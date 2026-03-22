@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import NotificationNavigationBridge from "./components/NotificationNavigationBridge";
 import "./globals.css";
 
@@ -16,6 +16,13 @@ export const metadata: Metadata = {
     title: "Defender Drivers",
     statusBarStyle: "black-translucent",
   },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#05070d",
 };
 
 export default function RootLayout({
