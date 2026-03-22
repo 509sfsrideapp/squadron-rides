@@ -10,14 +10,9 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == userId;
     }
 
-    function currentUserDoc() {
-      return get(/databases/$(database)/documents/users/$(request.auth.uid));
-    }
-
     function isAdmin() {
       return signedIn() &&
-        currentUserDoc().exists() &&
-        currentUserDoc().data.email == "509sfsrideapp@gmail.com";
+        request.auth.token.email == "509sfsrideapp@gmail.com";
     }
 
     function activeRideStatus(status) {
@@ -40,6 +35,7 @@ service cloud.firestore {
         request.resource.data.status == "open";
 
       allow read: if signedIn() && (
+        resource.data.status == "open" ||
         resource.data.riderId == request.auth.uid ||
         resource.data.acceptedBy == request.auth.uid ||
         isAdmin()

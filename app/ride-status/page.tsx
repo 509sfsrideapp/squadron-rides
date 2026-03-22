@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
@@ -19,6 +20,11 @@ type Ride = {
   driverName?: string;
   driverPhone?: string;
   driverEmail?: string;
+  driverPhotoUrl?: string;
+  carMake?: string;
+  carModel?: string;
+  carColor?: string;
+  carPlate?: string;
   riderLocation?: {
     latitude?: number;
     longitude?: number;
@@ -233,22 +239,40 @@ export default function RideStatusPage() {
                 flexWrap: "wrap",
               }}
             >
-              <div
-                style={{
-                  width: 88,
-                  height: 88,
-                  borderRadius: 999,
-                  display: "grid",
-                  placeItems: "center",
-                  background: "linear-gradient(180deg, rgba(24,39,66,0.95) 0%, rgba(12,20,35,0.98) 100%)",
-                  border: "1px solid rgba(96, 165, 250, 0.22)",
-                  color: "#dbeafe",
-                  fontSize: "1.8rem",
-                  fontFamily: "var(--font-display)",
-                }}
-              >
-                {activeRide.driverName ? activeRide.driverName.charAt(0).toUpperCase() : "?"}
-              </div>
+              {activeRide.driverPhotoUrl ? (
+                <Image
+                  src={activeRide.driverPhotoUrl}
+                  alt={`${activeRide.driverName || "Driver"} profile`}
+                  width={88}
+                  height={88}
+                  unoptimized
+                  style={{
+                    width: 88,
+                    height: 88,
+                    objectFit: "cover",
+                    borderRadius: 999,
+                    border: "1px solid rgba(96, 165, 250, 0.22)",
+                    background: "linear-gradient(180deg, rgba(24,39,66,0.95) 0%, rgba(12,20,35,0.98) 100%)",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 88,
+                    height: 88,
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    background: "linear-gradient(180deg, rgba(24,39,66,0.95) 0%, rgba(12,20,35,0.98) 100%)",
+                    border: "1px solid rgba(96, 165, 250, 0.22)",
+                    color: "#dbeafe",
+                    fontSize: "1.8rem",
+                    fontFamily: "var(--font-display)",
+                  }}
+                >
+                  {activeRide.driverName ? activeRide.driverName.charAt(0).toUpperCase() : "?"}
+                </div>
+              )}
 
               <div style={{ flex: "1 1 260px" }}>
                 <p style={{ margin: 0, fontSize: "0.95rem", color: "#8ea1b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
@@ -258,7 +282,14 @@ export default function RideStatusPage() {
                   {activeRide.driverName || "Waiting for driver"}
                 </p>
                 <p style={{ margin: "10px 0 0", color: "#cbd5e1" }}>
-                  Driver photo and car details will show here once they are added to account profiles.
+                  {activeRide.carColor || activeRide.carMake || activeRide.carModel || activeRide.carPlate
+                    ? [
+                        [activeRide.carColor, activeRide.carMake, activeRide.carModel].filter(Boolean).join(" ").trim(),
+                        activeRide.carPlate ? `Plate ${activeRide.carPlate}` : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" • ")
+                    : "Driver car details have not been added yet."}
                 </p>
               </div>
             </div>

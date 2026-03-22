@@ -28,6 +28,11 @@ type Ride = {
   driverName?: string;
   driverPhone?: string;
   driverEmail?: string;
+  driverPhotoUrl?: string;
+  carMake?: string;
+  carModel?: string;
+  carColor?: string;
+  carPlate?: string;
   riderLocation?: {
     latitude?: number;
     longitude?: number;
@@ -41,6 +46,11 @@ type UserProfile = {
   phone: string;
   email: string;
   available: boolean;
+  driverPhotoUrl?: string;
+  carMake?: string;
+  carModel?: string;
+  carColor?: string;
+  carPlate?: string;
 };
 
 export default function DriverPage() {
@@ -130,6 +140,11 @@ export default function DriverPage() {
         driverName: profile.name,
         driverPhone: profile.phone,
         driverEmail: profile.email,
+        driverPhotoUrl: profile.driverPhotoUrl || null,
+        carMake: profile.carMake || null,
+        carModel: profile.carModel || null,
+        carColor: profile.carColor || null,
+        carPlate: profile.carPlate || null,
         acceptedAt: new Date(),
       });
       router.replace(`/driver/active/${rideId}`);

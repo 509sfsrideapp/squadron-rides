@@ -115,6 +115,11 @@ export default function AdminPage() {
         driverName: null,
         driverPhone: null,
         driverEmail: null,
+        driverPhotoUrl: null,
+        carMake: null,
+        carModel: null,
+        carColor: null,
+        carPlate: null,
         driverLocation: null,
         reassignedAt: new Date(),
       });

@@ -5,7 +5,7 @@ import { use, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../../../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 
 type Ride = {
   id: string;
@@ -16,6 +16,13 @@ type Ride = {
   destination?: string;
   status?: string;
   acceptedBy?: string;
+  driverName?: string;
+  driverEmail?: string;
+  driverPhotoUrl?: string;
+  carMake?: string;
+  carModel?: string;
+  carColor?: string;
+  carPlate?: string;
   riderLocation?: {
     latitude?: number;
     longitude?: number;
@@ -26,6 +33,17 @@ type Ride = {
   } | null;
   driverPhone?: string;
   riderId?: string;
+};
+
+type DriverProfile = {
+  name?: string;
+  phone?: string;
+  email?: string;
+  driverPhotoUrl?: string;
+  carMake?: string;
+  carModel?: string;
+  carColor?: string;
+  carPlate?: string;
 };
 
 type Coordinates = {
@@ -134,6 +152,47 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
       router.replace("/driver");
     }
   }, [ride, router, user]);
+
+  useEffect(() => {
+    if (!user || !ride || ride.acceptedBy !== user.uid) return;
+
+    const missingDriverDetails =
+      !ride.driverPhotoUrl ||
+      !ride.driverName ||
+      !ride.driverPhone ||
+      !ride.driverEmail ||
+      !ride.carMake ||
+      !ride.carModel ||
+      !ride.carColor ||
+      !ride.carPlate;
+
+    if (!missingDriverDetails) return;
+
+    const syncDriverProfile = async () => {
+      try {
+        const profileSnap = await getDoc(doc(db, "users", user.uid));
+
+        if (!profileSnap.exists()) return;
+
+        const profile = profileSnap.data() as DriverProfile;
+
+        await updateDoc(doc(db, "rides", ride.id), {
+          driverName: ride.driverName || profile.name || null,
+          driverPhone: ride.driverPhone || profile.phone || null,
+          driverEmail: ride.driverEmail || profile.email || null,
+          driverPhotoUrl: ride.driverPhotoUrl || profile.driverPhotoUrl || null,
+          carMake: ride.carMake || profile.carMake || null,
+          carModel: ride.carModel || profile.carModel || null,
+          carColor: ride.carColor || profile.carColor || null,
+          carPlate: ride.carPlate || profile.carPlate || null,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void syncDriverProfile();
+  }, [ride, user]);
 
   const mapsUrl = useMemo(() => (ride ? buildMapsUrl(ride, userAgent) : null), [ride, userAgent]);
 
