@@ -264,8 +264,9 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     window.location.href = mapsUrl;
   };
 
-  const riderCallHref = ride.riderPhone ? `tel:${ride.riderPhone}` : null;
-  const riderTextHref = ride.riderPhone ? `sms:${ride.riderPhone}` : null;
+  const riderPhone = ride?.riderPhone ?? null;
+  const riderCallHref = riderPhone ? `tel:${riderPhone}` : null;
+  const riderTextHref = riderPhone ? `sms:${riderPhone}` : null;
 
   if (loading) {
     return (
