@@ -394,12 +394,13 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
 
       <div
         style={{
-          border: "1px solid #0f766e",
+          border: "1px solid rgba(45, 212, 191, 0.22)",
           padding: 16,
           borderRadius: 12,
-          backgroundColor: "#ecfeff",
-          color: "#0f172a",
+          backgroundColor: "rgba(9, 15, 25, 0.88)",
+          color: "#e5edf7",
           maxWidth: 560,
+          boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
         }}
       >
         <p>

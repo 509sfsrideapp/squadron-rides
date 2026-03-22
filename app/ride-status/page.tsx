@@ -58,19 +58,19 @@ function getStatusMessage(status?: string) {
 function getStatusAccent(status?: string) {
   switch (status) {
     case "open":
-      return { backgroundColor: "#fef3c7", color: "#92400e" };
+      return { backgroundColor: "rgba(77, 53, 15, 0.88)", color: "#fef3c7" };
     case "accepted":
-      return { backgroundColor: "#dbeafe", color: "#1d4ed8" };
+      return { backgroundColor: "rgba(16, 44, 84, 0.88)", color: "#dbeafe" };
     case "arrived":
-      return { backgroundColor: "#ffedd5", color: "#c2410c" };
+      return { backgroundColor: "rgba(86, 42, 19, 0.88)", color: "#ffedd5" };
     case "picked_up":
-      return { backgroundColor: "#dcfce7", color: "#166534" };
+      return { backgroundColor: "rgba(10, 51, 44, 0.88)", color: "#ccfbf1" };
     case "completed":
-      return { backgroundColor: "#e5e7eb", color: "#111827" };
+      return { backgroundColor: "rgba(31, 41, 55, 0.88)", color: "#e5e7eb" };
     case "canceled":
-      return { backgroundColor: "#fee2e2", color: "#b91c1c" };
+      return { backgroundColor: "rgba(69, 10, 10, 0.9)", color: "#fecaca" };
     default:
-      return { backgroundColor: "#e5e7eb", color: "#111827" };
+      return { backgroundColor: "rgba(31, 41, 55, 0.88)", color: "#e5e7eb" };
   }
 }
 
@@ -214,12 +214,13 @@ export default function RideStatusPage() {
 
           <div
             style={{
-              border: "1px solid #0f766e",
-              backgroundColor: "#ecfeff",
-              color: "#0f172a",
+              border: "1px solid rgba(45, 212, 191, 0.22)",
+              backgroundColor: "rgba(9, 15, 25, 0.88)",
+              color: "#e5edf7",
               borderRadius: 12,
               padding: 16,
               maxWidth: 560,
+              boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
             }}
           >
             <p>

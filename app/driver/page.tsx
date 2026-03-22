@@ -253,13 +253,13 @@ export default function DriverPage() {
             <div
               key={ride.id}
               style={{
-                border: "1px solid #0f766e",
-                padding: 12,
+                border: "1px solid rgba(45, 212, 191, 0.22)",
+                padding: 14,
                 marginBottom: 12,
-                borderRadius: 8,
-                backgroundColor: "#ecfeff",
-                color: "#0f172a",
-                boxShadow: "0 4px 14px rgba(15, 23, 42, 0.08)",
+                borderRadius: 12,
+                backgroundColor: "rgba(9, 15, 25, 0.88)",
+                color: "#e5edf7",
+                boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
               }}
             >
               <p>
@@ -313,10 +313,13 @@ export default function DriverPage() {
             <div
               key={ride.id}
               style={{
-                border: "1px solid #ccc",
-                padding: 10,
-                marginBottom: 10,
-                borderRadius: 8,
+                border: "1px solid rgba(148, 163, 184, 0.18)",
+                padding: 14,
+                marginBottom: 12,
+                borderRadius: 12,
+                backgroundColor: "rgba(9, 15, 25, 0.88)",
+                color: "#e5edf7",
+                boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
               }}
             >
               <p>

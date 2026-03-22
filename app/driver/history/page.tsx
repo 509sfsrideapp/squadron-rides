@@ -81,13 +81,14 @@ export default function DriverHistoryPage() {
           <div
             key={ride.id}
             style={{
-              border: "1px solid #d1d5db",
-              backgroundColor: "#ffffff",
-              color: "#111827",
-              borderRadius: 8,
-              padding: 12,
-              marginBottom: 10,
+              border: "1px solid rgba(148, 163, 184, 0.18)",
+              backgroundColor: "rgba(9, 15, 25, 0.88)",
+              color: "#e5edf7",
+              borderRadius: 12,
+              padding: 14,
+              marginBottom: 12,
               maxWidth: 560,
+              boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
             }}
           >
             <p><strong>Status:</strong> {ride.status}</p>
