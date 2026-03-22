@@ -198,14 +198,15 @@ export default function RideStatusPage() {
         <p>You do not have an active ride right now.</p>
       ) : (
         <>
-          <p>{getStatusMessage(activeRide.status)}</p>
+          <p style={{ fontSize: "1.15rem", maxWidth: 620 }}>{getStatusMessage(activeRide.status)}</p>
           <div
             style={{
               display: "inline-block",
-              padding: "6px 10px",
+              padding: "10px 16px",
               borderRadius: 999,
               fontWeight: 700,
-              marginBottom: 16,
+              fontSize: "1.1rem",
+              marginBottom: 18,
               ...getStatusAccent(activeRide.status),
             }}
           >
@@ -217,23 +218,73 @@ export default function RideStatusPage() {
               border: "1px solid rgba(45, 212, 191, 0.22)",
               backgroundColor: "rgba(9, 15, 25, 0.88)",
               color: "#e5edf7",
-              borderRadius: 12,
-              padding: 16,
-              maxWidth: 560,
-              boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
+              borderRadius: 16,
+              padding: 20,
+              maxWidth: 640,
+              boxShadow: "0 16px 36px rgba(2, 6, 23, 0.22)",
             }}
           >
-            <p>
-              <strong>Status:</strong> {activeRide.status}
-            </p>
+            <div
+              style={{
+                display: "flex",
+                gap: 18,
+                alignItems: "center",
+                marginBottom: 20,
+                flexWrap: "wrap",
+              }}
+            >
+              <div
+                style={{
+                  width: 88,
+                  height: 88,
+                  borderRadius: 999,
+                  display: "grid",
+                  placeItems: "center",
+                  background: "linear-gradient(180deg, rgba(24,39,66,0.95) 0%, rgba(12,20,35,0.98) 100%)",
+                  border: "1px solid rgba(96, 165, 250, 0.22)",
+                  color: "#dbeafe",
+                  fontSize: "1.8rem",
+                  fontFamily: "var(--font-display)",
+                }}
+              >
+                {activeRide.driverName ? activeRide.driverName.charAt(0).toUpperCase() : "?"}
+              </div>
+
+              <div style={{ flex: "1 1 260px" }}>
+                <p style={{ margin: 0, fontSize: "0.95rem", color: "#8ea1b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Your Driver
+                </p>
+                <p style={{ margin: "4px 0 0", fontSize: "2rem", lineHeight: 1.05, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
+                  {activeRide.driverName || "Waiting for driver"}
+                </p>
+                <p style={{ margin: "10px 0 0", color: "#cbd5e1" }}>
+                  Driver photo and car details will show here once they are added to account profiles.
+                </p>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginBottom: 20,
+                padding: 16,
+                borderRadius: 14,
+                backgroundColor: "rgba(18, 37, 63, 0.62)",
+                border: "1px solid rgba(96, 165, 250, 0.16)",
+              }}
+            >
+              <p style={{ margin: 0, fontSize: "0.95rem", color: "#93c5fd", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Ride Status
+              </p>
+              <p style={{ margin: "8px 0 0", fontSize: "2.35rem", lineHeight: 1, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
+                {String(activeRide.status).replace("_", " ").toUpperCase()}
+              </p>
+            </div>
+
             <p>
               <strong>Pickup:</strong> {activeRide.pickup || "N/A"}
             </p>
             <p>
               <strong>Destination:</strong> {activeRide.destination || "N/A"}
-            </p>
-            <p>
-              <strong>Driver:</strong> {activeRide.driverName || "Waiting for driver"}
             </p>
             <p>
               <strong>Driver Phone:</strong> {activeRide.driverPhone || "Not available yet"}
@@ -242,17 +293,21 @@ export default function RideStatusPage() {
               <strong>Driver Email:</strong> {activeRide.driverEmail || "Not available yet"}
             </p>
             {activeRide.driverPhone ? (
-              <div style={{ marginBottom: 12 }}>
+              <div style={{ marginBottom: 16, marginTop: 16 }}>
                 <a
                   href={`tel:${activeRide.driverPhone}`}
                   style={{
                     display: "inline-block",
-                    padding: "10px 14px",
+                    padding: "14px 20px",
                     backgroundColor: "#1d4ed8",
                     color: "white",
                     textDecoration: "none",
-                    borderRadius: 8,
-                    marginRight: 10,
+                    borderRadius: 12,
+                    marginRight: 12,
+                    fontSize: "1.05rem",
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
                   }}
                 >
                   Call Driver
@@ -261,11 +316,15 @@ export default function RideStatusPage() {
                   href={`sms:${activeRide.driverPhone}`}
                   style={{
                     display: "inline-block",
-                    padding: "10px 14px",
+                    padding: "14px 20px",
                     backgroundColor: "#0f766e",
                     color: "white",
                     textDecoration: "none",
-                    borderRadius: 8,
+                    borderRadius: 12,
+                    fontSize: "1.05rem",
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
                   }}
                 >
                   Text Driver
