@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import PushNotificationsCard from "../components/PushNotificationsCard";
 import { auth, db } from "../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import {
@@ -261,6 +262,8 @@ export default function DriverPage() {
       <p>
         <strong>Status:</strong> {profile?.available ? "Clocked In" : "Clocked Out"}
       </p>
+
+      <PushNotificationsCard />
 
       {hasDriverHistory ? (
         <div style={{ marginTop: 20 }}>

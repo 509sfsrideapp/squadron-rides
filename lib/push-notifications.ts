@@ -1,7 +1,7 @@
 "use client";
 
 import { getToken, isSupported, Messaging, onMessage } from "firebase/messaging";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 let messagingPromise: Promise<Messaging | null> | null = null;
@@ -53,20 +53,20 @@ async function saveTokenToProfile(token: string) {
   const existingTokens = userSnap.exists() ? ((userSnap.data().notificationTokens as string[] | undefined) ?? []) : [];
 
   if (existingTokens.includes(token)) {
-    await updateDoc(userRef, {
+    await setDoc(userRef, {
       notificationsEnabled: true,
       notificationsUpdatedAt: new Date(),
       notificationDeviceId: getDeviceId(),
-    });
+    }, { merge: true });
     return;
   }
 
-  await updateDoc(userRef, {
+  await setDoc(userRef, {
     notificationTokens: [...existingTokens, token],
     notificationsEnabled: true,
     notificationsUpdatedAt: new Date(),
     notificationDeviceId: getDeviceId(),
-  });
+  }, { merge: true });
 }
 
 export async function enablePushNotifications() {
