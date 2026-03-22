@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { auth } from "../../lib/firebase";
 import { attachForegroundNotificationListener, enablePushNotifications } from "../../lib/push-notifications";
 
 export default function PushNotificationsCard() {
@@ -26,6 +27,31 @@ export default function PushNotificationsCard() {
         .catch((error) => {
           console.error(error);
           setStatusMessage(error instanceof Error ? error.message : "Could not confirm push notifications on this device.");
+        });
+    }
+
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      void currentUser.getIdToken()
+        .then((idToken) =>
+          fetch("/api/notifications/debug", {
+            headers: {
+              Authorization: `Bearer ${idToken}`,
+            },
+          })
+        )
+        .then(async (response) => {
+          if (!response?.ok) return;
+
+          const details = (await response.json()) as { tokenCount?: number };
+
+          if ((details.tokenCount ?? 0) > 0) {
+            setStatusMessage(`Push notifications are linked on ${details.tokenCount} device${details.tokenCount === 1 ? "" : "s"}.`);
+          }
+        })
+        .catch((error) => {
+          console.error("Notification debug lookup failed", error);
         });
     }
 

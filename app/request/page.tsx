@@ -192,8 +192,15 @@ export default function RequestPage() {
           body: JSON.stringify({
             rideId: rideRef.id,
           }),
-        }).catch((error) => {
-          console.error("Driver notification request failed", error);
+        })
+          .then(async (response) => {
+            if (!response.ok) {
+              const details = await response.json().catch(() => null);
+              console.error("Driver notification request failed", details || response.statusText);
+            }
+          })
+          .catch((error) => {
+            console.error("Driver notification request failed", error);
         });
       }
 
