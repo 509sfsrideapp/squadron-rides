@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth, db } from "../../../lib/firebase";
+import { formatRideTimestamp, getRideStatusLabel } from "../../../lib/ride-lifecycle";
 import { useActiveRides } from "../../../lib/use-active-rides";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -15,6 +16,9 @@ type Ride = {
   destination?: string;
   status?: string;
   createdAt?: { seconds?: number };
+  acceptedAt?: { seconds?: number };
+  completedAt?: { seconds?: number };
+  canceledAt?: { seconds?: number };
 };
 
 export default function DriverHistoryPage() {
@@ -105,10 +109,13 @@ export default function DriverHistoryPage() {
               boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
             }}
           >
-            <p><strong>Status:</strong> {ride.status}</p>
+            <p><strong>Status:</strong> {getRideStatusLabel(ride.status)}</p>
             <p><strong>Rider:</strong> {ride.riderName || "N/A"}</p>
             <p><strong>Pickup:</strong> {ride.pickup || "N/A"}</p>
             <p><strong>Destination:</strong> {ride.destination || "N/A"}</p>
+            <p><strong>Requested:</strong> {formatRideTimestamp(ride.createdAt) || "N/A"}</p>
+            <p><strong>Accepted:</strong> {formatRideTimestamp(ride.acceptedAt) || "N/A"}</p>
+            <p><strong>Closed:</strong> {formatRideTimestamp(ride.completedAt || ride.canceledAt) || "N/A"}</p>
           </div>
         ))
       )}

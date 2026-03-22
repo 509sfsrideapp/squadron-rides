@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
 import { auth, db } from "../../lib/firebase";
+import { formatRideTimestamp, getRideStatusLabel } from "../../lib/ride-lifecycle";
 import { ADMIN_EMAIL, isAdminEmail } from "../../lib/admin";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { collection, doc, onSnapshot, orderBy, query, updateDoc } from "firebase/firestore";
@@ -25,6 +26,12 @@ type Ride = {
     longitude?: number;
   } | null;
   acceptedBy?: string;
+  createdAt?: { seconds?: number };
+  acceptedAt?: { seconds?: number };
+  arrivedAt?: { seconds?: number };
+  pickedUpAt?: { seconds?: number };
+  completedAt?: { seconds?: number };
+  canceledAt?: { seconds?: number };
 };
 
 type AppUser = {
@@ -123,6 +130,11 @@ export default function AdminPage() {
         driverPhone: null,
         driverEmail: null,
         driverPhotoUrl: null,
+        acceptedAt: null,
+        arrivedAt: null,
+        pickedUpAt: null,
+        completedAt: null,
+        canceledAt: null,
         carMake: null,
         carModel: null,
         carColor: null,
@@ -165,6 +177,10 @@ export default function AdminPage() {
         carColor: driver.carColor || null,
         carPlate: driver.carPlate || null,
         acceptedAt: new Date(),
+        arrivedAt: null,
+        pickedUpAt: null,
+        completedAt: null,
+        canceledAt: null,
         assignedByAdminAt: new Date(),
         assignedByAdminUid: user?.uid ?? "admin",
       });
@@ -354,7 +370,7 @@ export default function AdminPage() {
               }}
             >
               <p>
-                <strong>Status:</strong> {ride.status || "unknown"}
+                <strong>Status:</strong> {getRideStatusLabel(ride.status)}
               </p>
               <p>
                 <strong>Rider:</strong> {ride.riderName || "N/A"}
@@ -376,6 +392,21 @@ export default function AdminPage() {
               </p>
               <p>
                 <strong>Driver:</strong> {ride.driverName || "Unassigned"}
+              </p>
+              <p>
+                <strong>Requested:</strong> {formatRideTimestamp(ride.createdAt) || "N/A"}
+              </p>
+              <p>
+                <strong>Accepted:</strong> {formatRideTimestamp(ride.acceptedAt) || "N/A"}
+              </p>
+              <p>
+                <strong>Arrived:</strong> {formatRideTimestamp(ride.arrivedAt) || "N/A"}
+              </p>
+              <p>
+                <strong>Picked Up:</strong> {formatRideTimestamp(ride.pickedUpAt) || "N/A"}
+              </p>
+              <p>
+                <strong>Closed:</strong> {formatRideTimestamp(ride.completedAt || ride.canceledAt) || "N/A"}
               </p>
               <p>
                 <strong>Driver GPS:</strong>{" "}

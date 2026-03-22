@@ -151,6 +151,10 @@ export default function DriverPage() {
         carColor: profile.carColor || null,
         carPlate: profile.carPlate || null,
         acceptedAt: new Date(),
+        arrivedAt: null,
+        pickedUpAt: null,
+        completedAt: null,
+        canceledAt: null,
       });
 
       const idToken = await auth.currentUser?.getIdToken();
