@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import PushNotificationsCard from "./components/PushNotificationsCard";
 import { auth, db } from "../lib/firebase";
 import { isAdminEmail } from "../lib/admin";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
@@ -12,6 +13,7 @@ type UserProfile = {
   phone: string;
   email: string;
   available: boolean;
+  notificationsEnabled?: boolean;
 };
 
 export default function HomePage() {
@@ -338,6 +340,8 @@ export default function HomePage() {
               </Link>
             </div>
           ) : null}
+
+          <PushNotificationsCard />
         </div>
       )}
     </main>

@@ -133,6 +133,7 @@ export default function DriverPage() {
     }
 
     try {
+      const selectedRide = openRides.find((ride) => ride.id === rideId);
       const rideRef = doc(db, "rides", rideId);
       await updateDoc(rideRef, {
         status: "accepted",
@@ -147,6 +148,27 @@ export default function DriverPage() {
         carPlate: profile.carPlate || null,
         acceptedAt: new Date(),
       });
+
+      const idToken = await auth.currentUser?.getIdToken();
+
+      if (idToken) {
+        void fetch("/api/notifications/ride-update", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            rideId,
+            riderId: selectedRide?.riderId,
+            event: "accepted",
+            driverName: profile.name,
+          }),
+        }).catch((error) => {
+          console.error("Ride accepted notification failed", error);
+        });
+      }
+
       router.replace(`/driver/active/${rideId}`);
     } catch (error) {
       console.error(error);

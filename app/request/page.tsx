@@ -180,6 +180,23 @@ export default function RequestPage() {
         createdAt: new Date(),
       });
 
+      const idToken = await auth.currentUser?.getIdToken();
+
+      if (idToken) {
+        void fetch("/api/notifications/ride-request", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            rideId: rideRef.id,
+          }),
+        }).catch((error) => {
+          console.error("Driver notification request failed", error);
+        });
+      }
+
       alert("Ride requested!");
       setPickup("");
       setDestination(profile.homeAddress || "");

@@ -289,6 +289,28 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
 
     try {
       await updateDoc(doc(db, "rides", ride.id), updates);
+
+      if (status === "arrived") {
+        const idToken = await auth.currentUser?.getIdToken();
+
+        if (idToken && ride.riderId) {
+          void fetch("/api/notifications/ride-update", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${idToken}`,
+            },
+            body: JSON.stringify({
+              rideId: ride.id,
+              riderId: ride.riderId,
+              event: "arrived",
+              driverName: ride.driverName,
+            }),
+          }).catch((error) => {
+            console.error("Ride arrived notification failed", error);
+          });
+        }
+      }
     } catch (error) {
       console.error(error);
       alert(`Error updating ride to ${status}.`);
