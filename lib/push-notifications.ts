@@ -6,6 +6,20 @@ import { auth, db } from "./firebase";
 
 let messagingPromise: Promise<Messaging | null> | null = null;
 
+function isIosDevice() {
+  if (typeof window === "undefined") return false;
+
+  const userAgent = window.navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(userAgent);
+}
+
+function isStandaloneDisplayMode() {
+  if (typeof window === "undefined") return false;
+
+  const navigatorWithStandalone = navigator as Navigator & { standalone?: boolean };
+  return window.matchMedia("(display-mode: standalone)").matches || navigatorWithStandalone.standalone === true;
+}
+
 async function getMessagingInstance() {
   if (!messagingPromise) {
     messagingPromise = (async () => {
@@ -80,6 +94,10 @@ export async function enablePushNotifications() {
 
   if (!("Notification" in window)) {
     throw new Error("This browser does not support notifications.");
+  }
+
+  if (isIosDevice() && !isStandaloneDisplayMode()) {
+    throw new Error("On iPhone, add this site to your Home Screen in Safari and open it from that icon before enabling notifications.");
   }
 
   const vapidKey = getVapidKey();

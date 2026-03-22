@@ -63,7 +63,7 @@ export default function PushNotificationsCard() {
       <h2 style={{ marginTop: 0 }}>Notifications</h2>
       <p style={{ marginBottom: 14 }}>{statusMessage}</p>
       <p style={{ marginTop: 0, marginBottom: 14, color: "#cbd5e1", fontSize: 14 }}>
-        On iPhone, web push works best when this site is opened from a Home Screen icon after being added in Safari.
+        On iPhone, open this site in Safari, tap Share, choose Add to Home Screen, then launch it from that Home Screen icon before enabling notifications.
       </p>
       <button type="button" onClick={handleEnable} disabled={enabling}>
         {enabling ? "Enabling..." : "Enable Push Notifications"}
