@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { auth, db } from "../lib/firebase";
 import { isAdminEmail } from "../lib/admin";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from "firebase/firestore";
 
 type UserProfile = {
   name: string;
@@ -19,6 +19,7 @@ export default function HomePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [authWarning, setAuthWarning] = useState("");
+  const [hasActiveRide, setHasActiveRide] = useState(false);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -41,6 +42,7 @@ export default function HomePage() {
           }
         } else {
           setProfile(null);
+          setHasActiveRide(false);
         }
       } catch (error) {
         console.error(error);
@@ -60,6 +62,22 @@ export default function HomePage() {
       unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const activeRideQuery = query(collection(db, "rides"), where("riderId", "==", user.uid));
+    const unsubscribe = onSnapshot(activeRideQuery, (snapshot) => {
+      const hasRide = snapshot.docs.some((docSnap) => {
+        const status = docSnap.data().status;
+        return status === "open" || status === "accepted" || status === "arrived" || status === "picked_up";
+      });
+
+      setHasActiveRide(hasRide);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   const handleClockIn = async () => {
     if (!user) {
@@ -184,6 +202,24 @@ export default function HomePage() {
               Request Ride
             </Link>
           </div>
+
+          {hasActiveRide ? (
+            <div style={{ marginTop: 20 }}>
+              <Link
+                href="/ride-status"
+                style={{
+                  display: "inline-block",
+                  padding: "10px 16px",
+                  backgroundColor: "#0f766e",
+                  color: "white",
+                  textDecoration: "none",
+                  borderRadius: 8,
+                }}
+              >
+                Current Ride Status
+              </Link>
+            </div>
+          ) : null}
 
           <div style={{ marginTop: 20 }}>
             {!profile?.available ? (

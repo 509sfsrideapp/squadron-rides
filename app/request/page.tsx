@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { auth, db } from "../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, addDoc, doc, getDoc } from "firebase/firestore";
@@ -19,6 +20,7 @@ type UserProfile = {
 };
 
 export default function RequestPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [pickup, setPickup] = useState("");
@@ -115,7 +117,7 @@ export default function RequestPage() {
     try {
       setSubmitting(true);
 
-      await addDoc(collection(db, "rides"), {
+      const rideRef = await addDoc(collection(db, "rides"), {
         riderId: user.uid,
         riderName: profile.name,
         riderPhone: profile.phone,
@@ -135,6 +137,7 @@ export default function RequestPage() {
           ? "Ride submitted with your current GPS location."
           : "Ride submitted with manual pickup details."
       );
+      router.push(`/ride-status?rideId=${rideRef.id}`);
     } catch (error) {
       console.error(error);
       alert("Error submitting request");
