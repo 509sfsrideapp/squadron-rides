@@ -14,6 +14,8 @@ type Ride = {
   riderName?: string;
   riderPhone?: string;
   pickup?: string;
+  pickupLocationName?: string;
+  pickupLocationAddress?: string;
   destination?: string;
   status?: string;
   driverName?: string;
@@ -381,6 +383,14 @@ export default function AdminPage() {
               <p>
                 <strong>Pickup:</strong> {ride.pickup || "N/A"}
               </p>
+              <p>
+                <strong>Pickup Spot:</strong> {ride.pickupLocationName || ride.pickupLocationAddress || "Not resolved yet"}
+              </p>
+              {ride.pickupLocationAddress ? (
+                <p>
+                  <strong>Address:</strong> {ride.pickupLocationAddress}
+                </p>
+              ) : null}
               <p>
                 <strong>Rider GPS:</strong>{" "}
                 {ride.riderLocation?.latitude != null && ride.riderLocation?.longitude != null

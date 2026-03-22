@@ -16,6 +16,8 @@ type Ride = {
   riderEmail?: string;
   riderPhotoUrl?: string;
   pickup?: string;
+  pickupLocationName?: string;
+  pickupLocationAddress?: string;
   destination?: string;
   status?: string;
   acceptedBy?: string;
@@ -556,6 +558,14 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         <p>
           <strong>Pickup:</strong> {ride.pickup || "N/A"}
         </p>
+        <p>
+          <strong>Pickup Spot:</strong> {ride.pickupLocationName || ride.pickupLocationAddress || "Not resolved yet"}
+        </p>
+        {ride.pickupLocationAddress ? (
+          <p>
+            <strong>Address:</strong> {ride.pickupLocationAddress}
+          </p>
+        ) : null}
         <p>
           <strong>Destination:</strong> {ride.destination || "N/A"}
         </p>

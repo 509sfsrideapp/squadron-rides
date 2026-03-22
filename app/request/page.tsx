@@ -13,6 +13,12 @@ type Coordinates = {
   longitude: number;
 };
 
+type ReverseGeocodeResult = {
+  placeName?: string | null;
+  address?: string | null;
+  display?: string | null;
+};
+
 type UserProfile = {
   name: string;
   username?: string;
@@ -122,6 +128,22 @@ export default function RequestPage() {
     );
   };
 
+  const resolvePickupLocation = async (nextCoordinates: Coordinates) => {
+    const response = await fetch("/api/geocode/reverse", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(nextCoordinates),
+    });
+
+    if (!response.ok) {
+      throw new Error("Could not resolve pickup address.");
+    }
+
+    return (await response.json()) as ReverseGeocodeResult;
+  };
+
   const submitRequest = async () => {
     if (!user || !profile) {
       alert("Log in first");
@@ -138,7 +160,6 @@ export default function RequestPage() {
       return;
     }
 
-    const resolvedPickup = pickup.trim() || (coordinates ? "Current GPS location" : "");
     const resolvedDestination = destination.trim() || profile.homeAddress?.trim() || "";
 
     if (!resolvedPickup) {
@@ -153,6 +174,13 @@ export default function RequestPage() {
 
     try {
       setSubmitting(true);
+      const geocodedPickup = coordinates ? await resolvePickupLocation(coordinates).catch(() => null) : null;
+      const resolvedPickup =
+        pickup.trim() ||
+        geocodedPickup?.placeName ||
+        geocodedPickup?.address ||
+        geocodedPickup?.display ||
+        (coordinates ? "Current GPS location" : "");
 
       const rideRef = await addDoc(collection(db, "rides"), {
         riderId: user.uid,
@@ -161,6 +189,8 @@ export default function RequestPage() {
         riderEmail: profile.email,
         riderPhotoUrl: profile.driverPhotoUrl || profile.riderPhotoUrl || null,
         pickup: resolvedPickup,
+        pickupLocationName: geocodedPickup?.placeName || null,
+        pickupLocationAddress: geocodedPickup?.address || geocodedPickup?.display || null,
         destination: resolvedDestination,
         riderLocation: coordinates,
         status: "open",

@@ -16,6 +16,8 @@ type Ride = {
   riderPhone?: string;
   riderEmail?: string;
   pickup?: string;
+  pickupLocationName?: string;
+  pickupLocationAddress?: string;
   destination?: string;
   status?: string;
   driverName?: string;
@@ -406,6 +408,14 @@ export default function RideStatusPage() {
             <p>
               <strong>Pickup:</strong> {activeRide.pickup || "N/A"}
             </p>
+            <p>
+              <strong>Pickup Spot:</strong> {activeRide.pickupLocationName || activeRide.pickupLocationAddress || "Not resolved yet"}
+            </p>
+            {activeRide.pickupLocationAddress ? (
+              <p>
+                <strong>Address:</strong> {activeRide.pickupLocationAddress}
+              </p>
+            ) : null}
             <p>
               <strong>Destination:</strong> {activeRide.destination || "N/A"}
             </p>

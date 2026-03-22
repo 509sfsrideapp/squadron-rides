@@ -23,6 +23,8 @@ type Ride = {
   riderPhone?: string;
   riderEmail?: string;
   pickup: string;
+  pickupLocationName?: string;
+  pickupLocationAddress?: string;
   destination: string;
   status: string;
   acceptedBy?: string;
@@ -321,14 +323,16 @@ export default function DriverPage() {
                 <strong>Pickup:</strong> {ride.pickup}
               </p>
               <p>
-                <strong>Destination:</strong> {ride.destination}
+                <strong>Pickup Spot:</strong> {ride.pickupLocationName || ride.pickupLocationAddress || "Not resolved yet"}
               </p>
               <p>
-                <strong>GPS:</strong>{" "}
-                {ride.riderLocation?.latitude != null && ride.riderLocation?.longitude != null
-                  ? `${ride.riderLocation.latitude.toFixed(6)}, ${ride.riderLocation.longitude.toFixed(6)}`
-                  : "Not shared"}
+                <strong>Destination:</strong> {ride.destination}
               </p>
+              {ride.pickupLocationAddress ? (
+                <p>
+                  <strong>Address:</strong> {ride.pickupLocationAddress}
+                </p>
+              ) : null}
 
               <button
                 onClick={() => router.push(`/driver/active/${ride.id}`)}
@@ -376,6 +380,9 @@ export default function DriverPage() {
               </p>
               <p>
                 <strong>Pickup:</strong> {ride.pickup}
+              </p>
+              <p>
+                <strong>Pickup Spot:</strong> {ride.pickupLocationName || ride.pickupLocationAddress || "Not resolved yet"}
               </p>
               <p>
                 <strong>Destination:</strong> {ride.destination}
