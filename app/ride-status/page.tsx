@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
 import { auth, db } from "../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, updateDoc, where } from "firebase/firestore";
 
 type Ride = {
   id: string;
@@ -84,6 +84,7 @@ export default function RideStatusPage() {
   const [user, setUser] = useState<User | null>(null);
   const [rides, setRides] = useState<Ride[]>([]);
   const [loading, setLoading] = useState(true);
+  const [cancelingRide, setCancelingRide] = useState(false);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -134,6 +135,28 @@ export default function RideStatusPage() {
           longitude: activeRide.driverLocation.longitude,
         }
       : null;
+  const canCancelRide = activeRide?.status === "open" || activeRide?.status === "accepted" || activeRide?.status === "arrived";
+
+  const cancelRide = async () => {
+    if (!activeRide || !user) return;
+
+    const confirmed = window.confirm("Cancel this ride request?");
+    if (!confirmed) return;
+
+    try {
+      setCancelingRide(true);
+      await updateDoc(doc(db, "rides", activeRide.id), {
+        status: "canceled",
+        canceledAt: new Date(),
+        canceledBy: user.uid,
+      });
+    } catch (error) {
+      console.error(error);
+      alert("We could not cancel your ride.");
+    } finally {
+      setCancelingRide(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -203,6 +226,29 @@ export default function RideStatusPage() {
           >
             {String(activeRide.status).replace("_", " ").toUpperCase()}
           </div>
+
+          {canCancelRide ? (
+            <div style={{ marginBottom: 18 }}>
+              <button
+                type="button"
+                onClick={cancelRide}
+                disabled={cancelingRide}
+                style={{
+                  padding: "12px 18px",
+                  backgroundColor: "#b91c1c",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: 12,
+                  cursor: cancelingRide ? "wait" : "pointer",
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {cancelingRide ? "Canceling Ride..." : "Cancel Ride"}
+              </button>
+            </div>
+          ) : null}
 
           <div
             style={{

@@ -67,7 +67,14 @@ service cloud.firestore {
         isAdmin() ||
         (
           resource.data.riderId == request.auth.uid &&
-          request.resource.data.riderId == resource.data.riderId
+          request.resource.data.riderId == resource.data.riderId &&
+          (
+            request.resource.data.status == resource.data.status ||
+            (
+              resource.data.status in ["open", "accepted", "arrived"] &&
+              request.resource.data.status == "canceled"
+            )
+          )
         ) ||
         (
           resource.data.status == "open" &&
