@@ -50,6 +50,10 @@ type DriverProfile = {
   carPlate?: string;
 };
 
+type RiderProfile = {
+  driverPhotoUrl?: string;
+};
+
 type Coordinates = {
   latitude: number;
   longitude: number;
@@ -198,6 +202,30 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     };
 
     void syncDriverProfile();
+  }, [ride, user]);
+
+  useEffect(() => {
+    if (!user || !ride || ride.acceptedBy !== user.uid || ride.riderPhotoUrl || !ride.riderId) return;
+
+    const syncRiderPhoto = async () => {
+      try {
+        const riderSnap = await getDoc(doc(db, "users", ride.riderId as string));
+
+        if (!riderSnap.exists()) return;
+
+        const riderProfile = riderSnap.data() as RiderProfile;
+
+        if (!riderProfile.driverPhotoUrl) return;
+
+        await updateDoc(doc(db, "rides", ride.id), {
+          riderPhotoUrl: riderProfile.driverPhotoUrl,
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void syncRiderPhoto();
   }, [ride, user]);
 
   const mapsUrl = useMemo(() => (ride ? buildMapsUrl(ride, userAgent) : null), [ride, userAgent]);
@@ -422,7 +450,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
 
   return (
     <main style={{ padding: 20 }}>
-      <h1 style={{ marginTop: 20, textAlign: "center" }}>Active Ride</h1>
+      <h1 style={{ marginTop: 20, marginBottom: 24, textAlign: "center" }}>Active Ride</h1>
 
       <div
         style={{
