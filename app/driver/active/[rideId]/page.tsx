@@ -20,17 +20,45 @@ type Ride = {
     latitude?: number;
     longitude?: number;
   } | null;
+  driverLocation?: {
+    latitude?: number;
+    longitude?: number;
+  } | null;
 };
 
-function buildMapsUrl(ride: Ride) {
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+function buildMapsUrl(ride: Ride, userAgent: string) {
   const latitude = ride.riderLocation?.latitude;
   const longitude = ride.riderLocation?.longitude;
+  const isIPhone = /iPhone|iPad|iPod/i.test(userAgent);
+  const isAndroid = /Android/i.test(userAgent);
+  const pickupLabel = ride.pickup ? encodeURIComponent(ride.pickup) : "Pickup";
 
   if (latitude != null && longitude != null) {
+    if (isIPhone) {
+      return `maps://?daddr=${latitude},${longitude}&q=${pickupLabel}`;
+    }
+
+    if (isAndroid) {
+      return `geo:${latitude},${longitude}?q=${latitude},${longitude}(${pickupLabel})`;
+    }
+
     return `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`;
   }
 
   if (ride.pickup) {
+    if (isIPhone) {
+      return `maps://?q=${encodeURIComponent(ride.pickup)}`;
+    }
+
+    if (isAndroid) {
+      return `geo:0,0?q=${encodeURIComponent(ride.pickup)}`;
+    }
+
     return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ride.pickup)}`;
   }
 
@@ -40,10 +68,17 @@ function buildMapsUrl(ride: Ride) {
 export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]">) {
   const router = useRouter();
   const { rideId } = use(props.params);
+  const geolocationAvailable = typeof window !== "undefined" && "geolocation" in navigator;
+  const userAgent = typeof window !== "undefined" ? window.navigator.userAgent : "";
+  const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(userAgent);
   const [user, setUser] = useState<User | null>(null);
   const [ride, setRide] = useState<Ride | null>(null);
   const [loading, setLoading] = useState(true);
+  const [driverLocationStatus, setDriverLocationStatus] = useState("Waiting to start driver location sharing...");
+  const [driverCoordinates, setDriverCoordinates] = useState<Coordinates | null>(null);
   const launchedRideIdRef = useRef<string | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+  const lastSentRef = useRef<{ latitude: number; longitude: number; sentAt: number } | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -90,10 +125,10 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     }
   }, [ride, router, user]);
 
-  const mapsUrl = useMemo(() => (ride ? buildMapsUrl(ride) : null), [ride]);
+  const mapsUrl = useMemo(() => (ride ? buildMapsUrl(ride, userAgent) : null), [ride, userAgent]);
 
   useEffect(() => {
-    if (!ride || !mapsUrl) return;
+    if (!ride || !mapsUrl || !isMobileDevice) return;
     if (launchedRideIdRef.current === ride.id) return;
 
     launchedRideIdRef.current = ride.id;
@@ -102,7 +137,66 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     }, 700);
 
     return () => window.clearTimeout(timeoutId);
-  }, [mapsUrl, ride]);
+  }, [isMobileDevice, mapsUrl, ride]);
+
+  useEffect(() => {
+    if (!user || !ride || ride.status !== "accepted" || ride.acceptedBy !== user.uid) {
+      return;
+    }
+
+    if (!geolocationAvailable) {
+      return;
+    }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      async (position) => {
+        const nextCoordinates = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+
+        setDriverCoordinates(nextCoordinates);
+
+        const now = Date.now();
+        const lastSent = lastSentRef.current;
+        const latitudeChanged = !lastSent || Math.abs(lastSent.latitude - nextCoordinates.latitude) > 0.0001;
+        const longitudeChanged = !lastSent || Math.abs(lastSent.longitude - nextCoordinates.longitude) > 0.0001;
+        const enoughTimePassed = !lastSent || now - lastSent.sentAt > 15000;
+
+        if (!latitudeChanged && !longitudeChanged && !enoughTimePassed) {
+          setDriverLocationStatus("Live driver location is active.");
+          return;
+        }
+
+        try {
+          await updateDoc(doc(db, "rides", ride.id), {
+            driverLocation: nextCoordinates,
+            driverLocationUpdatedAt: new Date(),
+          });
+          lastSentRef.current = { ...nextCoordinates, sentAt: now };
+          setDriverLocationStatus("Live driver location is active.");
+        } catch (error) {
+          console.error(error);
+          setDriverLocationStatus("We could not update live driver location.");
+        }
+      },
+      () => {
+        setDriverLocationStatus("Driver location permission was denied or unavailable.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 5000,
+      }
+    );
+
+    return () => {
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
+    };
+  }, [geolocationAvailable, ride, user]);
 
   const completeRide = async () => {
     if (!ride) return;
@@ -111,6 +205,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
       await updateDoc(doc(db, "rides", ride.id), {
         status: "completed",
         completedAt: new Date(),
+        driverLocation: driverCoordinates ?? ride.driverLocation ?? null,
       });
       alert("Ride completed");
       router.replace("/driver");
@@ -249,9 +344,21 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         <p>
           <strong>Navigation:</strong>{" "}
           {mapsUrl
-            ? "Maps will open automatically for turn-by-turn directions."
+            ? isMobileDevice
+              ? "Your phone will prompt to open its maps app with the rider location ready."
+              : "Use the button above to open turn-by-turn directions."
             : "No GPS coordinates available. Use the pickup details above."}
         </p>
+        <p>
+          <strong>Driver Location:</strong>{" "}
+          {geolocationAvailable ? driverLocationStatus : "This browser cannot share live driver location."}
+        </p>
+        {driverCoordinates ? (
+          <p>
+            <strong>Your GPS:</strong> {driverCoordinates.latitude.toFixed(6)},{" "}
+            {driverCoordinates.longitude.toFixed(6)}
+          </p>
+        ) : null}
       </div>
 
       <div style={{ marginTop: 20 }}>

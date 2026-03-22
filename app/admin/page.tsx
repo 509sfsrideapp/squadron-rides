@@ -19,6 +19,10 @@ type Ride = {
     latitude?: number;
     longitude?: number;
   } | null;
+  driverLocation?: {
+    latitude?: number;
+    longitude?: number;
+  } | null;
 };
 
 type AppUser = {
@@ -267,6 +271,12 @@ export default function AdminPage() {
               </p>
               <p>
                 <strong>Driver:</strong> {ride.driverName || "Unassigned"}
+              </p>
+              <p>
+                <strong>Driver GPS:</strong>{" "}
+                {ride.driverLocation?.latitude != null && ride.driverLocation?.longitude != null
+                  ? `${ride.driverLocation.latitude.toFixed(6)}, ${ride.driverLocation.longitude.toFixed(6)}`
+                  : "Not shared"}
               </p>
             </div>
           ))
