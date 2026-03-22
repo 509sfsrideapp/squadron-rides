@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { auth, db } from "../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
@@ -39,6 +39,29 @@ type Point = {
   longitude: number;
 };
 
+type LeafletMapInstance = {
+  setView: (coords: [number, number], zoom: number) => void;
+  fitBounds: (bounds: [[number, number], [number, number]], options?: { padding?: [number, number] }) => void;
+  remove: () => void;
+};
+
+type LeafletMarkerInstance = {
+  setLatLng: (coords: [number, number]) => void;
+  bindPopup: (content: string) => void;
+  addTo: (map: LeafletMapInstance) => LeafletMarkerInstance;
+  remove?: () => void;
+};
+
+type LeafletNamespace = {
+  map: (element: HTMLElement, options?: Record<string, unknown>) => LeafletMapInstance;
+  tileLayer: (
+    url: string,
+    options?: { attribution?: string; maxZoom?: number }
+  ) => { addTo: (map: LeafletMapInstance) => void };
+  marker: (coords: [number, number], options?: { icon?: unknown }) => LeafletMarkerInstance;
+  divIcon: (options: { className: string; html: string; iconSize: [number, number]; iconAnchor: [number, number] }) => unknown;
+};
+
 function getStatusMessage(status?: string) {
   switch (status) {
     case "open":
@@ -54,29 +77,179 @@ function getStatusMessage(status?: string) {
   }
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
+declare global {
+  interface Window {
+    L?: LeafletNamespace;
+  }
 }
 
-function getMapPoint(point: Point, bounds: { minLat: number; maxLat: number; minLon: number; maxLon: number }) {
-  const padding = 16;
-  const width = 320;
-  const height = 220;
-  const usableWidth = width - padding * 2;
-  const usableHeight = height - padding * 2;
-  const longitudeRange = Math.max(bounds.maxLon - bounds.minLon, 0.002);
-  const latitudeRange = Math.max(bounds.maxLat - bounds.minLat, 0.002);
+let leafletAssetsPromise: Promise<LeafletNamespace> | null = null;
 
-  const x = padding + ((point.longitude - bounds.minLon) / longitudeRange) * usableWidth;
-  const y = padding + (1 - (point.latitude - bounds.minLat) / latitudeRange) * usableHeight;
+function loadLeafletAssets() {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("Leaflet can only load in the browser."));
+  }
 
-  return {
-    x: clamp(x, padding, width - padding),
-    y: clamp(y, padding, height - padding),
-  };
+  if (window.L) {
+    return Promise.resolve(window.L);
+  }
+
+  if (!leafletAssetsPromise) {
+    leafletAssetsPromise = new Promise((resolve, reject) => {
+      const existingStylesheet = document.querySelector('link[data-leaflet="true"]');
+
+      if (!existingStylesheet) {
+        const stylesheet = document.createElement("link");
+        stylesheet.rel = "stylesheet";
+        stylesheet.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+        stylesheet.crossOrigin = "";
+        stylesheet.dataset.leaflet = "true";
+        document.head.appendChild(stylesheet);
+      }
+
+      const existingScript = document.querySelector('script[data-leaflet="true"]') as HTMLScriptElement | null;
+
+      if (existingScript) {
+        existingScript.addEventListener("load", () => {
+          if (window.L) {
+            resolve(window.L);
+          } else {
+            reject(new Error("Leaflet script loaded without exposing window.L"));
+          }
+        });
+        existingScript.addEventListener("error", () => reject(new Error("Leaflet script failed to load.")));
+        return;
+      }
+
+      const script = document.createElement("script");
+      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      script.async = true;
+      script.crossOrigin = "";
+      script.dataset.leaflet = "true";
+      script.onload = () => {
+        if (window.L) {
+          resolve(window.L);
+        } else {
+          reject(new Error("Leaflet script loaded without exposing window.L"));
+        }
+      };
+      script.onerror = () => reject(new Error("Leaflet script failed to load."));
+      document.body.appendChild(script);
+    });
+  }
+
+  return leafletAssetsPromise;
 }
 
 function LiveRideMap({ riderLocation, driverLocation }: { riderLocation?: Point | null; driverLocation?: Point | null }) {
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<LeafletMapInstance | null>(null);
+  const riderMarkerRef = useRef<LeafletMarkerInstance | null>(null);
+  const driverMarkerRef = useRef<LeafletMarkerInstance | null>(null);
+  const [mapError, setMapError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!mapContainerRef.current || !riderLocation) {
+      return;
+    }
+
+    loadLeafletAssets()
+      .then((L) => {
+        if (cancelled || !mapContainerRef.current) return;
+
+        if (!mapRef.current) {
+          const map = L.map(mapContainerRef.current, {
+            zoomControl: true,
+          });
+
+          L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          }).addTo(map);
+
+          mapRef.current = map;
+
+          const riderIcon = L.divIcon({
+            className: "",
+            html:
+              '<div style="width:18px;height:18px;border-radius:9999px;background:#f97316;border:3px solid #fff;box-shadow:0 0 0 2px rgba(154,52,18,0.35);"></div>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
+          });
+
+          const driverIcon = L.divIcon({
+            className: "",
+            html:
+              '<div style="width:18px;height:18px;border-radius:9999px;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 2px rgba(30,64,175,0.35);"></div>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
+          });
+
+          riderMarkerRef.current = L.marker([riderLocation.latitude, riderLocation.longitude], { icon: riderIcon }).addTo(map);
+          riderMarkerRef.current.bindPopup("Pickup");
+
+          if (driverLocation) {
+            driverMarkerRef.current = L.marker([driverLocation.latitude, driverLocation.longitude], { icon: driverIcon }).addTo(map);
+            driverMarkerRef.current.bindPopup("Driver");
+          }
+        } else {
+          riderMarkerRef.current?.setLatLng([riderLocation.latitude, riderLocation.longitude]);
+
+          if (driverLocation) {
+            if (!driverMarkerRef.current) {
+              const driverIcon = L.divIcon({
+                className: "",
+                html:
+                  '<div style="width:18px;height:18px;border-radius:9999px;background:#2563eb;border:3px solid #fff;box-shadow:0 0 0 2px rgba(30,64,175,0.35);"></div>',
+                iconSize: [18, 18],
+                iconAnchor: [9, 9],
+              });
+              driverMarkerRef.current = L.marker([driverLocation.latitude, driverLocation.longitude], { icon: driverIcon }).addTo(mapRef.current);
+              driverMarkerRef.current.bindPopup("Driver");
+            } else {
+              driverMarkerRef.current.setLatLng([driverLocation.latitude, driverLocation.longitude]);
+            }
+          } else if (driverMarkerRef.current?.remove) {
+            driverMarkerRef.current.remove();
+            driverMarkerRef.current = null;
+          }
+        }
+
+        if (mapRef.current) {
+          if (driverLocation) {
+            mapRef.current.fitBounds(
+              [
+                [riderLocation.latitude, riderLocation.longitude],
+                [driverLocation.latitude, driverLocation.longitude],
+              ],
+              { padding: [40, 40] }
+            );
+          } else {
+            mapRef.current.setView([riderLocation.latitude, riderLocation.longitude], 15);
+          }
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        setMapError("We could not load the live map right now.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [driverLocation, riderLocation]);
+
+  useEffect(() => {
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
   if (!riderLocation) {
     return (
       <div
@@ -95,19 +268,6 @@ function LiveRideMap({ riderLocation, driverLocation }: { riderLocation?: Point 
     );
   }
 
-  const points = driverLocation ? [riderLocation, driverLocation] : [riderLocation];
-  const latitudes = points.map((point) => point.latitude);
-  const longitudes = points.map((point) => point.longitude);
-  const bounds = {
-    minLat: Math.min(...latitudes) - 0.001,
-    maxLat: Math.max(...latitudes) + 0.001,
-    minLon: Math.min(...longitudes) - 0.001,
-    maxLon: Math.max(...longitudes) + 0.001,
-  };
-
-  const riderPoint = getMapPoint(riderLocation, bounds);
-  const driverPoint = driverLocation ? getMapPoint(driverLocation, bounds) : null;
-
   return (
     <div
       style={{
@@ -116,61 +276,17 @@ function LiveRideMap({ riderLocation, driverLocation }: { riderLocation?: Point 
         borderRadius: 14,
         overflow: "hidden",
         border: "1px solid #bfdbfe",
-        background:
-          "linear-gradient(180deg, rgba(224,242,254,1) 0%, rgba(239,246,255,1) 52%, rgba(240,253,244,1) 100%)",
+        backgroundColor: "#ffffff",
       }}
     >
-      <div style={{ padding: "12px 14px", color: "#0f172a" }}>
-        <strong>Live Tracker</strong>
+      <div style={{ padding: "12px 14px", color: "#0f172a", backgroundColor: "#eff6ff" }}>
+        <strong>Live Map</strong>
       </div>
 
-      <svg viewBox="0 0 320 220" style={{ display: "block", width: "100%", height: "auto" }}>
-        <defs>
-          <pattern id="grid" width="32" height="22" patternUnits="userSpaceOnUse">
-            <path d="M 32 0 L 0 0 0 22" fill="none" stroke="rgba(15,23,42,0.08)" strokeWidth="1" />
-          </pattern>
-        </defs>
+      <div ref={mapContainerRef} style={{ width: "100%", height: 320 }} />
 
-        <rect width="320" height="220" fill="url(#grid)" />
-        <path
-          d="M0 162 C60 132, 120 188, 180 154 S280 128, 320 146"
-          fill="none"
-          stroke="rgba(15,118,110,0.18)"
-          strokeWidth="14"
-          strokeLinecap="round"
-        />
-
-        {driverPoint ? (
-          <line
-            x1={driverPoint.x}
-            y1={driverPoint.y}
-            x2={riderPoint.x}
-            y2={riderPoint.y}
-            stroke="#1d4ed8"
-            strokeDasharray="6 6"
-            strokeWidth="2"
-          />
-        ) : null}
-
-        <circle cx={riderPoint.x} cy={riderPoint.y} r="10" fill="#f97316" />
-        <circle cx={riderPoint.x} cy={riderPoint.y} r="4" fill="#fff" />
-        <text x={riderPoint.x + 14} y={riderPoint.y + 4} fill="#9a3412" fontSize="12" fontWeight="700">
-          Pickup
-        </text>
-
-        {driverPoint ? (
-          <>
-            <circle cx={driverPoint.x} cy={driverPoint.y} r="10" fill="#1d4ed8" />
-            <circle cx={driverPoint.x} cy={driverPoint.y} r="4" fill="#fff" />
-            <text x={driverPoint.x + 14} y={driverPoint.y + 4} fill="#1e3a8a" fontSize="12" fontWeight="700">
-              Driver
-            </text>
-          </>
-        ) : null}
-      </svg>
-
-      <div style={{ padding: 14, color: "#0f172a", backgroundColor: "rgba(255,255,255,0.72)" }}>
-        {driverLocation ? "Blue is your driver. Orange is your pickup spot." : "Waiting for your driver location to appear."}
+      <div style={{ padding: 14, color: "#0f172a", backgroundColor: "#f8fafc" }}>
+        {mapError ? mapError : driverLocation ? "Blue is your driver. Orange is your pickup spot." : "Waiting for your driver location to appear."}
       </div>
     </div>
   );
