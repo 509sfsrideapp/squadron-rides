@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       title,
       body: messageBody,
       link: "/ride-status",
+      origin: new URL(request.url).origin,
     });
 
     return NextResponse.json({ ok: true });

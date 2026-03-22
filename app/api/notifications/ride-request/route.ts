@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       title: "New Ride Request",
       body: `${ride.riderName || decoded.email || "A rider"} needs a pickup${ride.pickup ? ` near ${ride.pickup}` : ""}.`,
       link: "/driver",
+      origin: new URL(request.url).origin,
     });
 
     return NextResponse.json({ ok: true });

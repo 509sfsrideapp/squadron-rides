@@ -5,9 +5,22 @@ type PushMessageInput = {
   title: string;
   body: string;
   link?: string;
+  origin?: string;
 };
 
-export async function sendPushMessage({ tokens, title, body, link = "/" }: PushMessageInput) {
+function resolveNotificationLink(link: string, origin?: string) {
+  if (/^https?:\/\//i.test(link)) {
+    return link;
+  }
+
+  if (!origin) {
+    return link;
+  }
+
+  return new URL(link, origin).toString();
+}
+
+export async function sendPushMessage({ tokens, title, body, link = "/", origin }: PushMessageInput) {
   const uniqueTokens = Array.from(new Set(tokens.filter(Boolean)));
 
   if (uniqueTokens.length === 0) {
@@ -15,6 +28,7 @@ export async function sendPushMessage({ tokens, title, body, link = "/" }: PushM
   }
 
   const accessToken = await getGoogleAccessToken();
+  const resolvedLink = resolveNotificationLink(link, origin);
 
   await Promise.all(
     uniqueTokens.map(async (token) => {
@@ -40,11 +54,11 @@ export async function sendPushMessage({ tokens, title, body, link = "/" }: PushM
                   icon: "/window.svg",
                 },
                 fcm_options: {
-                  link,
+                  link: resolvedLink,
                 },
               },
               data: {
-                link,
+                link: resolvedLink,
               },
             },
           }),
