@@ -30,6 +30,7 @@ type Ride = {
   driverPhone?: string;
   driverEmail?: string;
   driverPhotoUrl?: string;
+  carYear?: string;
   carMake?: string;
   carModel?: string;
   carColor?: string;
@@ -48,6 +49,7 @@ type UserProfile = {
   email: string;
   available: boolean;
   driverPhotoUrl?: string;
+  carYear?: string;
   carMake?: string;
   carModel?: string;
   carColor?: string;
@@ -143,6 +145,7 @@ export default function DriverPage() {
         driverPhone: profile.phone,
         driverEmail: profile.email,
         driverPhotoUrl: profile.driverPhotoUrl || null,
+        carYear: profile.carYear || null,
         carMake: profile.carMake || null,
         carModel: profile.carModel || null,
         carColor: profile.carColor || null,
@@ -163,7 +166,6 @@ export default function DriverPage() {
             rideId,
             riderId: selectedRide?.riderId,
             event: "accepted",
-            driverName: profile.name,
           }),
         }).catch((error) => {
           console.error("Ride accepted notification failed", error);

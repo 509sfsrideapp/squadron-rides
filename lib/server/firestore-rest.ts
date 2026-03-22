@@ -30,6 +30,11 @@ export type FirestoreRideDoc = {
   status?: string;
   riderName?: string;
   pickup?: string;
+  driverName?: string;
+  carYear?: string;
+  carMake?: string;
+  carModel?: string;
+  carColor?: string;
 };
 
 const projectId = "ride-app-dd741";
@@ -146,5 +151,10 @@ export async function getRideDoc(rideId: string) {
     status: parseValue(fields.status) as string | undefined,
     riderName: parseValue(fields.riderName) as string | undefined,
     pickup: parseValue(fields.pickup) as string | undefined,
+    driverName: parseValue(fields.driverName) as string | undefined,
+    carYear: parseValue(fields.carYear) as string | undefined,
+    carMake: parseValue(fields.carMake) as string | undefined,
+    carModel: parseValue(fields.carModel) as string | undefined,
+    carColor: parseValue(fields.carColor) as string | undefined,
   } satisfies FirestoreRideDoc;
 }

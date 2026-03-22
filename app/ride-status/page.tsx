@@ -21,6 +21,7 @@ type Ride = {
   driverPhone?: string;
   driverEmail?: string;
   driverPhotoUrl?: string;
+  carYear?: string;
   carMake?: string;
   carModel?: string;
   carColor?: string;
@@ -317,7 +318,7 @@ export default function RideStatusPage() {
                 <p style={{ margin: "10px 0 0", color: "#cbd5e1" }}>
                   {activeRide.carColor || activeRide.carMake || activeRide.carModel || activeRide.carPlate
                     ? [
-                        [activeRide.carColor, activeRide.carMake, activeRide.carModel].filter(Boolean).join(" ").trim(),
+                        [activeRide.carColor, activeRide.carYear, activeRide.carMake, activeRide.carModel].filter(Boolean).join(" ").trim(),
                         activeRide.carPlate ? `Plate ${activeRide.carPlate}` : "",
                       ]
                         .filter(Boolean)

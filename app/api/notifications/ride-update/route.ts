@@ -17,7 +17,6 @@ export async function POST(request: Request) {
       rideId?: string;
       riderId?: string;
       event?: "accepted" | "arrived";
-      driverName?: string;
     };
 
     if (!body.rideId || !body.riderId || !body.event) {
@@ -31,17 +30,22 @@ export async function POST(request: Request) {
     }
 
     const tokens = await getUserNotificationTokens(body.riderId);
-    const title = body.event === "accepted" ? "Driver Accepted Your Ride" : "Your Driver Has Arrived";
+    const title = body.event === "accepted" ? "Ride Accepted" : "Driver Arrived";
+    const driverName = ride.driverName || "Your driver";
+    const vehicleDescription = [ride.carColor, ride.carYear, ride.carMake, ride.carModel]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
     const messageBody =
       body.event === "accepted"
-        ? `${body.driverName || "Your driver"} is heading to you now.`
-        : `${body.driverName || "Your driver"} is at the pickup spot.`;
+        ? `${driverName} accepted your ride${vehicleDescription ? ` in a ${vehicleDescription}` : ""}.`
+        : `${driverName} has arrived${vehicleDescription ? ` in a ${vehicleDescription}` : ""}.`;
 
     await sendPushMessage({
       tokens,
       title,
       body: messageBody,
-      link: "/ride-status",
+      link: `/ride-status?rideId=${ride.id}`,
       origin: new URL(request.url).origin,
     });
 

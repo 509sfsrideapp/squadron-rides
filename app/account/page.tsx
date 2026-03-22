@@ -18,6 +18,7 @@ type UserProfile = {
   homeAddress?: string;
   available?: boolean;
   rankOrRole?: string;
+  carYear?: string;
   carMake?: string;
   carModel?: string;
   carColor?: string;
@@ -41,6 +42,7 @@ export default function AccountPage() {
     email: "",
     homeAddress: "",
     rankOrRole: "",
+    carYear: "",
     carMake: "",
     carModel: "",
     carColor: "",
@@ -68,6 +70,7 @@ export default function AccountPage() {
           email: data?.email || currentUser.email || "",
           homeAddress: data?.homeAddress || "",
           rankOrRole: data?.rankOrRole || "",
+          carYear: data?.carYear || "",
           carMake: data?.carMake || "",
           carModel: data?.carModel || "",
           carColor: data?.carColor || "",
@@ -240,6 +243,7 @@ export default function AccountPage() {
           email: form.email.trim(),
           homeAddress: form.homeAddress.trim(),
           rankOrRole: form.rankOrRole.trim(),
+          carYear: form.carYear.trim(),
           carMake: form.carMake.trim(),
           carModel: form.carModel.trim(),
           carColor: form.carColor.trim(),
@@ -400,6 +404,7 @@ export default function AccountPage() {
           />
         </div>
 
+        <input value={form.carYear} onChange={(e) => handleChange("carYear", e.target.value)} placeholder="Car year (optional)" style={{ marginBottom: 10 }} />
         <input value={form.carMake} onChange={(e) => handleChange("carMake", e.target.value)} placeholder="Car make (optional)" style={{ marginBottom: 10 }} />
         <input value={form.carModel} onChange={(e) => handleChange("carModel", e.target.value)} placeholder="Car model (optional)" style={{ marginBottom: 10 }} />
         <input value={form.carColor} onChange={(e) => handleChange("carColor", e.target.value)} placeholder="Car color (optional)" style={{ marginBottom: 10 }} />

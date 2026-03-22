@@ -19,6 +19,7 @@ type Ride = {
   driverName?: string;
   driverEmail?: string;
   driverPhotoUrl?: string;
+  carYear?: string;
   carMake?: string;
   carModel?: string;
   carColor?: string;
@@ -40,6 +41,7 @@ type DriverProfile = {
   phone?: string;
   email?: string;
   driverPhotoUrl?: string;
+  carYear?: string;
   carMake?: string;
   carModel?: string;
   carColor?: string;
@@ -161,6 +163,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
       !ride.driverName ||
       !ride.driverPhone ||
       !ride.driverEmail ||
+      !ride.carYear ||
       !ride.carMake ||
       !ride.carModel ||
       !ride.carColor ||
@@ -181,6 +184,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
           driverPhone: ride.driverPhone || profile.phone || null,
           driverEmail: ride.driverEmail || profile.email || null,
           driverPhotoUrl: ride.driverPhotoUrl || profile.driverPhotoUrl || null,
+          carYear: ride.carYear || profile.carYear || null,
           carMake: ride.carMake || profile.carMake || null,
           carModel: ride.carModel || profile.carModel || null,
           carColor: ride.carColor || profile.carColor || null,
@@ -304,7 +308,6 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
               rideId: ride.id,
               riderId: ride.riderId,
               event: "arrived",
-              driverName: ride.driverName,
             }),
           }).catch((error) => {
             console.error("Ride arrived notification failed", error);
