@@ -190,6 +190,22 @@ export default function HomePage() {
 
           <div style={{ marginTop: 20 }}>
             <Link
+              href="/account"
+              style={{
+                display: "inline-block",
+                padding: "10px 16px",
+                backgroundColor: "#111827",
+                color: "white",
+                textDecoration: "none",
+                borderRadius: 8,
+              }}
+            >
+              Account Details
+            </Link>
+          </div>
+
+          <div style={{ marginTop: 20 }}>
+            <Link
               href="/request"
               style={{
                 display: "inline-block",
