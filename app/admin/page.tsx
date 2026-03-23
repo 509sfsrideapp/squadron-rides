@@ -57,6 +57,7 @@ export default function AdminPage() {
   const [rides, setRides] = useState<Ride[]>([]);
   const [users, setUsers] = useState<AppUser[]>([]);
   const [selectedDriversByRide, setSelectedDriversByRide] = useState<Record<string, string>>({});
+  const [statusFilter, setStatusFilter] = useState<string>("all");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -251,6 +252,7 @@ export default function AdminPage() {
   const pickedUpRides = rides.filter((ride) => ride.status === "picked_up");
   const completedRides = rides.filter((ride) => ride.status === "completed");
   const availableDrivers = users.filter((appUser) => appUser.available);
+  const filteredRides = statusFilter === "all" ? rides : rides.filter((ride) => ride.status === statusFilter);
 
   return (
     <main style={{ padding: 20 }}>
@@ -355,10 +357,29 @@ export default function AdminPage() {
 
       <section style={{ marginTop: 32 }}>
         <h2>All Ride Activity</h2>
-        {rides.length === 0 ? (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+          {["all", "open", "accepted", "arrived", "picked_up", "completed", "canceled"].map((filter) => (
+            <button
+              key={filter}
+              type="button"
+              onClick={() => setStatusFilter(filter)}
+              style={{
+                padding: "8px 12px",
+                borderRadius: 999,
+                border: "1px solid rgba(148, 163, 184, 0.18)",
+                backgroundColor: statusFilter === filter ? "#0f766e" : "rgba(15, 23, 42, 0.78)",
+                color: "white",
+                cursor: "pointer",
+              }}
+            >
+              {filter === "all" ? "All" : getRideStatusLabel(filter)}
+            </button>
+          ))}
+        </div>
+        {filteredRides.length === 0 ? (
           <p>No rides have been submitted yet.</p>
         ) : (
-          rides.map((ride) => (
+          filteredRides.map((ride) => (
             <div
               key={ride.id}
               style={{
@@ -381,12 +402,9 @@ export default function AdminPage() {
                 <strong>Phone:</strong> {ride.riderPhone || "N/A"}
               </p>
               <p>
-                <strong>Pickup:</strong> {ride.pickup || "N/A"}
+                <strong>Pickup:</strong> {ride.pickupLocationName || ride.pickupLocationAddress || ride.pickup || "N/A"}
               </p>
-              <p>
-                <strong>Pickup Spot:</strong> {ride.pickupLocationName || ride.pickupLocationAddress || "Not resolved yet"}
-              </p>
-              {ride.pickupLocationAddress ? (
+              {ride.pickupLocationAddress && ride.pickupLocationAddress !== ride.pickupLocationName ? (
                 <p>
                   <strong>Address:</strong> {ride.pickupLocationAddress}
                 </p>

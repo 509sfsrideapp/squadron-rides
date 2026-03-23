@@ -58,6 +58,10 @@ type UserProfile = {
   carPlate?: string;
 };
 
+function renderPickupSummary(ride: Ride) {
+  return ride.pickupLocationName || ride.pickupLocationAddress || ride.pickup || "Not resolved yet";
+}
+
 export default function DriverPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -320,10 +324,7 @@ export default function DriverPage() {
                 <strong>Stage:</strong> {ride.status}
               </p>
               <p>
-                <strong>Pickup:</strong> {ride.pickup}
-              </p>
-              <p>
-                <strong>Pickup Spot:</strong> {ride.pickupLocationName || ride.pickupLocationAddress || "Not resolved yet"}
+                <strong>Pickup:</strong> {renderPickupSummary(ride)}
               </p>
               <p>
                 <strong>Destination:</strong> {ride.destination}
@@ -379,10 +380,7 @@ export default function DriverPage() {
                 <strong>Phone:</strong> {ride.riderPhone || "N/A"}
               </p>
               <p>
-                <strong>Pickup:</strong> {ride.pickup}
-              </p>
-              <p>
-                <strong>Pickup Spot:</strong> {ride.pickupLocationName || ride.pickupLocationAddress || "Not resolved yet"}
+                <strong>Pickup:</strong> {renderPickupSummary(ride)}
               </p>
               <p>
                 <strong>Destination:</strong> {ride.destination}

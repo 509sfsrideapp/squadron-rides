@@ -140,6 +140,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
   const [loading, setLoading] = useState(true);
   const [driverLocationStatus, setDriverLocationStatus] = useState("Waiting to start driver location sharing...");
   const [driverCoordinates, setDriverCoordinates] = useState<Coordinates | null>(null);
+  const [copyStatus, setCopyStatus] = useState("");
   const launchedNavigationKeyRef = useRef<string | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const lastSentRef = useRef<{ latitude: number; longitude: number; sentAt: number } | null>(null);
@@ -410,6 +411,24 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     window.location.href = mapsUrl;
   };
 
+  const copyPickupAddress = async () => {
+    const value = ride?.pickupLocationAddress || ride?.pickupLocationName || ride?.pickup || "";
+
+    if (!value) {
+      setCopyStatus("No pickup address to copy.");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyStatus("Pickup copied.");
+      window.setTimeout(() => setCopyStatus(""), 1800);
+    } catch (error) {
+      console.error(error);
+      setCopyStatus("Could not copy pickup.");
+    }
+  };
+
   const riderPhone = ride?.riderPhone ?? null;
   const riderCallHref = riderPhone ? `tel:${riderPhone}` : null;
   const riderTextHref = riderPhone ? `sms:${riderPhone}` : null;
@@ -555,17 +574,42 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         <p>
           <strong>Status:</strong> {getRideStatusLabel(ride.status)}
         </p>
-        <p>
-          <strong>Pickup:</strong> {ride.pickup || "N/A"}
-        </p>
-        <p>
-          <strong>Pickup Spot:</strong> {ride.pickupLocationName || ride.pickupLocationAddress || "Not resolved yet"}
-        </p>
-        {ride.pickupLocationAddress ? (
-          <p>
-            <strong>Address:</strong> {ride.pickupLocationAddress}
+        <div
+          style={{
+            marginBottom: 18,
+            padding: 16,
+            borderRadius: 14,
+            backgroundColor: "rgba(15, 23, 42, 0.5)",
+            border: "1px solid rgba(148, 163, 184, 0.12)",
+          }}
+        >
+          <p style={{ margin: 0, fontSize: "0.95rem", color: "#8ea1b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+            Pickup Spot
           </p>
-        ) : null}
+          <p style={{ margin: "8px 0 0", fontSize: "1.45rem", lineHeight: 1.1, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
+            {ride.pickupLocationName || ride.pickup || "Not resolved yet"}
+          </p>
+          <p style={{ margin: "8px 0 0", color: "#cbd5e1" }}>
+            {ride.pickupLocationAddress || ride.pickup || "No address available yet"}
+          </p>
+          <div style={{ marginTop: 12, display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              onClick={copyPickupAddress}
+              style={{
+                padding: "10px 14px",
+                backgroundColor: "#111827",
+                color: "white",
+                border: "1px solid rgba(148, 163, 184, 0.18)",
+                borderRadius: 10,
+                cursor: "pointer",
+              }}
+            >
+              Copy Address
+            </button>
+            {copyStatus ? <span style={{ color: "#cbd5e1", alignSelf: "center" }}>{copyStatus}</span> : null}
+          </div>
+        </div>
         <p>
           <strong>Destination:</strong> {ride.destination || "N/A"}
         </p>
@@ -628,13 +672,14 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
           onClick={relaunchMaps}
           style={{
             width: "100%",
-            padding: "16px 18px",
+            padding: "18px 20px",
             backgroundColor: "#0f766e",
             color: "white",
             border: "none",
             borderRadius: 12,
             cursor: "pointer",
-            fontSize: "1rem",
+            fontSize: "1.05rem",
+            fontWeight: 700,
           }}
         >
           Open Maps
@@ -656,7 +701,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
             href={riderCallHref}
             style={{
               display: "inline-block",
-              padding: "14px 16px",
+              padding: "16px 16px",
               backgroundColor: "#1d4ed8",
               color: "white",
               textDecoration: "none",
@@ -675,7 +720,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
             href={riderTextHref}
             style={{
               display: "inline-block",
-              padding: "14px 16px",
+              padding: "16px 16px",
               backgroundColor: "#0f766e",
               color: "white",
               textDecoration: "none",
@@ -704,12 +749,13 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
           <button
             onClick={handleStatusAction}
             style={{
-              padding: "14px 16px",
+              padding: "16px 16px",
               backgroundColor: ride.status === "arrived" ? "#1d4ed8" : "#b45309",
               color: "white",
               border: "none",
               borderRadius: 10,
               cursor: "pointer",
+              fontWeight: 700,
             }}
           >
             {statusActionLabel}
@@ -721,12 +767,13 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         <button
           onClick={completeRide}
           style={{
-            padding: "14px 16px",
+            padding: "16px 16px",
             backgroundColor: "#7f1d1d",
             color: "white",
             border: "none",
             borderRadius: 10,
             cursor: "pointer",
+            fontWeight: 700,
           }}
         >
           Complete Ride

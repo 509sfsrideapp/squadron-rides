@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
+import { formatEtaLabel } from "../../lib/eta";
 import { auth, db } from "../../lib/firebase";
 import { formatRideTimestamp, getRideLifecycleSteps, getRideStatusLabel } from "../../lib/ride-lifecycle";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -161,6 +162,7 @@ export default function RideStatusPage() {
       : null;
   const canCancelRide = activeRide?.status === "open" || activeRide?.status === "accepted" || activeRide?.status === "arrived";
   const lifecycleSteps = activeRide ? getRideLifecycleSteps(activeRide) : [];
+  const eta = formatEtaLabel(driverLocation, riderLocation);
 
   const cancelRide = async () => {
     if (!activeRide || !user) return;
@@ -349,6 +351,25 @@ export default function RideStatusPage() {
                         .join(" • ")
                     : "Driver car details have not been added yet."}
                 </p>
+                {eta && activeRide.status === "accepted" ? (
+                  <div
+                    style={{
+                      marginTop: 12,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 10,
+                      padding: "10px 14px",
+                      borderRadius: 999,
+                      backgroundColor: "rgba(15, 118, 110, 0.2)",
+                      border: "1px solid rgba(45, 212, 191, 0.25)",
+                      color: "#ccfbf1",
+                      fontWeight: 700,
+                    }}
+                  >
+                    <span>{eta.summary}</span>
+                    <span style={{ color: "#99f6e4", fontWeight: 500 }}>{eta.miles.toFixed(1)} mi</span>
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -405,17 +426,25 @@ export default function RideStatusPage() {
               </div>
             </div>
 
-            <p>
-              <strong>Pickup:</strong> {activeRide.pickup || "N/A"}
-            </p>
-            <p>
-              <strong>Pickup Spot:</strong> {activeRide.pickupLocationName || activeRide.pickupLocationAddress || "Not resolved yet"}
-            </p>
-            {activeRide.pickupLocationAddress ? (
-              <p>
-                <strong>Address:</strong> {activeRide.pickupLocationAddress}
+            <div
+              style={{
+                marginBottom: 18,
+                padding: 16,
+                borderRadius: 14,
+                backgroundColor: "rgba(15, 23, 42, 0.5)",
+                border: "1px solid rgba(148, 163, 184, 0.12)",
+              }}
+            >
+              <p style={{ margin: 0, fontSize: "0.95rem", color: "#8ea1b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Pickup Spot
               </p>
-            ) : null}
+              <p style={{ margin: "8px 0 0", fontSize: "1.45rem", lineHeight: 1.1, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
+                {activeRide.pickupLocationName || activeRide.pickup || "Not resolved yet"}
+              </p>
+              <p style={{ margin: "8px 0 0", color: "#cbd5e1" }}>
+                {activeRide.pickupLocationAddress || activeRide.pickup || "No address available yet"}
+              </p>
+            </div>
             <p>
               <strong>Destination:</strong> {activeRide.destination || "N/A"}
             </p>
@@ -426,17 +455,25 @@ export default function RideStatusPage() {
               <strong>Driver Email:</strong> {activeRide.driverEmail || "Not available yet"}
             </p>
             {activeRide.driverPhone ? (
-              <div style={{ marginBottom: 16, marginTop: 16 }}>
+              <div
+                style={{
+                  marginBottom: 16,
+                  marginTop: 16,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: 12,
+                }}
+              >
                 <a
                   href={`tel:${activeRide.driverPhone}`}
                   style={{
-                    display: "inline-block",
+                    display: "block",
                     padding: "14px 20px",
                     backgroundColor: "#1d4ed8",
                     color: "white",
                     textDecoration: "none",
                     borderRadius: 12,
-                    marginRight: 12,
+                    textAlign: "center",
                     fontSize: "1.05rem",
                     fontFamily: "var(--font-display)",
                     letterSpacing: "0.06em",
@@ -448,12 +485,13 @@ export default function RideStatusPage() {
                 <a
                   href={`sms:${activeRide.driverPhone}`}
                   style={{
-                    display: "inline-block",
+                    display: "block",
                     padding: "14px 20px",
                     backgroundColor: "#0f766e",
                     color: "white",
                     textDecoration: "none",
                     borderRadius: 12,
+                    textAlign: "center",
                     fontSize: "1.05rem",
                     fontFamily: "var(--font-display)",
                     letterSpacing: "0.06em",
