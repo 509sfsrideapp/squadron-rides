@@ -75,6 +75,7 @@ type DriverProfile = {
   carModel?: string;
   carColor?: string;
   carPlate?: string;
+  locationServicesEnabled?: boolean;
 };
 
 type RiderProfile = {
@@ -140,6 +141,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
   const [loading, setLoading] = useState(true);
   const [driverLocationStatus, setDriverLocationStatus] = useState("Waiting to start driver location sharing...");
   const [driverCoordinates, setDriverCoordinates] = useState<Coordinates | null>(null);
+  const [locationServicesEnabled, setLocationServicesEnabled] = useState(true);
   const [copyStatus, setCopyStatus] = useState("");
   const launchedNavigationKeyRef = useRef<string | null>(null);
   const watchIdRef = useRef<number | null>(null);
@@ -189,6 +191,25 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
       router.replace("/driver");
     }
   }, [ride, router, user]);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadLocationPreference = async () => {
+      try {
+        const profileSnap = await getDoc(doc(db, "users", user.uid));
+
+        if (!profileSnap.exists()) return;
+
+        const profile = profileSnap.data() as DriverProfile;
+        setLocationServicesEnabled(profile.locationServicesEnabled !== false);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void loadLocationPreference();
+  }, [user]);
 
   useEffect(() => {
     if (!user || !ride || ride.acceptedBy !== user.uid) return;
@@ -279,6 +300,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     if (
       !user ||
       !ride ||
+      !locationServicesEnabled ||
       !ACTIVE_RIDE_STATUSES.includes(ride.status as (typeof ACTIVE_RIDE_STATUSES)[number]) ||
       ride.acceptedBy !== user.uid
     ) {
@@ -337,7 +359,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         watchIdRef.current = null;
       }
     };
-  }, [geolocationAvailable, ride, user]);
+  }, [geolocationAvailable, locationServicesEnabled, ride, user]);
 
   const updateRideStage = async (status: "arrived" | "picked_up") => {
     if (!ride) return;
@@ -432,6 +454,11 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
   const riderPhone = ride?.riderPhone ?? null;
   const riderCallHref = riderPhone ? `tel:${riderPhone}` : null;
   const riderTextHref = riderPhone ? `sms:${riderPhone}` : null;
+  const displayedDriverLocationStatus = locationServicesEnabled
+    ? geolocationAvailable
+      ? driverLocationStatus
+      : "This browser cannot share live driver location."
+    : "Location services are turned off in Account Settings.";
 
   if (loading) {
     return (
@@ -627,7 +654,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         </p>
         <p>
           <strong>Driver Location:</strong>{" "}
-          {geolocationAvailable ? driverLocationStatus : "This browser cannot share live driver location."}
+          {displayedDriverLocationStatus}
         </p>
 
         <div

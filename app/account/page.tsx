@@ -30,6 +30,7 @@ type UserProfile = {
   carColor?: string;
   carPlate?: string;
   driverPhotoUrl?: string;
+  locationServicesEnabled?: boolean;
 };
 
 export default function AccountPage() {
@@ -40,10 +41,12 @@ export default function AccountPage() {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [updatingNotifications, setUpdatingNotifications] = useState(false);
+  const [updatingLocationServices, setUpdatingLocationServices] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [originalUsername, setOriginalUsername] = useState("");
   const [notificationTokenCount, setNotificationTokenCount] = useState(0);
   const [notificationPermission, setNotificationPermission] = useState("unknown");
+  const [locationServicesEnabled, setLocationServicesEnabled] = useState(true);
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
   const [form, setForm] = useState({
     firstName: "",
@@ -109,6 +112,7 @@ export default function AccountPage() {
           carPlate: data?.carPlate || "",
         });
         setOriginalUsername(data?.username || "");
+        setLocationServicesEnabled(data?.locationServicesEnabled !== false);
       } catch (error) {
         console.error(error);
         setStatusMessage("We could not load your account details.");
@@ -287,6 +291,7 @@ export default function AccountPage() {
           carColor: form.carColor.trim(),
           carPlate: form.carPlate.trim(),
           driverPhotoUrl: profilePhotoUrl,
+          locationServicesEnabled,
           available: false,
           updatedAt: new Date(),
         },
@@ -354,6 +359,41 @@ export default function AccountPage() {
       setStatusMessage(error instanceof Error ? error.message : "Could not update notification settings.");
     } finally {
       setUpdatingNotifications(false);
+    }
+  };
+
+  const handleLocationServicesToggle = async () => {
+    if (!user) {
+      setStatusMessage("You need to log in first.");
+      return;
+    }
+
+    const nextValue = !locationServicesEnabled;
+
+    try {
+      setUpdatingLocationServices(true);
+      await writeBatch(db)
+        .set(
+          doc(db, "users", user.uid),
+          {
+            locationServicesEnabled: nextValue,
+            updatedAt: new Date(),
+          },
+          { merge: true }
+        )
+        .commit();
+
+      setLocationServicesEnabled(nextValue);
+      setStatusMessage(
+        nextValue
+          ? "Location services turned on for this account."
+          : "Location services turned off. The app will stop using GPS until you turn it back on."
+      );
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not update location services.");
+    } finally {
+      setUpdatingLocationServices(false);
     }
   };
 
@@ -521,6 +561,26 @@ export default function AccountPage() {
             : notificationTokenCount > 0 && notificationPermission === "granted"
               ? "Turn Off Notifications"
               : "Turn On Notifications"}
+        </button>
+
+        <h2 style={{ marginTop: 24 }}>Location Services</h2>
+        <p style={{ marginTop: 0, color: "#cbd5e1" }}>
+          Status: {locationServicesEnabled ? "Enabled for this account" : "Turned off for this account"}
+        </p>
+        <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
+          This controls whether the app uses GPS for ride requests and driver live location. Browser permission still lives in your device settings.
+        </p>
+        <button
+          type="button"
+          onClick={handleLocationServicesToggle}
+          disabled={updatingLocationServices}
+          style={{ marginBottom: 18 }}
+        >
+          {updatingLocationServices
+            ? "Updating..."
+            : locationServicesEnabled
+              ? "Turn Off Location Services"
+              : "Turn On Location Services"}
         </button>
 
         <h2 style={{ marginTop: 24 }}>Vehicle Details</h2>

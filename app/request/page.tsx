@@ -28,6 +28,7 @@ type UserProfile = {
   available: boolean;
   riderPhotoUrl?: string;
   driverPhotoUrl?: string;
+  locationServicesEnabled?: boolean;
 };
 
 export default function RequestPage() {
@@ -75,6 +76,14 @@ export default function RequestPage() {
   }, [activeRideLoading, driverActiveRide, riderActiveRide, router, user]);
 
   useEffect(() => {
+    if (loading) return;
+
+    if (profile?.locationServicesEnabled === false) {
+      setCoordinates(null);
+      setLocationStatus("Location services are turned off in Account Settings. Enter pickup manually or turn them back on.");
+      return;
+    }
+
     if (typeof window === "undefined" || !("geolocation" in navigator)) {
       setLocationStatus("Live location is not available in this browser. Enter pickup manually.");
       return;
@@ -98,9 +107,15 @@ export default function RequestPage() {
         maximumAge: 60000,
       }
     );
-  }, []);
+  }, [loading, profile?.locationServicesEnabled]);
 
   const refreshLocation = () => {
+    if (profile?.locationServicesEnabled === false) {
+      setCoordinates(null);
+      setLocationStatus("Location services are turned off in Account Settings. Turn them back on to use GPS pickup.");
+      return;
+    }
+
     if (typeof window === "undefined" || !("geolocation" in navigator)) {
       setLocationStatus("Live location is not available in this browser. Enter pickup manually.");
       return;
@@ -304,9 +319,10 @@ export default function RequestPage() {
 
             <button
               onClick={refreshLocation}
+              disabled={profile?.locationServicesEnabled === false}
               style={{ padding: 10, marginRight: 10 }}
             >
-              Refresh Location
+              {profile?.locationServicesEnabled === false ? "Location Services Off" : "Refresh Location"}
             </button>
 
             <button onClick={submitRequest} style={{ padding: 10 }} disabled={submitting}>
