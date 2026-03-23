@@ -162,7 +162,7 @@ export default function HomePage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
         <h1 style={{ margin: 0 }}>Defender Drivers</h1>
         {user ? (
-          <div style={{ display: "grid", justifyItems: "end", gap: 8 }}>
+          <div style={{ display: "grid", justifyItems: "end" }}>
             <Link
               href="/account"
               aria-label="Open account settings"
@@ -202,31 +202,6 @@ export default function HomePage() {
                 </div>
               )}
             </Link>
-            <Link
-              href="/chat"
-              aria-label="Open global chat"
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 999,
-                display: "grid",
-                placeItems: "center",
-                backgroundColor: "rgba(15, 23, 42, 0.9)",
-                border: "1px solid rgba(96, 165, 250, 0.18)",
-                boxShadow: "0 10px 28px rgba(2, 6, 23, 0.28)",
-              }}
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M7 10H17" stroke="#e5edf7" strokeWidth="1.8" strokeLinecap="round" />
-                <path d="M7 14H13" stroke="#e5edf7" strokeWidth="1.8" strokeLinecap="round" />
-                <path
-                  d="M6 4H18C19.6569 4 21 5.34315 21 7V15C21 16.6569 19.6569 18 18 18H11L7 21V18H6C4.34315 18 3 16.6569 3 15V7C3 5.34315 4.34315 4 6 4Z"
-                  stroke="#e5edf7"
-                  strokeWidth="1.8"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </Link>
           </div>
         ) : null}
       </div>
@@ -240,37 +215,6 @@ export default function HomePage() {
       {authWarning ? (
         <p style={{ color: "#b45309", maxWidth: 560 }}>{authWarning}</p>
       ) : null}
-
-      <div style={{ marginTop: 20, display: "flex", gap: 12, flexWrap: "wrap" }}>
-        <Link
-          href="/loading-preview/full"
-          style={{
-            display: "inline-block",
-            padding: "10px 16px",
-            backgroundColor: "#0f172a",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: 8,
-            border: "1px solid rgba(96, 165, 250, 0.18)",
-          }}
-        >
-          Preview Full Loader
-        </Link>
-        <Link
-          href="/loading-preview/inline"
-          style={{
-            display: "inline-block",
-            padding: "10px 16px",
-            backgroundColor: "#0f172a",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: 8,
-            border: "1px solid rgba(96, 165, 250, 0.18)",
-          }}
-        >
-          Preview Inline Loader
-        </Link>
-      </div>
 
       {!user ? (
         <div style={{ marginTop: 20 }}>
@@ -495,6 +439,26 @@ export default function HomePage() {
           <PushNotificationsCard />
         </div>
       )}
+
+      <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
+        <Link
+          href="/developer"
+          style={{
+            display: "inline-block",
+            padding: "8px 12px",
+            borderRadius: 999,
+            border: "1px solid rgba(148, 163, 184, 0.16)",
+            backgroundColor: "rgba(7, 11, 18, 0.84)",
+            color: "#94a3b8",
+            textDecoration: "none",
+            fontSize: 12,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+          }}
+        >
+          Developer
+        </Link>
+      </div>
     </main>
   );
 }
