@@ -45,7 +45,7 @@ export default function RootLayout({
             textAlign: "center",
           }}
         >
-          Version 49
+          Version 50
         </footer>
       </body>
     </html>
