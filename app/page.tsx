@@ -15,6 +15,8 @@ type UserProfile = {
   name: string;
   firstName?: string;
   lastName?: string;
+  rank?: string;
+  flight?: string;
   phone: string;
   email: string;
   available: boolean;
@@ -159,45 +161,72 @@ export default function HomePage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
         <h1 style={{ margin: 0 }}>Defender Drivers</h1>
         {user ? (
-          <Link
-            href="/account"
-            aria-label="Open account settings"
-            style={{ display: "inline-flex", textDecoration: "none" }}
-          >
-            {profile?.driverPhotoUrl || profile?.riderPhotoUrl ? (
-              <Image
-                src={profile.driverPhotoUrl || profile.riderPhotoUrl || ""}
-                alt="Account settings"
-                width={52}
-                height={52}
-                unoptimized
-                style={{
-                  width: 52,
-                  height: 52,
-                  objectFit: "cover",
-                  borderRadius: 999,
-                  border: "1px solid rgba(148, 163, 184, 0.22)",
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: 999,
-                  display: "grid",
-                  placeItems: "center",
-                  backgroundColor: "rgba(18, 37, 63, 0.72)",
-                  color: "#dbeafe",
-                  border: "1px solid rgba(96, 165, 250, 0.2)",
-                  fontFamily: "var(--font-display)",
-                  fontSize: "1.1rem",
-                }}
-              >
-                {(profile?.firstName || profile?.name || user.email || "?").charAt(0).toUpperCase()}
-              </div>
-            )}
-          </Link>
+          <div style={{ display: "grid", justifyItems: "end", gap: 8 }}>
+            <Link
+              href="/account"
+              aria-label="Open account settings"
+              style={{ display: "inline-flex", textDecoration: "none" }}
+            >
+              {profile?.driverPhotoUrl || profile?.riderPhotoUrl ? (
+                <Image
+                  src={profile.driverPhotoUrl || profile.riderPhotoUrl || ""}
+                  alt="Account settings"
+                  width={52}
+                  height={52}
+                  unoptimized
+                  style={{
+                    width: 52,
+                    height: 52,
+                    objectFit: "cover",
+                    borderRadius: 999,
+                    border: "1px solid rgba(148, 163, 184, 0.22)",
+                  }}
+                />
+              ) : (
+                <div
+                  style={{
+                    width: 52,
+                    height: 52,
+                    borderRadius: 999,
+                    display: "grid",
+                    placeItems: "center",
+                    backgroundColor: "rgba(18, 37, 63, 0.72)",
+                    color: "#dbeafe",
+                    border: "1px solid rgba(96, 165, 250, 0.2)",
+                    fontFamily: "var(--font-display)",
+                    fontSize: "1.1rem",
+                  }}
+                >
+                  {(profile?.firstName || profile?.name || user.email || "?").charAt(0).toUpperCase()}
+                </div>
+              )}
+            </Link>
+            <Link
+              href="/chat"
+              aria-label="Open global chat"
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 999,
+                display: "grid",
+                placeItems: "center",
+                backgroundColor: "rgba(15, 23, 42, 0.9)",
+                border: "1px solid rgba(96, 165, 250, 0.18)",
+                boxShadow: "0 10px 28px rgba(2, 6, 23, 0.28)",
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 10H17" stroke="#e5edf7" strokeWidth="1.8" strokeLinecap="round" />
+                <path d="M7 14H13" stroke="#e5edf7" strokeWidth="1.8" strokeLinecap="round" />
+                <path
+                  d="M6 4H18C19.6569 4 21 5.34315 21 7V15C21 16.6569 19.6569 18 18 18H11L7 21V18H6C4.34315 18 3 16.6569 3 15V7C3 5.34315 4.34315 4 6 4Z"
+                  stroke="#e5edf7"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </Link>
+          </div>
         ) : null}
       </div>
       {checkingAuth ? <p>Checking sign-in status...</p> : null}
