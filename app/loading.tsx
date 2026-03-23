@@ -1,4 +1,7 @@
 import Image from "next/image";
+import afgscLogo from "./afgsc.png";
+import b2Image from "./b2.png";
+import targetImage from "./target.png";
 
 export default function Loading() {
   return (
@@ -17,11 +20,10 @@ export default function Loading() {
             <div className="loading-origin-ring" />
             <div className="loading-origin-core">
               <Image
-                src="/afgsc.png"
+                src={afgscLogo}
                 alt="Air Force Global Strike Command"
                 width={76}
                 height={76}
-                unoptimized
                 className="loading-origin-logo"
               />
             </div>
@@ -30,24 +32,24 @@ export default function Loading() {
           <div className="loading-track">
             <div className="loading-track-line" />
             <div className="loading-b2">
-              <svg viewBox="0 0 160 72" fill="none" role="presentation">
-                <path
-                  d="M80 8L154 38L140 50L113 31L99 42L90 35L80 44L70 35L61 42L47 31L20 50L6 38L80 8Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M80 17L135 39L126 46L111 35L98 43L90 37L80 46L70 37L62 43L49 35L34 46L25 39L80 17Z"
-                  fill="rgba(255,255,255,0.12)"
-                />
-              </svg>
+              <Image
+                src={b2Image}
+                alt="B-2 Spirit silhouette"
+                width={160}
+                height={72}
+                className="loading-b2-image"
+              />
             </div>
           </div>
 
           <div className="loading-target">
-            <div className="loading-target-ring loading-target-ring-outer" />
-            <div className="loading-target-ring loading-target-ring-mid" />
-            <div className="loading-target-ring loading-target-ring-inner" />
-            <div className="loading-target-dot" />
+            <Image
+              src={targetImage}
+              alt="Target"
+              width={96}
+              height={96}
+              className="loading-target-image"
+            />
           </div>
         </div>
 

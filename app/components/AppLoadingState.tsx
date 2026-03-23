@@ -1,4 +1,7 @@
 import Image from "next/image";
+import afgscLogo from "../afgsc.png";
+import b2Image from "../b2.png";
+import targetImage from "../target.png";
 
 type AppLoadingStateProps = {
   title?: string;
@@ -16,29 +19,31 @@ export default function AppLoadingState({
       <div className="loading-state-visual" aria-hidden="true">
         <div className="loading-state-origin">
           <Image
-            src="/afgsc.png"
+            src={afgscLogo}
             alt="Air Force Global Strike Command"
             width={36}
             height={36}
-            unoptimized
             className="loading-state-origin-logo"
           />
         </div>
         <div className="loading-state-track" />
         <div className="loading-state-b2">
-          <svg viewBox="0 0 160 72" fill="none" role="presentation">
-            <path
-              d="M80 8L154 38L140 50L113 31L99 42L90 35L80 44L70 35L61 42L47 31L20 50L6 38L80 8Z"
-              fill="currentColor"
-            />
-            <path
-              d="M80 17L135 39L126 46L111 35L98 43L90 37L80 46L70 37L62 43L49 35L34 46L25 39L80 17Z"
-              fill="rgba(255,255,255,0.12)"
-            />
-          </svg>
+          <Image
+            src={b2Image}
+            alt="B-2 Spirit silhouette"
+            width={160}
+            height={72}
+            className="loading-b2-image"
+          />
         </div>
         <div className="loading-state-target">
-          <span />
+          <Image
+            src={targetImage}
+            alt="Target"
+            width={28}
+            height={28}
+            className="loading-state-target-image"
+          />
         </div>
       </div>
       <div>

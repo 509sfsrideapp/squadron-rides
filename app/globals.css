@@ -284,31 +284,21 @@ button:disabled {
 .loading-b2 {
   position: absolute;
   width: clamp(4.5rem, 10vw, 6rem);
-  color: #f8fbff;
   filter: drop-shadow(0 8px 18px rgba(14, 165, 233, 0.18));
   animation: loading-fly 2.4s ease-in-out infinite;
 }
 
-.loading-target-ring-outer {
-  border-color: rgba(248, 113, 113, 0.28);
+.loading-b2-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
-.loading-target-ring-mid {
-  inset: 0.65rem;
-  border-color: rgba(251, 191, 36, 0.42);
-}
-
-.loading-target-ring-inner {
-  inset: 1.3rem;
-  border-color: rgba(248, 250, 252, 0.5);
-}
-
-.loading-target-dot {
-  width: 0.8rem;
-  height: 0.8rem;
-  border-radius: 999px;
-  background: #fb7185;
-  box-shadow: 0 0 24px rgba(251, 113, 133, 0.5);
+.loading-target-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(251, 191, 36, 0.22));
 }
 
 .loading-progress-label {
@@ -424,7 +414,6 @@ button:disabled {
   position: absolute;
   left: 0;
   width: 3.4rem;
-  color: #f8fbff;
   filter: drop-shadow(0 8px 18px rgba(14, 165, 233, 0.16));
   animation: loading-fly 2.4s ease-in-out infinite;
 }
@@ -434,18 +423,15 @@ button:disabled {
   right: 0;
   width: 1.15rem;
   height: 1.15rem;
-  border-radius: 999px;
-  border: 1px solid rgba(251, 191, 36, 0.42);
   display: grid;
   place-items: center;
 }
 
-.loading-state-target span {
-  width: 0.35rem;
-  height: 0.35rem;
-  border-radius: 999px;
-  background: #fb7185;
-  box-shadow: 0 0 16px rgba(251, 113, 133, 0.45);
+.loading-state-target-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.2));
 }
 
 .loading-state-title {
