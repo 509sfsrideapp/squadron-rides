@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -70,20 +71,7 @@ export default function LoginPage() {
 
   return (
     <main style={{ padding: 20 }}>
-      <Link
-        href="/"
-        style={{
-          display: "inline-block",
-          marginBottom: 20,
-          padding: "8px 14px",
-          backgroundColor: "#1f2937",
-          color: "white",
-          textDecoration: "none",
-          borderRadius: 8,
-        }}
-      >
-        Home
-      </Link>
+      <HomeIconLink />
 
       <h1>Login</h1>
 

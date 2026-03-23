@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import HomeIconLink from "../components/HomeIconLink";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
 import { formatEtaLabel } from "../../lib/eta";
 import { auth, db } from "../../lib/firebase";
@@ -218,21 +219,7 @@ export default function RideStatusPage() {
   return (
     <main style={{ padding: 20 }}>
       {!activeRide ? (
-        <Link
-          href="/"
-          style={{
-            display: "inline-block",
-            marginBottom: 20,
-            padding: "8px 14px",
-            backgroundColor: "#1f2937",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: 8,
-            marginRight: 12,
-          }}
-        >
-          Home
-        </Link>
+        <HomeIconLink style={{ marginRight: 12 }} />
       ) : null}
 
       <h1>Ride Status</h1>

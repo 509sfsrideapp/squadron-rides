@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import HomeIconLink from "../components/HomeIconLink";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
 import { auth, db } from "../../lib/firebase";
 import { formatRideTimestamp, getRideStatusLabel } from "../../lib/ride-lifecycle";
@@ -226,20 +227,7 @@ export default function AdminPage() {
   if (!authorized) {
     return (
       <main style={{ padding: 20 }}>
-        <Link
-          href="/"
-          style={{
-            display: "inline-block",
-            marginBottom: 20,
-            padding: "8px 14px",
-            backgroundColor: "#1f2937",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: 8,
-          }}
-        >
-          Home
-        </Link>
+        <HomeIconLink />
         <p>This account does not have admin access.</p>
         <p>Authorized admin email: {ADMIN_EMAIL}</p>
       </main>
@@ -257,20 +245,7 @@ export default function AdminPage() {
   return (
     <main style={{ padding: 20 }}>
       <div style={{ marginBottom: 20 }}>
-        <Link
-          href="/"
-          style={{
-            display: "inline-block",
-            marginRight: 12,
-            padding: "8px 14px",
-            backgroundColor: "#1f2937",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: 8,
-          }}
-        >
-          Home
-        </Link>
+        <HomeIconLink style={{ marginRight: 12, marginBottom: 0 }} />
 
         <button
           onClick={handleLogout}

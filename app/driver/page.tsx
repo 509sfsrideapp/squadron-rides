@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import HomeIconLink from "../components/HomeIconLink";
 import PushNotificationsCard from "../components/PushNotificationsCard";
 import { auth, db } from "../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -215,20 +216,7 @@ export default function DriverPage() {
   if (!user) {
     return (
       <main style={{ padding: 20 }}>
-        <Link
-          href="/"
-          style={{
-            display: "inline-block",
-            marginBottom: 20,
-            padding: "8px 14px",
-            backgroundColor: "#1f2937",
-            color: "white",
-            textDecoration: "none",
-            borderRadius: 8,
-          }}
-        >
-          Home
-        </Link>
+        <HomeIconLink />
         <p>You need to log in first.</p>
       </main>
     );
@@ -236,21 +224,7 @@ export default function DriverPage() {
 
   return (
     <main style={{ padding: 20 }}>
-      <Link
-        href="/"
-        style={{
-          display: "inline-block",
-          marginBottom: 20,
-          padding: "8px 14px",
-          backgroundColor: "#1f2937",
-          color: "white",
-          textDecoration: "none",
-          borderRadius: 8,
-          marginRight: 12,
-        }}
-      >
-        Home
-      </Link>
+      <HomeIconLink style={{ marginRight: 12 }} />
 
       <button
         onClick={clockOut}

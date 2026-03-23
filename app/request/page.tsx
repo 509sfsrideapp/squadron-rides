@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
 import { useActiveRides } from "../../lib/use-active-rides";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -260,20 +260,7 @@ export default function RequestPage() {
 
   return (
     <main style={{ padding: 20 }}>
-      <Link
-        href="/"
-        style={{
-          display: "inline-block",
-          marginBottom: 20,
-          padding: "8px 14px",
-          backgroundColor: "#1f2937",
-          color: "white",
-          textDecoration: "none",
-          borderRadius: 8,
-        }}
-      >
-        Home
-      </Link>
+      <HomeIconLink />
 
       <h1>Request a Ride</h1>
 

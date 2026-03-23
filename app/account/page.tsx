@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ChangeEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
 import { disablePushNotifications, enablePushNotifications } from "../../lib/push-notifications";
 import { useActiveRides } from "../../lib/use-active-rides";
@@ -429,20 +430,7 @@ export default function AccountPage() {
 
   return (
     <main style={{ padding: 20 }}>
-      <Link
-        href="/"
-        style={{
-          display: "inline-block",
-          marginBottom: 20,
-          padding: "8px 14px",
-          backgroundColor: "#1f2937",
-          color: "white",
-          textDecoration: "none",
-          borderRadius: 8,
-        }}
-      >
-        Home
-      </Link>
+      <HomeIconLink />
 
       <h1>Account Settings</h1>
       <p style={{ maxWidth: 640 }}>
