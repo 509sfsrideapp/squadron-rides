@@ -169,7 +169,7 @@ export default function RequestPage() {
     }
 
     if (!resolvedDestination) {
-      alert("Add a home address in Account Details or enter a destination.");
+      alert("Add a home address in Account Settings or enter a destination.");
       return;
     }
 

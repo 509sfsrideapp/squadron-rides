@@ -13,11 +13,15 @@ import { isValidUsername, normalizeUsername } from "../../lib/username";
 
 type UserProfile = {
   name?: string;
+  firstName?: string;
+  lastName?: string;
   username?: string;
   phone?: string;
   email?: string;
   homeAddress?: string;
   available?: boolean;
+  rank?: string;
+  flight?: string;
   rankOrRole?: string;
   riderPhotoUrl?: string;
   carYear?: string;
@@ -29,6 +33,7 @@ type UserProfile = {
 };
 
 export default function AccountPage() {
+  const flightOptions = ["Alpha", "Bravo", "Charlie", "Delta", "Foxtrot", "Staff"] as const;
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -41,12 +46,14 @@ export default function AccountPage() {
   const [notificationPermission, setNotificationPermission] = useState("unknown");
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
   const [form, setForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     username: "",
     phone: "",
     email: "",
     homeAddress: "",
-    rankOrRole: "",
+    rank: "",
+    flight: "",
     profilePhotoUrl: "",
     carYear: "",
     carMake: "",
@@ -83,13 +90,17 @@ export default function AccountPage() {
           setNotificationTokenCount(notificationDetails.tokenCount ?? 0);
         }
 
+        const [fallbackFirstName = "", ...fallbackLastNameParts] = (data?.name || "").trim().split(/\s+/);
+
         setForm({
-          name: data?.name || "",
+          firstName: data?.firstName || fallbackFirstName,
+          lastName: data?.lastName || fallbackLastNameParts.join(" "),
           username: data?.username || "",
           phone: data?.phone || "",
           email: data?.email || currentUser.email || "",
           homeAddress: data?.homeAddress || "",
-          rankOrRole: data?.rankOrRole || "",
+          rank: data?.rank || data?.rankOrRole || "",
+          flight: data?.flight || "",
           profilePhotoUrl: data?.driverPhotoUrl || data?.riderPhotoUrl || "",
           carYear: data?.carYear || "",
           carMake: data?.carMake || "",
@@ -223,8 +234,8 @@ export default function AccountPage() {
       return;
     }
 
-    if (!form.name.trim() || !form.phone.trim() || !form.email.trim()) {
-      setStatusMessage("Name, phone, and email are required.");
+    if (!form.firstName.trim() || !form.lastName.trim() || !form.rank.trim() || !form.flight.trim() || !form.phone.trim() || !form.email.trim()) {
+      setStatusMessage("First name, last name, rank, flight, phone, and email are required.");
       return;
     }
 
@@ -255,15 +266,20 @@ export default function AccountPage() {
 
       const batch = writeBatch(db);
       const profilePhotoUrl = form.profilePhotoUrl.trim();
+      const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
       batch.set(
         doc(db, "users", user.uid),
         {
-          name: form.name.trim(),
+          name: fullName,
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
           username: normalizedUsername,
           phone: form.phone.trim(),
           email: form.email.trim(),
           homeAddress: form.homeAddress.trim(),
-          rankOrRole: form.rankOrRole.trim(),
+          rank: form.rank.trim(),
+          flight: form.flight.trim(),
+          rankOrRole: form.rank.trim(),
           riderPhotoUrl: profilePhotoUrl,
           carYear: form.carYear.trim(),
           carMake: form.carMake.trim(),
@@ -388,7 +404,7 @@ export default function AccountPage() {
         Home
       </Link>
 
-      <h1>Account Details</h1>
+      <h1>Account Settings</h1>
       <p style={{ maxWidth: 640 }}>
         Update your basic info, one profile photo, and your vehicle details here.
       </p>
@@ -407,12 +423,31 @@ export default function AccountPage() {
         }}
       >
         <h2 style={{ marginTop: 0 }}>Basic Info</h2>
-        <input value={form.name} onChange={(e) => handleChange("name", e.target.value)} placeholder="Full Name" style={{ marginBottom: 10 }} />
+        <input value={form.firstName} onChange={(e) => handleChange("firstName", e.target.value)} placeholder="First Name" style={{ marginBottom: 10 }} />
+        <input value={form.lastName} onChange={(e) => handleChange("lastName", e.target.value)} placeholder="Last Name" style={{ marginBottom: 10 }} />
         <input value={form.username} onChange={(e) => handleChange("username", e.target.value)} placeholder="Username" style={{ marginBottom: 10 }} />
+        <p style={{ marginTop: -2, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
+          Username is only used for login.
+        </p>
         <input value={form.phone} onChange={(e) => handleChange("phone", e.target.value)} placeholder="Phone Number" style={{ marginBottom: 10 }} />
         <input value={form.email} onChange={(e) => handleChange("email", e.target.value)} placeholder="Email" style={{ marginBottom: 10 }} />
         <input value={form.homeAddress} onChange={(e) => handleChange("homeAddress", e.target.value)} placeholder="Home Address" style={{ marginBottom: 10 }} />
-        <input value={form.rankOrRole} onChange={(e) => handleChange("rankOrRole", e.target.value)} placeholder="Rank or role (optional)" style={{ marginBottom: 10 }} />
+        <input value={form.rank} onChange={(e) => handleChange("rank", e.target.value)} placeholder="Rank" style={{ marginBottom: 10 }} />
+        <select
+          value={form.flight}
+          onChange={(e) => handleChange("flight", e.target.value)}
+          style={{ display: "block", marginBottom: 6, width: "100%" }}
+        >
+          <option value="">Select Flight</option>
+          {flightOptions.map((flight) => (
+            <option key={flight} value={flight}>
+              {flight}
+            </option>
+          ))}
+        </select>
+        <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
+          Flight options: Alpha, Bravo, Charlie, Delta, Foxtrot, or Staff.
+        </p>
 
         <h2 style={{ marginTop: 24 }}>Profile Photo</h2>
         <div style={{ marginBottom: 14 }}>
@@ -420,7 +455,7 @@ export default function AccountPage() {
             <strong>Account Photo</strong>
           </p>
 
-          {form.profilePhotoUrl ? (
+              {form.profilePhotoUrl ? (
             <Image
               src={form.profilePhotoUrl}
               alt="Profile preview"
@@ -451,7 +486,7 @@ export default function AccountPage() {
                 fontSize: "1.5rem",
               }}
             >
-              {form.name ? form.name.charAt(0).toUpperCase() : "?"}
+              {form.firstName ? form.firstName.charAt(0).toUpperCase() : "?"}
             </div>
           )}
 
@@ -496,7 +531,7 @@ export default function AccountPage() {
         <input value={form.carPlate} onChange={(e) => handleChange("carPlate", e.target.value)} placeholder="License plate (optional)" style={{ marginBottom: 10 }} />
 
         <button type="button" onClick={handleSave} disabled={saving || uploadingPhoto}>
-          Save Account Details
+          Save Account Settings
         </button>
       </div>
     </main>

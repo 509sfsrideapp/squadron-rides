@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -12,10 +13,14 @@ import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from "fi
 
 type UserProfile = {
   name: string;
+  firstName?: string;
+  lastName?: string;
   phone: string;
   email: string;
   available: boolean;
   notificationsEnabled?: boolean;
+  driverPhotoUrl?: string;
+  riderPhotoUrl?: string;
 };
 
 export default function HomePage() {
@@ -151,7 +156,50 @@ export default function HomePage() {
 
   return (
     <main style={{ padding: 20 }}>
-      <h1>Defender Drivers</h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+        <h1 style={{ margin: 0 }}>Defender Drivers</h1>
+        {user ? (
+          <Link
+            href="/account"
+            aria-label="Open account settings"
+            style={{ display: "inline-flex", textDecoration: "none" }}
+          >
+            {profile?.driverPhotoUrl || profile?.riderPhotoUrl ? (
+              <Image
+                src={profile.driverPhotoUrl || profile.riderPhotoUrl || ""}
+                alt="Account settings"
+                width={52}
+                height={52}
+                unoptimized
+                style={{
+                  width: 52,
+                  height: 52,
+                  objectFit: "cover",
+                  borderRadius: 999,
+                  border: "1px solid rgba(148, 163, 184, 0.22)",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 999,
+                  display: "grid",
+                  placeItems: "center",
+                  backgroundColor: "rgba(18, 37, 63, 0.72)",
+                  color: "#dbeafe",
+                  border: "1px solid rgba(96, 165, 250, 0.2)",
+                  fontFamily: "var(--font-display)",
+                  fontSize: "1.1rem",
+                }}
+              >
+                {(profile?.firstName || profile?.name || user.email || "?").charAt(0).toUpperCase()}
+              </div>
+            )}
+          </Link>
+        ) : null}
+      </div>
       {checkingAuth ? <p>Checking sign-in status...</p> : null}
       {authWarning ? (
         <p style={{ color: "#b45309", maxWidth: 560 }}>{authWarning}</p>
@@ -220,24 +268,6 @@ export default function HomePage() {
 
           {!driverActiveRide && riderActiveRide ? (
             <p style={{ maxWidth: 560 }}>You already have an active ride request. Redirecting to ride status.</p>
-          ) : null}
-
-          {!driverActiveRide && !riderActiveRide ? (
-            <div style={{ marginTop: 20 }}>
-            <Link
-              href="/account"
-              style={{
-                display: "inline-block",
-                padding: "10px 16px",
-                backgroundColor: "#111827",
-                color: "white",
-                textDecoration: "none",
-                borderRadius: 8,
-              }}
-            >
-              Account Details
-            </Link>
-            </div>
           ) : null}
 
           {!driverActiveRide && !riderActiveRide ? (
