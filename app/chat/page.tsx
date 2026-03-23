@@ -21,6 +21,7 @@ type ChatMessage = {
   id: string;
   text?: string;
   senderUid?: string;
+  senderFirstName?: string;
   senderRank?: string;
   senderLastName?: string;
   senderFlight?: string;
@@ -100,11 +101,12 @@ export default function ChatPage() {
   const identity = useMemo(
     () =>
       getChatDisplayNameParts({
+        firstName: profile?.firstName,
         rank: profile?.rank,
         lastName: profile?.lastName,
         flight: profile?.flight,
       }),
-    [profile?.flight, profile?.lastName, profile?.rank]
+    [profile?.firstName, profile?.flight, profile?.lastName, profile?.rank]
   );
 
   const sendMessage = async () => {
@@ -131,6 +133,7 @@ export default function ChatPage() {
       await addDoc(collection(db, "globalMessages"), {
         text: trimmed,
         senderUid: user.uid,
+        senderFirstName: profile.firstName?.trim() || "",
         senderRank: profile.rank?.trim() || "",
         senderLastName: profile.lastName?.trim() || "",
         senderFlight: profile.flight?.trim() || "",
@@ -223,6 +226,7 @@ export default function ChatPage() {
           {messages.length === 0 ? <p style={{ margin: 0 }}>No messages yet.</p> : null}
           {messages.map((message) => {
             const sender = getChatDisplayNameParts({
+              firstName: message.senderFirstName,
               rank: message.senderRank,
               lastName: message.senderLastName,
               flight: message.senderFlight,
