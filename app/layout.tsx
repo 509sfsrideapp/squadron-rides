@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "Defender Drivers",
+    title: "509 SFS",
     statusBarStyle: "black-translucent",
   },
 };
@@ -45,7 +45,7 @@ export default function RootLayout({
             textAlign: "center",
           }}
         >
-          Version 40
+          Version 41
         </footer>
       </body>
     </html>
