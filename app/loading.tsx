@@ -23,12 +23,12 @@ export default function Loading() {
             <div className="loading-b2">
               <svg viewBox="0 0 160 72" fill="none" role="presentation">
                 <path
-                  d="M80 10L128 24L154 36L128 40L102 46L92 56H68L58 46L32 40L6 36L32 24L80 10Z"
+                  d="M80 8L154 38L140 50L113 31L99 42L90 35L80 44L70 35L61 42L47 31L20 50L6 38L80 8Z"
                   fill="currentColor"
                 />
                 <path
-                  d="M80 21L110 29L127 36L108 38L92 41L86 49H74L68 41L52 38L33 36L50 29L80 21Z"
-                  fill="rgba(255,255,255,0.16)"
+                  d="M80 17L135 39L126 46L111 35L98 43L90 37L80 46L70 37L62 43L49 35L34 46L25 39L80 17Z"
+                  fill="rgba(255,255,255,0.12)"
                 />
               </svg>
             </div>
