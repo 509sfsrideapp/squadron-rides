@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DeveloperBackLink from "../../components/DeveloperBackLink";
 
 type ObstacleType = "car" | "barrier" | "cone";
+type GamePhase = "menu" | "playing" | "crashed";
 
 type Obstacle = {
   id: number;
@@ -11,9 +12,8 @@ type Obstacle = {
   y: number;
   type: ObstacleType;
   nearMissed?: boolean;
+  color?: string;
 };
-
-type GamePhase = "menu" | "playing" | "crashed";
 
 type GameSnapshot = {
   phase: GamePhase;
@@ -40,28 +40,15 @@ type GameWorld = GameSnapshot & {
   steeringVelocity: number;
 };
 
-const STORAGE_KEY = "driving-sim-best-score";
-const LANE_CENTERS = [19, 50, 81] as const;
-const PLAYER_ZONE_TOP = 70;
-const PLAYER_ZONE_BOTTOM = 92;
-
-const obstaclePalette: Record<ObstacleType, { body: string; glow: string; label: string }> = {
-  car: {
-    body: "linear-gradient(180deg, #f87171 0%, #7f1d1d 100%)",
-    glow: "rgba(248, 113, 113, 0.35)",
-    label: "Sedan",
-  },
-  barrier: {
-    body: "linear-gradient(180deg, #f59e0b 0%, #7c2d12 100%)",
-    glow: "rgba(251, 191, 36, 0.32)",
-    label: "Barrier",
-  },
-  cone: {
-    body: "linear-gradient(180deg, #fb923c 0%, #9a3412 100%)",
-    glow: "rgba(251, 146, 60, 0.3)",
-    label: "Cone",
-  },
+type OrientationPermissionApi = {
+  requestPermission?: () => Promise<"granted" | "denied">;
 };
+
+const STORAGE_KEY = "driving-sim-best-score";
+const LANE_CENTERS = [20, 50, 80] as const;
+const PLAYER_ZONE_TOP = 71;
+const PLAYER_ZONE_BOTTOM = 92;
+const OBSTACLE_COLORS = ["#ef4444", "#3b82f6", "#22c55e", "#f59e0b", "#a855f7"];
 
 function loadBestScore() {
   if (typeof window === "undefined") {
@@ -81,16 +68,12 @@ function persistBestScore(value: number) {
   window.localStorage.setItem(STORAGE_KEY, String(Math.round(value)));
 }
 
-function formatNumber(value: number) {
-  return Math.round(value).toLocaleString();
-}
-
 function createInitialWorld(bestScore = 0): GameWorld {
   return {
     phase: "menu",
     playerX: 50,
     drift: 0,
-    speed: 48,
+    speed: 54,
     distance: 0,
     score: 0,
     elapsed: 0,
@@ -113,27 +96,32 @@ function getLaneCenter(lane: 0 | 1 | 2) {
   return LANE_CENTERS[lane];
 }
 
-function getCrashReason(obstacleType: ObstacleType) {
-  if (obstacleType === "barrier") {
-    return "You plowed into a roadside barrier.";
+function getCrashReason(type: ObstacleType) {
+  if (type === "barrier") {
+    return "You clipped the guardrail and lost the car.";
   }
 
-  if (obstacleType === "cone") {
-    return "You lost control and clipped the shoulder.";
+  if (type === "cone") {
+    return "You drifted off the lane and hit the shoulder markers.";
   }
 
-  return "You slammed into another vehicle.";
+  return "You collided with traffic ahead.";
+}
+
+function formatNumber(value: number) {
+  return Math.round(value).toLocaleString();
 }
 
 function DrivingSimHud({ label, value, accent }: { label: string; value: string; accent?: string }) {
   return (
     <div
       style={{
-        padding: "0.75rem 0.9rem",
-        borderRadius: 16,
+        padding: "0.8rem 0.95rem",
+        borderRadius: 18,
         border: "1px solid rgba(148, 163, 184, 0.18)",
-        background: "rgba(8, 14, 24, 0.82)",
-        boxShadow: "0 12px 26px rgba(2, 6, 23, 0.18)",
+        background: "rgba(6, 10, 18, 0.78)",
+        backdropFilter: "blur(10px)",
+        boxShadow: "0 16px 30px rgba(2, 6, 23, 0.22)",
       }}
     >
       <p style={{ margin: 0, fontSize: 11, letterSpacing: "0.14em", textTransform: "uppercase", color: "#7dd3fc" }}>
@@ -141,10 +129,10 @@ function DrivingSimHud({ label, value, accent }: { label: string; value: string;
       </p>
       <p
         style={{
-          margin: "0.3rem 0 0",
+          margin: "0.28rem 0 0",
           fontFamily: "var(--font-display)",
           fontSize: "1.2rem",
-          letterSpacing: "0.06em",
+          letterSpacing: "0.05em",
           color: accent || "#f8fbff",
         }}
       >
@@ -154,12 +142,64 @@ function DrivingSimHud({ label, value, accent }: { label: string; value: string;
   );
 }
 
+function CarSprite({ color, player = false }: { color: string; player?: boolean }) {
+  return (
+    <svg viewBox="0 0 100 180" width="100%" height="100%" aria-hidden="true">
+      <defs>
+        <linearGradient id={`carBody-${color.replace("#", "")}`} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor="#f8fafc" stopOpacity="0.9" />
+          <stop offset="12%" stopColor={color} />
+          <stop offset="100%" stopColor={player ? "#020617" : "#111827"} />
+        </linearGradient>
+      </defs>
+      <ellipse cx="50" cy="157" rx="28" ry="13" fill={player ? "rgba(96,165,250,0.34)" : "rgba(15,23,42,0.4)"} />
+      <rect x="16" y="18" width="68" height="144" rx="24" fill={`url(#carBody-${color.replace("#", "")})`} stroke="rgba(255,255,255,0.18)" />
+      <rect x="27" y="28" width="46" height="30" rx="14" fill="rgba(191,219,254,0.92)" />
+      <rect x="24" y="70" width="52" height="55" rx="16" fill="rgba(15,23,42,0.92)" stroke="rgba(255,255,255,0.08)" />
+      <rect x="8" y="36" width="12" height="30" rx="5" fill="rgba(30,41,59,0.95)" />
+      <rect x="80" y="36" width="12" height="30" rx="5" fill="rgba(30,41,59,0.95)" />
+      <rect x="10" y="115" width="12" height="30" rx="5" fill="rgba(30,41,59,0.95)" />
+      <rect x="78" y="115" width="12" height="30" rx="5" fill="rgba(30,41,59,0.95)" />
+      <rect x="20" y="150" width="15" height="6" rx="3" fill="#fca5a5" />
+      <rect x="65" y="150" width="15" height="6" rx="3" fill="#fca5a5" />
+    </svg>
+  );
+}
+
+function BarrierSprite() {
+  return (
+    <svg viewBox="0 0 110 74" width="100%" height="100%" aria-hidden="true">
+      <rect x="7" y="12" width="96" height="50" rx="12" fill="#f97316" stroke="rgba(255,255,255,0.18)" />
+      <rect x="16" y="20" width="24" height="34" rx="4" fill="rgba(255,255,255,0.82)" />
+      <rect x="44" y="20" width="22" height="34" rx="4" fill="#ea580c" />
+      <rect x="70" y="20" width="24" height="34" rx="4" fill="rgba(255,255,255,0.82)" />
+      <ellipse cx="55" cy="64" rx="40" ry="7" fill="rgba(124,45,18,0.35)" />
+    </svg>
+  );
+}
+
+function ConeSprite() {
+  return (
+    <svg viewBox="0 0 70 96" width="100%" height="100%" aria-hidden="true">
+      <ellipse cx="35" cy="85" rx="24" ry="7" fill="rgba(124,45,18,0.3)" />
+      <path d="M35 10 54 68H16L35 10Z" fill="#f97316" stroke="rgba(255,255,255,0.18)" />
+      <path d="M28 34h14l5 12H23l5-12Z" fill="rgba(255,255,255,0.9)" />
+      <rect x="15" y="68" width="40" height="10" rx="5" fill="#7c2d12" />
+    </svg>
+  );
+}
+
 function renderObstacle(obstacle: Obstacle) {
-  const palette = obstaclePalette[obstacle.type];
   const laneCenter = getLaneCenter(obstacle.lane);
-  const scale = 0.72 + (obstacle.y / 100) * 0.56;
-  const width = obstacle.type === "cone" ? 34 : obstacle.type === "barrier" ? 54 : 58;
-  const height = obstacle.type === "cone" ? 44 : obstacle.type === "barrier" ? 38 : 82;
+  const scale = 0.68 + (obstacle.y / 100) * 0.62;
+  const width = obstacle.type === "cone" ? 42 : obstacle.type === "barrier" ? 72 : 74;
+  const height = obstacle.type === "cone" ? 56 : obstacle.type === "barrier" ? 46 : 122;
+  const shadow =
+    obstacle.type === "car"
+      ? "rgba(15, 23, 42, 0.5)"
+      : obstacle.type === "barrier"
+        ? "rgba(249, 115, 22, 0.26)"
+        : "rgba(217, 119, 6, 0.25)";
 
   return (
     <div
@@ -171,60 +211,136 @@ function renderObstacle(obstacle: Obstacle) {
         transform: `translate(-50%, -50%) scale(${scale})`,
         width,
         height,
-        borderRadius: obstacle.type === "cone" ? 18 : 16,
-        background: palette.body,
-        border: "1px solid rgba(255,255,255,0.12)",
-        boxShadow: `0 12px 30px ${palette.glow}`,
-        display: "grid",
-        placeItems: "center",
-        overflow: "hidden",
+        filter: `drop-shadow(0 14px 22px ${shadow})`,
       }}
     >
-      <div
-        style={{
-          position: "absolute",
-          inset: obstacle.type === "cone" ? "12% 22%" : "12% 10%",
-          borderRadius: obstacle.type === "cone" ? 14 : 12,
-          border: "1px solid rgba(255,255,255,0.18)",
-          opacity: 0.45,
-        }}
-      />
-      <span
-        style={{
-          position: "relative",
-          zIndex: 1,
-          fontSize: obstacle.type === "cone" ? 8 : 9,
-          textTransform: "uppercase",
-          letterSpacing: "0.12em",
-          color: "rgba(255,255,255,0.86)",
-          fontFamily: "var(--font-display)",
-        }}
-      >
-        {palette.label}
-      </span>
+      {obstacle.type === "car" ? <CarSprite color={obstacle.color || "#ef4444"} /> : obstacle.type === "barrier" ? <BarrierSprite /> : <ConeSprite />}
     </div>
   );
 }
 
 export default function DrivingSimClient() {
   const [snapshot, setSnapshot] = useState<GameSnapshot>(() => createInitialWorld(loadBestScore()));
+  const [isLandscape, setIsLandscape] = useState(false);
+  const [tiltAvailable, setTiltAvailable] = useState(false);
+  const [tiltGranted, setTiltGranted] = useState(false);
+  const [tiltPrompt, setTiltPrompt] = useState("Tilt your phone to steer. Keyboard still works on desktop.");
+  const [fullscreenActive, setFullscreenActive] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const worldRef = useRef<GameWorld>(createInitialWorld(loadBestScore()));
   const frameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
+  const shellRef = useRef<HTMLDivElement | null>(null);
 
-  function startGame() {
+  const enterPlayMode = useCallback(async () => {
+    const shell = shellRef.current;
+    if (!shell || typeof document === "undefined") {
+      return;
+    }
+
+    try {
+      if (!document.fullscreenElement) {
+        await shell.requestFullscreen();
+      }
+    } catch {
+      // Ignore unsupported fullscreen requests.
+    }
+
+    try {
+      const orientationApi = screen.orientation as ScreenOrientation & { lock?: (orientation: string) => Promise<void> };
+      if (orientationApi.lock) {
+        await orientationApi.lock("landscape");
+      }
+    } catch {
+      // Ignore unsupported orientation locks.
+    }
+  }, []);
+
+  const requestTiltAccess = useCallback(async () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const orientationCtor = window.DeviceOrientationEvent as typeof DeviceOrientationEvent & OrientationPermissionApi;
+
+    if (!orientationCtor) {
+      setTiltPrompt("Tilt steering is not supported on this device. Keyboard fallback is still available.");
+      return;
+    }
+
+    setTiltAvailable(true);
+
+    if (typeof orientationCtor.requestPermission === "function") {
+      try {
+        const result = await orientationCtor.requestPermission();
+        if (result === "granted") {
+          setTiltGranted(true);
+          setTiltPrompt("Tilt steering armed. Hold the phone steady to stay centered.");
+        } else {
+          setTiltPrompt("Tilt permission was denied. Steering will fall back to keyboard only.");
+        }
+      } catch {
+        setTiltPrompt("Tilt permission could not be enabled. Keyboard fallback is still available.");
+      }
+    } else {
+      setTiltGranted(true);
+      setTiltPrompt("Tilt steering armed. Hold the phone steady to stay centered.");
+    }
+  }, []);
+
+  const startGame = useCallback(async () => {
     const best = worldRef.current.bestScore || loadBestScore();
     const nextWorld = createInitialWorld(best);
     nextWorld.phase = "playing";
     worldRef.current = nextWorld;
     lastTimeRef.current = null;
     setSnapshot({ ...nextWorld });
-  }
+    await requestTiltAccess();
+    await enterPlayMode();
+  }, [enterPlayMode, requestTiltAccess]);
+
+  const syncViewportMode = () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    setIsLandscape(window.innerWidth > window.innerHeight);
+    setIsTouchDevice(window.matchMedia("(pointer: coarse)").matches);
+  };
+
+  const exitPlayMode = async () => {
+    try {
+      const orientationApi = screen.orientation as ScreenOrientation & { unlock?: () => void };
+      orientationApi.unlock?.();
+    } catch {
+      // Ignore unsupported orientation unlocks.
+    }
+
+    if (typeof document !== "undefined" && document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        // Ignore unsupported fullscreen exits.
+      }
+    }
+  };
 
   useEffect(() => {
     worldRef.current.bestScore = loadBestScore();
     setSnapshot({ ...worldRef.current });
-  }, []);
+    syncViewportMode();
+
+    const handleResize = () => syncViewportMode();
+    const handleFullscreen = () => setFullscreenActive(Boolean(document.fullscreenElement));
+
+    window.addEventListener("resize", handleResize);
+    document.addEventListener("fullscreenchange", handleFullscreen);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      document.removeEventListener("fullscreenchange", handleFullscreen);
+    };
+  }, [startGame]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -244,7 +360,7 @@ export default function DrivingSimClient() {
       }
 
       if (event.key === "Enter" && world.phase !== "playing") {
-        startGame();
+        void startGame();
       }
     };
 
@@ -270,7 +386,33 @@ export default function DrivingSimClient() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, []);
+  }, [startGame]);
+
+  useEffect(() => {
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      if (!tiltGranted) {
+        return;
+      }
+
+      const gamma = event.gamma ?? 0;
+      const normalized = Math.max(-1, Math.min(1, gamma / 18));
+      worldRef.current.input = normalized;
+    };
+
+    if (tiltGranted) {
+      window.addEventListener("deviceorientation", handleOrientation);
+    }
+
+    return () => {
+      window.removeEventListener("deviceorientation", handleOrientation);
+    };
+  }, [tiltGranted]);
+
+  useEffect(() => {
+    if (snapshot.phase === "playing" && !isLandscape) {
+      void exitPlayMode();
+    }
+  }, [isLandscape, snapshot.phase]);
 
   useEffect(() => {
     const tick = (now: number) => {
@@ -285,68 +427,71 @@ export default function DrivingSimClient() {
       if (world.phase === "playing") {
         world.elapsed += dt;
         const distanceFactor = world.distance / 120;
-        world.bac = Math.min(0.24, 0.16 + world.elapsed * 0.0028);
-        world.reactionLag = Math.round(380 + world.bac * 820 + Math.sin(world.elapsed * 0.8) * 35);
-        world.controlRating = Math.max(4, Math.round(28 - world.bac * 60 - world.elapsed * 0.42));
+        world.bac = Math.min(0.24, 0.16 + world.elapsed * 0.0026);
+        world.reactionLag = Math.round(370 + world.bac * 820 + Math.sin(world.elapsed * 0.8) * 40);
+        world.controlRating = Math.max(4, Math.round(30 - world.bac * 62 - world.elapsed * 0.45));
 
         const driftWave =
-          Math.sin(world.elapsed * 1.55) * 4.6 +
-          Math.sin(world.elapsed * 0.42 + 1.2) * 2.2 +
-          Math.sin(world.elapsed * 3.1) * 0.95;
+          Math.sin(world.elapsed * 1.45) * 4.2 +
+          Math.sin(world.elapsed * 0.46 + 1.2) * 1.9 +
+          Math.sin(world.elapsed * 3.6) * 0.85;
         world.drift = driftWave;
 
-        const targetSteering = world.input * 18;
-        world.steeringVelocity += (targetSteering - world.steeringVelocity) * dt * 1.9;
-        world.playerX += (world.steeringVelocity + world.drift * 0.35) * dt;
+        const targetSteering = world.input * 24;
+        world.steeringVelocity += (targetSteering - world.steeringVelocity) * dt * 2;
+        world.playerX += (world.steeringVelocity + world.drift * 0.36) * dt;
         world.playerX = Math.max(13, Math.min(87, world.playerX));
 
-        const targetSpeed = 45 + distanceFactor * 4.8;
-        const brakePenalty = world.brakeHeld ? 26 : 0;
+        const targetSpeed = 56 + distanceFactor * 4.8;
+        const brakePenalty = world.brakeHeld ? 32 : 0;
         world.speed += (targetSpeed - brakePenalty - world.speed) * dt * 2.1;
-        world.distance += world.speed * dt * 0.88;
-        world.score = world.distance + world.nearMisses * 65;
+        world.distance += world.speed * dt * 0.92;
+        world.score = world.distance + world.nearMisses * 70;
 
         world.spawnIn -= dt;
         if (world.spawnIn <= 0) {
-          const obstacleTypePool: ObstacleType[] = ["car", "car", "barrier", "cone"];
-          const type = obstacleTypePool[Math.floor(Math.random() * obstacleTypePool.length)];
+          const pool: ObstacleType[] = ["car", "car", "barrier", "cone"];
+          const type = pool[Math.floor(Math.random() * pool.length)];
           const lane = Math.floor(Math.random() * 3) as 0 | 1 | 2;
           world.obstacles.push({
             id: world.obstacleId,
             lane,
-            y: -16,
+            y: -18,
             type,
+            color: OBSTACLE_COLORS[Math.floor(Math.random() * OBSTACLE_COLORS.length)],
           });
           world.obstacleId += 1;
-          world.spawnIn = Math.max(0.38, 1.05 - world.speed / 120 + Math.random() * 0.35);
+          world.spawnIn = Math.max(0.36, 1.02 - world.speed / 118 + Math.random() * 0.28);
         }
 
         world.obstacles = world.obstacles
           .map((obstacle) => {
-            const nextY = obstacle.y + world.speed * dt * (obstacle.type === "cone" ? 0.96 : 0.82);
+            const nextY = obstacle.y + world.speed * dt * (obstacle.type === "cone" ? 1.04 : 0.86);
             const laneCenter = getLaneCenter(obstacle.lane);
             const laneDistance = Math.abs(world.playerX - laneCenter);
 
-            if (!obstacle.nearMissed && nextY > PLAYER_ZONE_BOTTOM + 5 && laneDistance > 8 && laneDistance < 20) {
+            if (!obstacle.nearMissed && nextY > PLAYER_ZONE_BOTTOM + 5 && laneDistance > 8 && laneDistance < 18) {
               obstacle.nearMissed = true;
               world.nearMisses += 1;
               world.score += 40;
             }
 
-            if (nextY > PLAYER_ZONE_TOP && nextY < PLAYER_ZONE_BOTTOM && laneDistance < (obstacle.type === "cone" ? 8 : 11)) {
+            if (nextY > PLAYER_ZONE_TOP && nextY < PLAYER_ZONE_BOTTOM && laneDistance < (obstacle.type === "cone" ? 8 : 11.5)) {
               world.phase = "crashed";
               world.crashReason = getCrashReason(obstacle.type);
               world.bestScore = Math.max(world.bestScore, world.score);
               persistBestScore(world.bestScore);
 
-              if (typeof window !== "undefined" && "vibrate" in navigator) {
-                navigator.vibrate?.([100, 40, 120]);
+              if ("vibrate" in navigator) {
+                navigator.vibrate?.([100, 35, 120]);
               }
+
+              void exitPlayMode();
             }
 
             return { ...obstacle, y: nextY };
           })
-          .filter((obstacle) => obstacle.y < 120);
+          .filter((obstacle) => obstacle.y < 122);
       }
 
       setSnapshot({
@@ -378,36 +523,53 @@ export default function DrivingSimClient() {
     };
   }, []);
 
-  const setInput = (direction: number) => {
-    worldRef.current.input = direction;
-  };
+  const impairmentBlur = Math.min(7, 1.2 + snapshot.bac * 18);
+  const distortionRotation = Math.sin(snapshot.elapsed * 0.58) * 0.65;
+  const shellStyle = fullscreenActive
+    ? {
+        position: "fixed" as const,
+        inset: 0,
+        zIndex: 120,
+        padding: 0,
+        maxWidth: "none",
+        borderRadius: 0,
+      }
+    : {};
 
-  const setBrake = (value: boolean) => {
-    worldRef.current.brakeHeld = value;
-  };
+  const tiltText = useMemo(() => {
+    if (!isTouchDevice) {
+      return "Desktop fallback stays on keyboard steering.";
+    }
 
-  const impairmentBlur = Math.min(7, 1.4 + snapshot.bac * 18);
-  const distortionRotation = Math.sin(snapshot.elapsed * 0.55) * 0.9;
+    if (!tiltAvailable) {
+      return "Phone tilt steering will activate after you start.";
+    }
+
+    return tiltPrompt;
+  }, [isTouchDevice, tiltAvailable, tiltPrompt]);
 
   return (
-    <main style={{ padding: 20 }}>
-      <DeveloperBackLink />
+    <main style={{ padding: fullscreenActive ? 0 : 20 }}>
+      {!fullscreenActive ? <DeveloperBackLink /> : null}
 
       <section
+        ref={shellRef}
         style={{
-          maxWidth: 1180,
+          maxWidth: 1240,
           margin: "0 auto",
-          padding: "clamp(1rem, 2vw, 1.4rem)",
-          borderRadius: 28,
-          border: "1px solid rgba(96, 165, 250, 0.18)",
+          padding: fullscreenActive ? 0 : "clamp(1rem, 2vw, 1.4rem)",
+          borderRadius: fullscreenActive ? 0 : 28,
+          border: fullscreenActive ? "none" : "1px solid rgba(96, 165, 250, 0.18)",
           background:
             "radial-gradient(circle at top, rgba(37, 99, 235, 0.16), transparent 24%), linear-gradient(180deg, rgba(7, 12, 22, 0.98) 0%, rgba(2, 5, 10, 0.99) 100%)",
-          boxShadow: "0 28px 80px rgba(2, 6, 23, 0.42)",
+          boxShadow: fullscreenActive ? "none" : "0 28px 80px rgba(2, 6, 23, 0.42)",
+          minHeight: fullscreenActive ? "100dvh" : undefined,
+          ...shellStyle,
         }}
       >
         <div
           style={{
-            display: "flex",
+            display: fullscreenActive ? "none" : "flex",
             justifyContent: "space-between",
             gap: 18,
             flexWrap: "wrap",
@@ -421,13 +583,13 @@ export default function DrivingSimClient() {
             </p>
             <h1 style={{ margin: "0.45rem 0 0.65rem" }}>Impairment Driving Simulator</h1>
             <p style={{ margin: 0, color: "#cbd5e1", maxWidth: 620 }}>
-              A dev-only awareness sim built to show how fast control, reaction, and judgment collapse under impairment. Stay alive as long as you can, but the point is that the run gets ugly fast.
+              A dev-only awareness sim built to show how fast control, reaction, and judgment collapse under impairment. It should feel sharp, tense, and ugly in exactly the way it needs to.
             </p>
           </div>
 
           <div
             style={{
-              minWidth: 240,
+              minWidth: 280,
               padding: 16,
               borderRadius: 20,
               border: "1px solid rgba(148, 163, 184, 0.16)",
@@ -437,29 +599,31 @@ export default function DrivingSimClient() {
             <p style={{ margin: 0, color: "#7dd3fc", letterSpacing: "0.14em", textTransform: "uppercase", fontSize: 12 }}>
               Controls
             </p>
-            <p style={{ margin: "0.6rem 0 0", color: "#e2e8f0" }}>A / Left: steer left</p>
-            <p style={{ margin: "0.2rem 0 0", color: "#e2e8f0" }}>D / Right: steer right</p>
-            <p style={{ margin: "0.2rem 0 0", color: "#e2e8f0" }}>Down / Space: brake</p>
-            <p style={{ margin: "0.2rem 0 0", color: "#94a3b8", fontSize: 13 }}>Mobile buttons are built in below the road.</p>
+            <p style={{ margin: "0.55rem 0 0", color: "#e2e8f0" }}>Rotate phone horizontal for full-screen play.</p>
+            <p style={{ margin: "0.2rem 0 0", color: "#e2e8f0" }}>{tiltText}</p>
+            <p style={{ margin: "0.2rem 0 0", color: "#94a3b8", fontSize: 13 }}>
+              Rotate back upright and the game releases fullscreen automatically.
+            </p>
           </div>
         </div>
 
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "minmax(0, 1fr) 310px",
-            gap: 18,
+            gridTemplateColumns: fullscreenActive ? "minmax(0, 1fr)" : "minmax(0, 1fr) 310px",
+            gap: fullscreenActive ? 0 : 18,
+            minHeight: fullscreenActive ? "100dvh" : undefined,
           }}
         >
           <div
             style={{
               position: "relative",
-              minHeight: 700,
+              minHeight: fullscreenActive ? "100dvh" : 720,
               overflow: "hidden",
-              borderRadius: 28,
-              border: "1px solid rgba(148, 163, 184, 0.16)",
+              borderRadius: fullscreenActive ? 0 : 28,
+              border: fullscreenActive ? "none" : "1px solid rgba(148, 163, 184, 0.16)",
               background:
-                "radial-gradient(circle at 50% 8%, rgba(96, 165, 250, 0.24), transparent 20%), linear-gradient(180deg, #0a1020 0%, #05070d 100%)",
+                "linear-gradient(180deg, #58a6ff 0%, #7dd3fc 16%, #9fd6ff 28%, #1f2937 28%, #111827 100%)",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
             }}
           >
@@ -468,7 +632,7 @@ export default function DrivingSimClient() {
                 position: "absolute",
                 inset: 0,
                 background:
-                  "linear-gradient(180deg, rgba(125, 211, 252, 0.14), transparent 18%), radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08), transparent 60%)",
+                  "radial-gradient(circle at 50% 12%, rgba(255,255,255,0.38), transparent 12%), linear-gradient(180deg, rgba(255,255,255,0.12), transparent 16%)",
                 pointerEvents: "none",
               }}
             />
@@ -476,40 +640,84 @@ export default function DrivingSimClient() {
             <div
               style={{
                 position: "absolute",
-                inset: "7% 8% 13%",
-                borderRadius: 28,
+                inset: fullscreenActive ? "2% 2.5% 0" : "7% 8% 10%",
+                borderRadius: fullscreenActive ? 0 : 28,
                 overflow: "hidden",
-                transform: `perspective(880px) rotateX(61deg) rotateZ(${distortionRotation}deg)`,
+                transform: `perspective(1100px) rotateX(${fullscreenActive ? 64 : 61}deg) rotateZ(${distortionRotation}deg)`,
                 transformOrigin: "center bottom",
+                background: "linear-gradient(180deg, #1f2937 0%, #0f172a 14%, #111827 100%)",
                 boxShadow: `0 18px 42px rgba(2, 6, 23, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.12) inset`,
-                background:
-                  "linear-gradient(180deg, rgba(2, 6, 12, 0.98) 0%, rgba(14, 19, 28, 0.98) 10%, rgba(18, 25, 36, 0.98) 100%)",
               }}
             >
               <div
                 style={{
                   position: "absolute",
-                  inset: 0,
-                  background:
-                    `repeating-linear-gradient(180deg, transparent 0 3.4%, rgba(255,255,255,0.9) 3.4% 4.3%, transparent 4.3% 12%)`,
-                  backgroundSize: "100% 140%",
-                  backgroundPositionY: `${snapshot.distance * 1.8}px`,
-                  opacity: 0.72,
-                  mixBlendMode: "screen",
+                  left: "-18%",
+                  top: 0,
+                  bottom: 0,
+                  width: "18%",
+                  background: "linear-gradient(180deg, #14532d 0%, #166534 100%)",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  right: "-18%",
+                  top: 0,
+                  bottom: 0,
+                  width: "18%",
+                  background: "linear-gradient(180deg, #14532d 0%, #166534 100%)",
                 }}
               />
 
-              {[33.33, 66.66].map((divider, index) => (
+              <div
+                style={{
+                  position: "absolute",
+                  left: "7.5%",
+                  right: "7.5%",
+                  top: 0,
+                  bottom: 0,
+                  background:
+                    "linear-gradient(180deg, rgba(255,255,255,0.12), transparent 12%), linear-gradient(180deg, #334155 0%, #1f2937 12%, #111827 100%)",
+                }}
+              />
+
+              <div
+                style={{
+                  position: "absolute",
+                  left: "9.5%",
+                  width: 8,
+                  top: "-12%",
+                  bottom: "-12%",
+                  background: "rgba(255,255,255,0.95)",
+                  opacity: 0.85,
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  right: "9.5%",
+                  width: 8,
+                  top: "-12%",
+                  bottom: "-12%",
+                  background: "rgba(255,255,255,0.95)",
+                  opacity: 0.85,
+                }}
+              />
+
+              {[33.33, 66.66].map((divider) => (
                 <div
                   key={divider}
                   style={{
                     position: "absolute",
-                    top: "-8%",
-                    bottom: "-8%",
+                    top: "-18%",
+                    bottom: "-18%",
                     left: `${divider}%`,
-                    width: index === 0 ? 4 : 3,
-                    background: "linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.4) 12%, rgba(255,255,255,0.2) 88%, transparent 100%)",
-                    opacity: 0.26,
+                    width: 6,
+                    background: "repeating-linear-gradient(180deg, rgba(255,255,120,0.95) 0 4.8%, transparent 4.8% 11.8%)",
+                    backgroundSize: "100% 150%",
+                    backgroundPositionY: `${snapshot.distance * 2.2}px`,
+                    opacity: 0.9,
                   }}
                 />
               ))}
@@ -517,12 +725,10 @@ export default function DrivingSimClient() {
               <div
                 style={{
                   position: "absolute",
-                  inset: "-2%",
-                  borderRadius: 32,
-                  border: "1px solid rgba(96, 165, 250, 0.12)",
-                  boxShadow: `0 0 ${12 + impairmentBlur * 2}px rgba(59, 130, 246, 0.14) inset`,
+                  inset: 0,
+                  boxShadow: `0 0 ${12 + impairmentBlur * 2}px rgba(255,255,255,0.09) inset`,
                   backdropFilter: `blur(${impairmentBlur}px)`,
-                  opacity: 0.2,
+                  opacity: 0.18,
                   pointerEvents: "none",
                 }}
               />
@@ -533,57 +739,51 @@ export default function DrivingSimClient() {
                 style={{
                   position: "absolute",
                   left: `${snapshot.playerX}%`,
-                  top: "78%",
-                  transform: `translate(-50%, -50%) rotate(${snapshot.drift * 0.55}deg)`,
-                  width: 74,
-                  height: 122,
-                  zIndex: 3,
+                  top: "79%",
+                  transform: `translate(-50%, -50%) rotate(${snapshot.drift * 0.5}deg)`,
+                  width: 88,
+                  height: 146,
+                  zIndex: 4,
+                  filter: "drop-shadow(0 22px 28px rgba(59,130,246,0.32))",
                 }}
               >
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: "0 0 0 0",
-                    borderRadius: 22,
-                    background: "linear-gradient(180deg, #dbeafe 0%, #60a5fa 12%, #0f172a 28%, #020617 100%)",
-                    border: "1px solid rgba(255,255,255,0.16)",
-                    boxShadow: "0 16px 36px rgba(59, 130, 246, 0.34)",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: "8px 10px auto",
-                    height: 20,
-                    borderRadius: 999,
-                    background: "rgba(191, 219, 254, 0.82)",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    inset: "38px 8px 12px",
-                    borderRadius: 18,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "linear-gradient(180deg, rgba(30, 41, 59, 0.96) 0%, rgba(15, 23, 42, 0.98) 100%)",
-                  }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 8,
-                    right: 8,
-                    bottom: -12,
-                    height: 18,
-                    borderRadius: 999,
-                    background: "radial-gradient(circle, rgba(59,130,246,0.36), transparent 65%)",
-                    filter: "blur(8px)",
-                  }}
-                />
+                <CarSprite color="#60a5fa" player />
               </div>
             </div>
 
-            {snapshot.phase !== "playing" ? (
+            <div
+              style={{
+                position: "absolute",
+                left: 16,
+                top: 16,
+                display: "grid",
+                gap: 10,
+                maxWidth: fullscreenActive ? 210 : 280,
+                zIndex: 6,
+              }}
+            >
+              <DrivingSimHud label="Score" value={`${formatNumber(snapshot.score)} pts`} accent="#f8fbff" />
+              <DrivingSimHud label="Speed" value={`${snapshot.speed.toFixed(0)} mph`} accent="#fde68a" />
+              <DrivingSimHud label="BAC" value={snapshot.bac.toFixed(2)} accent="#fecaca" />
+            </div>
+
+            <div
+              style={{
+                position: "absolute",
+                right: 16,
+                top: 16,
+                display: "grid",
+                gap: 10,
+                maxWidth: fullscreenActive ? 220 : 290,
+                zIndex: 6,
+              }}
+            >
+              <DrivingSimHud label="Reaction Delay" value={`${snapshot.reactionLag} ms`} accent="#fde68a" />
+              <DrivingSimHud label="Control" value={`${snapshot.controlRating}%`} accent="#fca5a5" />
+              <DrivingSimHud label="Near Misses" value={String(snapshot.nearMisses)} accent="#c4b5fd" />
+            </div>
+
+            {snapshot.phase !== "playing" || (isTouchDevice && !isLandscape) ? (
               <div
                 style={{
                   position: "absolute",
@@ -591,13 +791,14 @@ export default function DrivingSimClient() {
                   display: "grid",
                   placeItems: "center",
                   padding: 24,
-                  background: "linear-gradient(180deg, rgba(2, 6, 23, 0.28) 0%, rgba(2, 6, 23, 0.72) 100%)",
+                  background: "linear-gradient(180deg, rgba(2, 6, 23, 0.36) 0%, rgba(2, 6, 23, 0.82) 100%)",
                   backdropFilter: "blur(10px)",
+                  zIndex: 7,
                 }}
               >
                 <div
                   style={{
-                    width: "min(100%, 35rem)",
+                    width: "min(100%, 36rem)",
                     padding: "1.6rem",
                     borderRadius: 26,
                     border: "1px solid rgba(148, 163, 184, 0.16)",
@@ -605,14 +806,24 @@ export default function DrivingSimClient() {
                     boxShadow: "0 24px 56px rgba(2, 6, 23, 0.44)",
                   }}
                 >
-                  {snapshot.phase === "menu" ? (
+                  {isTouchDevice && !isLandscape ? (
+                    <>
+                      <p style={{ margin: 0, color: "#7dd3fc", letterSpacing: "0.15em", textTransform: "uppercase", fontSize: 12 }}>
+                        Rotate Device
+                      </p>
+                      <h2 style={{ margin: "0.55rem 0 0.8rem" }}>Turn your phone sideways to drive</h2>
+                      <p style={{ margin: 0, color: "#cbd5e1" }}>
+                        This build is meant to play in landscape. Rotate horizontal and tap start again to enter full-screen mode.
+                      </p>
+                    </>
+                  ) : snapshot.phase === "menu" ? (
                     <>
                       <p style={{ margin: 0, color: "#fca5a5", letterSpacing: "0.15em", textTransform: "uppercase", fontSize: 12 }}>
                         Awareness Prototype
                       </p>
                       <h2 style={{ margin: "0.55rem 0 0.8rem" }}>Every second gets less controllable</h2>
                       <p style={{ margin: 0, color: "#cbd5e1" }}>
-                        The road drifts, reaction time stretches, and staying in lane gets harder the longer the run goes. This isn’t a power fantasy. It’s a failure spiral.
+                        The road drifts, reaction time stretches, and lane control fades. This is built to feel unstable on purpose. On mobile, steering comes from the way you tilt the phone.
                       </p>
 
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginTop: 18 }}>
@@ -623,7 +834,7 @@ export default function DrivingSimClient() {
 
                       <button
                         type="button"
-                        onClick={startGame}
+                        onClick={() => void startGame()}
                         style={{
                           width: "100%",
                           marginTop: 18,
@@ -642,8 +853,7 @@ export default function DrivingSimClient() {
                       </p>
                       <h2 style={{ margin: "0.55rem 0 0.8rem" }}>{snapshot.crashReason}</h2>
                       <p style={{ margin: 0, color: "#cbd5e1" }}>
-                        Final score: <strong>{formatNumber(snapshot.score)}</strong> points after{" "}
-                        <strong>{snapshot.elapsed.toFixed(1)}s</strong>. Best run: <strong>{formatNumber(snapshot.bestScore)}</strong>.
+                        Final score: <strong>{formatNumber(snapshot.score)}</strong> points after <strong>{snapshot.elapsed.toFixed(1)}s</strong>. Best run: <strong>{formatNumber(snapshot.bestScore)}</strong>.
                       </p>
 
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginTop: 18 }}>
@@ -654,7 +864,7 @@ export default function DrivingSimClient() {
 
                       <button
                         type="button"
-                        onClick={startGame}
+                        onClick={() => void startGame()}
                         style={{
                           width: "100%",
                           marginTop: 18,
@@ -670,99 +880,37 @@ export default function DrivingSimClient() {
                 </div>
               </div>
             ) : null}
-
-            <div
-              style={{
-                position: "absolute",
-                left: 18,
-                right: 18,
-                bottom: 18,
-                display: "grid",
-                gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
-                gap: 10,
-              }}
-            >
-              <button
-                type="button"
-                onPointerDown={() => setInput(-1)}
-                onPointerUp={() => setInput(0)}
-                onPointerLeave={() => setInput(0)}
-                onTouchEnd={() => setInput(0)}
-                style={{
-                  minHeight: 58,
-                  borderRadius: 18,
-                  background: "rgba(8, 15, 28, 0.88)",
-                  border: "1px solid rgba(125, 211, 252, 0.16)",
-                }}
-              >
-                Steer Left
-              </button>
-              <button
-                type="button"
-                onPointerDown={() => setBrake(true)}
-                onPointerUp={() => setBrake(false)}
-                onPointerLeave={() => setBrake(false)}
-                onTouchEnd={() => setBrake(false)}
-                style={{
-                  minHeight: 58,
-                  borderRadius: 18,
-                  background: "rgba(69, 10, 10, 0.82)",
-                  border: "1px solid rgba(248, 113, 113, 0.16)",
-                }}
-              >
-                Brake
-              </button>
-              <button
-                type="button"
-                onPointerDown={() => setInput(1)}
-                onPointerUp={() => setInput(0)}
-                onPointerLeave={() => setInput(0)}
-                onTouchEnd={() => setInput(0)}
-                style={{
-                  minHeight: 58,
-                  borderRadius: 18,
-                  background: "rgba(8, 15, 28, 0.88)",
-                  border: "1px solid rgba(125, 211, 252, 0.16)",
-                }}
-              >
-                Steer Right
-              </button>
-            </div>
           </div>
 
-          <aside
-            style={{
-              display: "grid",
-              gap: 14,
-              alignContent: "start",
-            }}
-          >
-            <DrivingSimHud label="Score" value={`${formatNumber(snapshot.score)} pts`} accent="#f8fbff" />
-            <DrivingSimHud label="Distance" value={`${formatNumber(snapshot.distance)} m`} accent="#bfdbfe" />
-            <DrivingSimHud label="Speed" value={`${snapshot.speed.toFixed(0)} mph`} accent="#fef08a" />
-            <DrivingSimHud label="BAC" value={snapshot.bac.toFixed(2)} accent="#fecaca" />
-            <DrivingSimHud label="Reaction Delay" value={`${snapshot.reactionLag} ms`} accent="#fde68a" />
-            <DrivingSimHud label="Control" value={`${snapshot.controlRating}%`} accent="#fca5a5" />
-            <DrivingSimHud label="Near Misses" value={String(snapshot.nearMisses)} accent="#c4b5fd" />
-            <DrivingSimHud label="Best Run" value={`${formatNumber(snapshot.bestScore)} pts`} accent="#86efac" />
-
-            <div
+          {!fullscreenActive ? (
+            <aside
               style={{
-                padding: 18,
-                borderRadius: 20,
-                border: "1px solid rgba(148, 163, 184, 0.18)",
-                background: "rgba(8, 14, 24, 0.82)",
-                boxShadow: "0 12px 28px rgba(2, 6, 23, 0.18)",
+                display: "grid",
+                gap: 14,
+                alignContent: "start",
               }}
             >
-              <p style={{ margin: 0, color: "#7dd3fc", letterSpacing: "0.14em", textTransform: "uppercase", fontSize: 12 }}>
-                Why it works
-              </p>
-              <p style={{ margin: "0.65rem 0 0", color: "#cbd5e1" }}>
-                The car is always fighting you. Even when you stop steering, the impairment drift keeps pulling the run off center. The longer you survive, the less recoverable it becomes.
-              </p>
-            </div>
-          </aside>
+              <DrivingSimHud label="Distance" value={`${formatNumber(snapshot.distance)} m`} accent="#bfdbfe" />
+              <DrivingSimHud label="Best Run" value={`${formatNumber(snapshot.bestScore)} pts`} accent="#86efac" />
+
+              <div
+                style={{
+                  padding: 18,
+                  borderRadius: 20,
+                  border: "1px solid rgba(148, 163, 184, 0.18)",
+                  background: "rgba(8, 14, 24, 0.82)",
+                  boxShadow: "0 12px 28px rgba(2, 6, 23, 0.18)",
+                }}
+              >
+                <p style={{ margin: 0, color: "#7dd3fc", letterSpacing: "0.14em", textTransform: "uppercase", fontSize: 12 }}>
+                  Driving Model
+                </p>
+                <p style={{ margin: "0.65rem 0 0", color: "#cbd5e1" }}>
+                  Mobile uses tilt steering after you start. Rotate to landscape, the game takes over the screen, and rotating back upright releases it again.
+                </p>
+              </div>
+            </aside>
+          ) : null}
         </div>
       </section>
     </main>
