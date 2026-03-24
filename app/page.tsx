@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import AppLoadingState from "./components/AppLoadingState";
 import { useRouter } from "next/navigation";
 import PushNotificationsCard from "./components/PushNotificationsCard";
@@ -36,10 +36,12 @@ type UserProfile = {
 
 export default function HomePage() {
   const router = useRouter();
+  const profileMenuRef = useRef<HTMLDivElement | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [authWarning, setAuthWarning] = useState("");
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
 
   useEffect(() => {
@@ -82,6 +84,22 @@ export default function HomePage() {
       unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (!profileMenuOpen) {
+      return;
+    }
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (profileMenuRef.current && event.target instanceof Node && !profileMenuRef.current.contains(event.target)) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    window.addEventListener("mousedown", handlePointerDown);
+
+    return () => window.removeEventListener("mousedown", handlePointerDown);
+  }, [profileMenuOpen]);
 
   useEffect(() => {
     if (!user || activeRideLoading) return;
@@ -168,16 +186,23 @@ export default function HomePage() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
         <h1 style={{ margin: 0 }}>Defender Drivers</h1>
         {user ? (
-          <div style={{ display: "grid", justifyItems: "end" }}>
-            <Link
-              href="/account"
-              aria-label="Open account settings"
-              style={{ display: "inline-flex", textDecoration: "none" }}
+          <div ref={profileMenuRef} style={{ position: "relative", display: "grid", justifyItems: "end" }}>
+            <button
+              type="button"
+              aria-label="Open account menu"
+              aria-expanded={profileMenuOpen}
+              onClick={() => setProfileMenuOpen((current) => !current)}
+              style={{
+                padding: 0,
+                background: "transparent",
+                border: "none",
+                boxShadow: "none",
+              }}
             >
               {profile?.driverPhotoUrl || profile?.riderPhotoUrl ? (
                 <Image
                   src={profile.driverPhotoUrl || profile.riderPhotoUrl || ""}
-                  alt="Account settings"
+                  alt="Account menu"
                   width={52}
                   height={52}
                   unoptimized
@@ -207,7 +232,72 @@ export default function HomePage() {
                   {(profile?.firstName || profile?.name || user.email || "?").charAt(0).toUpperCase()}
                 </div>
               )}
-            </Link>
+            </button>
+
+            {profileMenuOpen ? (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 10px)",
+                  right: 0,
+                  minWidth: 180,
+                  padding: 8,
+                  borderRadius: 14,
+                  border: "1px solid rgba(148, 163, 184, 0.18)",
+                  backgroundColor: "rgba(9, 15, 25, 0.96)",
+                  boxShadow: "0 18px 40px rgba(2, 6, 23, 0.32)",
+                  display: "grid",
+                  gap: 6,
+                  zIndex: 20,
+                }}
+              >
+                <Link
+                  href="/account"
+                  onClick={() => setProfileMenuOpen(false)}
+                  style={{
+                    display: "block",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    textDecoration: "none",
+                    color: "#e5edf7",
+                    backgroundColor: "rgba(15, 23, 42, 0.72)",
+                  }}
+                >
+                  Settings
+                </Link>
+                <Link
+                  href="/messages"
+                  onClick={() => setProfileMenuOpen(false)}
+                  style={{
+                    display: "block",
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    textDecoration: "none",
+                    color: "#e5edf7",
+                    backgroundColor: "rgba(15, 23, 42, 0.72)",
+                  }}
+                >
+                  Messages
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    void handleLogout();
+                  }}
+                  style={{
+                    padding: "10px 12px",
+                    borderRadius: 10,
+                    textAlign: "left",
+                    backgroundColor: "rgba(127, 29, 29, 0.9)",
+                    textTransform: "none",
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  Log Out
+                </button>
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -465,24 +555,6 @@ export default function HomePage() {
                 </button>
               </>
             )}
-            </div>
-          ) : null}
-
-          {!driverActiveRide && !riderActiveRide ? (
-            <div style={{ marginTop: 20 }}>
-            <button
-              onClick={handleLogout}
-              style={{
-                padding: "10px 16px",
-                backgroundColor: "#444",
-                color: "white",
-                border: "none",
-                borderRadius: 8,
-                cursor: "pointer",
-              }}
-            >
-              Logout
-            </button>
             </div>
           ) : null}
 
