@@ -6,7 +6,6 @@ type ProfileReadinessShape = {
   username?: string | null;
   phone?: string | null;
   homeAddress?: string | null;
-  homeAddressVerified?: boolean | null;
   riderPhotoUrl?: string | null;
   driverPhotoUrl?: string | null;
   carYear?: string | null;
@@ -45,8 +44,6 @@ export function getRideReadinessIssues(profile: ProfileReadinessShape | null | u
 
   if (!profile?.homeAddress?.trim()) {
     issues.push("Add your home address in Account Settings before requesting rides.");
-  } else if (profile.homeAddressVerified !== true) {
-    issues.push("Verify your home address in Account Settings before requesting rides.");
   }
 
   return issues;

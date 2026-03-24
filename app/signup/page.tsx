@@ -54,7 +54,6 @@ export default function SignupPage() {
   const [carColor, setCarColor] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [addressCheckMessage, setAddressCheckMessage] = useState("");
 
   const convertImageToDataUrl = (file: File) =>
     new Promise<string>((resolve, reject) => {
@@ -182,47 +181,13 @@ export default function SignupPage() {
         zip: homeZip,
       });
       const hasAnyAddressField = Boolean(homeStreet.trim() || homeCity.trim() || homeState.trim() || homeZip.trim());
-      let normalizedHomeAddress = rawHomeAddress;
-      let homeAddressVerified = false;
+      const normalizedHomeAddress = rawHomeAddress;
 
       if (hasAnyAddressField) {
         if (!homeStreet.trim() || !homeCity.trim() || !homeState.trim() || !homeZip.trim()) {
           setStatusMessage("Complete street address, city, state, and ZIP code or leave the address blank for now.");
-          setAddressCheckMessage("");
           return;
         }
-
-        setAddressCheckMessage("Verifying home address...");
-
-        const validationResponse = await fetch("/api/geocode/validate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: normalizedHomeAddress,
-            street: homeStreet.trim(),
-            city: homeCity.trim(),
-            state: homeState.trim(),
-            zip: homeZip.trim(),
-          }),
-        });
-
-        const validationDetails = (await validationResponse.json().catch(() => null)) as
-          | { valid?: boolean; normalizedAddress?: string; error?: string }
-          | null;
-
-        if (!validationResponse.ok || !validationDetails?.valid || !validationDetails.normalizedAddress) {
-          setStatusMessage(validationDetails?.error || "Please enter a real home address or leave it blank for now.");
-          setAddressCheckMessage("");
-          return;
-        }
-
-        normalizedHomeAddress = validationDetails.normalizedAddress;
-        homeAddressVerified = true;
-        setAddressCheckMessage(`Verified: ${normalizedHomeAddress}`);
-      } else {
-        setAddressCheckMessage("");
       }
 
       setStatusMessage("Creating account...");
@@ -247,7 +212,6 @@ export default function SignupPage() {
         homeCity: homeCity.trim(),
         homeState: homeState.trim().toUpperCase(),
         homeZip: homeZip.trim(),
-        homeAddressVerified,
         riderPhotoUrl: trimmedPhoto,
         driverPhotoUrl: trimmedPhoto,
         carYear: carYear.trim(),
@@ -284,8 +248,6 @@ export default function SignupPage() {
 
       <div style={{ marginTop: 20, maxWidth: 460 }}>
         {statusMessage ? <p style={{ marginBottom: 12 }}>{statusMessage}</p> : null}
-        {addressCheckMessage ? <p style={{ marginBottom: 12, color: "#94a3b8" }}>{addressCheckMessage}</p> : null}
-
         <h2 style={{ marginTop: 0 }}>Required Now</h2>
 
         <input
@@ -382,7 +344,6 @@ export default function SignupPage() {
             value={homeStreet}
             onChange={(e) => {
               setHomeStreet(e.target.value);
-              setAddressCheckMessage("");
             }}
             placeholder="Street Address"
             style={{ display: "block", marginBottom: 10, width: "100%" }}
@@ -392,7 +353,6 @@ export default function SignupPage() {
             value={homeCity}
             onChange={(e) => {
               setHomeCity(e.target.value);
-              setAddressCheckMessage("");
             }}
             placeholder="City"
             style={{ display: "block", marginBottom: 10, width: "100%" }}
@@ -403,7 +363,6 @@ export default function SignupPage() {
               value={homeState}
               onChange={(e) => {
                 setHomeState(e.target.value.toUpperCase());
-                setAddressCheckMessage("");
               }}
               placeholder="State"
               style={{ width: "100%" }}
@@ -414,12 +373,14 @@ export default function SignupPage() {
               value={homeZip}
               onChange={(e) => {
                 setHomeZip(e.target.value);
-                setAddressCheckMessage("");
               }}
               placeholder="ZIP Code"
               style={{ width: "100%" }}
             />
           </div>
+          <p style={{ marginTop: 0, marginBottom: 12, fontSize: 13, color: "#94a3b8" }}>
+            Double-check that this information is correct so an accurate address is given to your driver.
+          </p>
 
           <div style={{ marginBottom: 12 }}>
             {profilePhotoUrl ? (

@@ -26,7 +26,6 @@ type UserProfile = {
   homeCity?: string;
   homeState?: string;
   homeZip?: string;
-  homeAddressVerified?: boolean;
   available?: boolean;
   rank?: string;
   flight?: string;
@@ -58,8 +57,6 @@ export default function AccountPage() {
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(true);
   const [hasRideHistory, setHasRideHistory] = useState(false);
   const [hasDriverHistory, setHasDriverHistory] = useState(false);
-  const [homeAddressVerified, setHomeAddressVerified] = useState(false);
-  const [addressCheckMessage, setAddressCheckMessage] = useState("");
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
   const [form, setForm] = useState({
     firstName: "",
@@ -139,7 +136,6 @@ export default function AccountPage() {
         });
         setOriginalUsername(data?.username || "");
         setLocationServicesEnabled(data?.locationServicesEnabled !== false);
-        setHomeAddressVerified(data?.homeAddressVerified === true);
       } catch (error) {
         console.error(error);
         setStatusMessage("We could not load your account details.");
@@ -334,45 +330,13 @@ export default function AccountPage() {
       const hasAnyAddressField = Boolean(
         form.homeStreet.trim() || form.homeCity.trim() || form.homeState.trim() || form.homeZip.trim()
       );
-      let verifiedHomeAddress = false;
-      let normalizedHomeAddress = rawHomeAddress;
+      const normalizedHomeAddress = rawHomeAddress;
 
       if (hasAnyAddressField) {
         if (!form.homeStreet.trim() || !form.homeCity.trim() || !form.homeState.trim() || !form.homeZip.trim()) {
           setStatusMessage("Complete street address, city, state, and ZIP code before saving your home address.");
-          setAddressCheckMessage("");
           return;
         }
-
-        setAddressCheckMessage("Verifying home address...");
-        const validationResponse = await fetch("/api/geocode/validate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            query: normalizedHomeAddress,
-            street: form.homeStreet.trim(),
-            city: form.homeCity.trim(),
-            state: form.homeState.trim(),
-            zip: form.homeZip.trim(),
-          }),
-        });
-        const validationDetails = (await validationResponse.json().catch(() => null)) as
-          | { valid?: boolean; normalizedAddress?: string; error?: string }
-          | null;
-
-        if (!validationResponse.ok || !validationDetails?.valid || !validationDetails.normalizedAddress) {
-          setStatusMessage(validationDetails?.error || "Please enter a real home address before saving.");
-          setAddressCheckMessage("");
-          return;
-        }
-
-        normalizedHomeAddress = validationDetails.normalizedAddress;
-        verifiedHomeAddress = true;
-        setAddressCheckMessage(`Verified: ${normalizedHomeAddress}`);
-      } else {
-        setAddressCheckMessage("Add your home address before requesting rides.");
       }
 
       const batch = writeBatch(db);
@@ -392,7 +356,6 @@ export default function AccountPage() {
           homeCity: form.homeCity.trim(),
           homeState: form.homeState.trim().toUpperCase(),
           homeZip: form.homeZip.trim(),
-          homeAddressVerified: verifiedHomeAddress,
           rank: form.rank.trim(),
           flight: form.flight.trim(),
           rankOrRole: form.rank.trim(),
@@ -426,7 +389,6 @@ export default function AccountPage() {
       await batch.commit();
 
       setOriginalUsername(normalizedUsername);
-      setHomeAddressVerified(verifiedHomeAddress);
       setForm((prev) => ({
         ...prev,
         homeStreet: form.homeStreet.trim(),
@@ -557,7 +519,6 @@ export default function AccountPage() {
       </p>
 
       {statusMessage ? <p style={{ marginTop: 12 }}>{statusMessage}</p> : null}
-      {addressCheckMessage ? <p style={{ marginTop: 8, color: "#94a3b8" }}>{addressCheckMessage}</p> : null}
 
       <div
         style={{
@@ -582,28 +543,20 @@ export default function AccountPage() {
         <h2 style={{ marginTop: 24 }}>Home Address</h2>
         <input value={form.homeStreet} onChange={(e) => {
           handleChange("homeStreet", e.target.value);
-          setHomeAddressVerified(false);
-          setAddressCheckMessage("");
         }} placeholder="Street Address" style={{ marginBottom: 10 }} />
         <input value={form.homeCity} onChange={(e) => {
           handleChange("homeCity", e.target.value);
-          setHomeAddressVerified(false);
-          setAddressCheckMessage("");
         }} placeholder="City" style={{ marginBottom: 10 }} />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 6, maxWidth: "28rem" }}>
           <input value={form.homeState} onChange={(e) => {
             handleChange("homeState", e.target.value.toUpperCase());
-            setHomeAddressVerified(false);
-            setAddressCheckMessage("");
           }} placeholder="State" maxLength={2} />
           <input value={form.homeZip} onChange={(e) => {
             handleChange("homeZip", e.target.value);
-            setHomeAddressVerified(false);
-            setAddressCheckMessage("");
           }} placeholder="ZIP Code" />
         </div>
-        <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: homeAddressVerified ? "#86efac" : "#94a3b8" }}>
-          {homeAddressVerified ? "Home address verified." : "Home address will be verified when you save Account Settings."}
+        <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
+          Double-check that this information is correct so an accurate address is given to your driver.
         </p>
         <select
           value={form.rank}
@@ -752,10 +705,10 @@ export default function AccountPage() {
               ? "Ready for identity photo checks."
               : "Upload a clear profile picture before requesting rides or driving."}
           </p>
-          <p style={{ color: form.homeStreet.trim() && form.homeCity.trim() && form.homeState.trim() && form.homeZip.trim() && homeAddressVerified ? "#86efac" : "#fca5a5" }}>
-            {form.homeStreet.trim() && form.homeCity.trim() && form.homeState.trim() && form.homeZip.trim() && homeAddressVerified
-              ? "Home address is verified for rider use."
-              : "Add and verify your home address before requesting rides."}
+          <p style={{ color: form.homeStreet.trim() && form.homeCity.trim() && form.homeState.trim() && form.homeZip.trim() ? "#86efac" : "#fca5a5" }}>
+            {form.homeStreet.trim() && form.homeCity.trim() && form.homeState.trim() && form.homeZip.trim()
+              ? "Home address is ready for rider use."
+              : "Add your home address before requesting rides."}
           </p>
           <p style={{ marginBottom: 0, color: form.carYear.trim() && form.carMake.trim() && form.carModel.trim() && form.carColor.trim() ? "#86efac" : "#fca5a5" }}>
             {form.carYear.trim() && form.carMake.trim() && form.carModel.trim() && form.carColor.trim()
