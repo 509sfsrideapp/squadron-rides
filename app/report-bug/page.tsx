@@ -19,6 +19,7 @@ export default function ReportBugPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [description, setDescription] = useState("");
+  const [contactConsent, setContactConsent] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export default function ReportBugPage() {
 
       await addDoc(collection(db, "bugReports"), {
         description: description.trim(),
+        contactConsentByPhone: contactConsent,
         reporterUid: user.uid,
         reporterName: fullName,
         reporterPhone: profile?.phone || "",
@@ -63,6 +65,7 @@ export default function ReportBugPage() {
       });
 
       setDescription("");
+      setContactConsent(false);
       setStatusMessage("Bug report submitted.");
     } catch (error) {
       console.error(error);
@@ -117,6 +120,26 @@ export default function ReportBugPage() {
             border: "1px solid rgba(148, 163, 184, 0.2)",
           }}
         />
+
+        <label
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 10,
+            marginTop: 14,
+            color: "#dbeafe",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={contactConsent}
+            onChange={(event) => setContactConsent(event.target.checked)}
+            style={{ marginTop: 3 }}
+          />
+          <span>
+            I consent to being contacted by phone if further information is needed about this bug report.
+          </span>
+        </label>
 
         <button
           type="button"

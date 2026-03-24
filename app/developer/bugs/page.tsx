@@ -12,6 +12,7 @@ import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 type BugReport = {
   id: string;
   description?: string;
+  contactConsentByPhone?: boolean;
   reporterName?: string;
   reporterPhone?: string;
   createdAt?: { seconds?: number };
@@ -98,6 +99,7 @@ export default function DeveloperBugPage() {
               <p><strong>Submitted:</strong> {formatRideTimestamp(report.createdAt) || "Just now"}</p>
               <p><strong>Name:</strong> {report.reporterName || "N/A"}</p>
               <p><strong>Phone:</strong> {report.reporterPhone || "N/A"}</p>
+              <p><strong>Phone Contact OK:</strong> {report.contactConsentByPhone ? "Yes" : "No"}</p>
               <p style={{ whiteSpace: "pre-wrap", marginBottom: 0 }}>
                 <strong>Description:</strong> {report.description || "N/A"}
               </p>

@@ -114,6 +114,7 @@ service cloud.firestore {
         request.resource.data.description is string &&
         request.resource.data.description.size() > 0 &&
         request.resource.data.description.size() <= 4000 &&
+        request.resource.data.contactConsentByPhone is bool &&
         request.resource.data.reporterName is string &&
         request.resource.data.reporterName.size() > 0;
 
