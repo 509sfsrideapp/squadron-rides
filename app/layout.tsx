@@ -1,5 +1,6 @@
 import ForegroundNotificationBridge from "./components/ForegroundNotificationBridge";
 import AccountAccessGate from "./components/AccountAccessGate";
+import BottomBackButton from "./components/BottomBackButton";
 import BottomUtilityNav from "./components/BottomUtilityNav";
 import DeveloperAccessCleaner from "./components/DeveloperAccessCleaner";
 import InitialAppSplash from "./components/InitialAppSplash";
@@ -46,6 +47,7 @@ export default function RootLayout({
         <AccountAccessGate />
         <ProfileCompletionGate />
         <div className="flex-1">{children}</div>
+        <BottomBackButton />
         <BottomUtilityNav />
         <footer
           style={{
@@ -55,7 +57,7 @@ export default function RootLayout({
             textAlign: "center",
           }}
         >
-          Version 103
+          Version 104
         </footer>
       </body>
     </html>
