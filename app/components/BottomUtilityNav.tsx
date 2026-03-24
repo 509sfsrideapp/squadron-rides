@@ -32,7 +32,7 @@ const labelStyle: CSSProperties = {
 export default function BottomUtilityNav() {
   return (
     <nav
-      aria-label="Feedback tools"
+      aria-label="Feedback and developer tools"
       style={{
         display: "flex",
         justifyContent: "center",
@@ -83,6 +83,40 @@ export default function BottomUtilityNav() {
           </svg>
         </span>
         <span style={labelStyle}>Suggestions</span>
+      </Link>
+
+      <Link href="/developer" style={linkStyle}>
+        <span style={iconShellStyle} aria-hidden="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M13.5 5.5L18.5 10.5L16 13L11 8L13.5 5.5Z"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M10.5 8.5L8.5 10.5L6.5 8.5L4.5 10.5"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M13.5 12.5L15.5 14.5L13.5 16.5L15.5 18.5"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M11 13L6 18"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
+        <span style={labelStyle}>Dev</span>
       </Link>
     </nav>
   );

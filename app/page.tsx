@@ -507,26 +507,6 @@ export default function HomePage() {
           {!checkingAuth && !activeRideLoading && !driverActiveRide && !riderActiveRide ? <PushNotificationsCard /> : null}
         </div>
       )}
-
-      <div style={{ marginTop: 28, display: "flex", justifyContent: "center" }}>
-        <Link
-          href="/developer"
-          style={{
-            display: "inline-block",
-            padding: "8px 12px",
-            borderRadius: 999,
-            border: "1px solid rgba(148, 163, 184, 0.16)",
-            backgroundColor: "rgba(7, 11, 18, 0.84)",
-            color: "#94a3b8",
-            textDecoration: "none",
-            fontSize: 12,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-          }}
-        >
-          Developer
-        </Link>
-      </div>
     </main>
   );
 }
