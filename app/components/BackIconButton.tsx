@@ -10,8 +10,8 @@ const baseStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: 42,
-  height: 42,
+  width: 46,
+  height: 46,
   backgroundColor: "#1f2937",
   color: "white",
   textDecoration: "none",
@@ -40,18 +40,18 @@ export default function BackIconButton({ style }: BackIconButtonProps) {
       onClick={handleBack}
       style={{ ...baseStyle, ...style }}
     >
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
-          d="M14.5 4.5 7 12l7.5 7.5"
+          d="M14.75 4.25 7 12l7.75 7.75"
           stroke="currentColor"
-          strokeWidth="2.4"
+          strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
-          d="M8 12h9"
+          d="M7.5 12H18"
           stroke="currentColor"
-          strokeWidth="2.4"
+          strokeWidth="3"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
