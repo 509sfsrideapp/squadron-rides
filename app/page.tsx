@@ -36,6 +36,17 @@ type UserProfile = {
   emergencyRideAddressConsent?: boolean;
 };
 
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+type ReverseGeocodeResult = {
+  placeName?: string | null;
+  address?: string | null;
+  display?: string | null;
+};
+
 const appTilePlaceholderCount = 6;
 
 function SteeringWheelIcon() {
@@ -234,7 +245,7 @@ export default function HomePage() {
     try {
       setSubmittingEmergencyRide(true);
       const pickupAddress = profile.homeAddress?.trim() || "";
-      const riderLocation =
+      const riderLocation: Coordinates | null =
         profile.locationServicesEnabled === false
           ? null
           : await new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
@@ -257,17 +268,45 @@ export default function HomePage() {
                 }
               );
             });
+      const geocodedPickup =
+        riderLocation
+          ? await fetch("/api/geocode/reverse", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(riderLocation),
+            })
+              .then(async (response) => {
+                if (!response.ok) {
+                  return null;
+                }
+
+                return (await response.json()) as ReverseGeocodeResult;
+              })
+              .catch(() => null)
+          : null;
+      const resolvedPickup =
+        geocodedPickup?.placeName ||
+        geocodedPickup?.address ||
+        geocodedPickup?.display ||
+        (riderLocation ? "Current GPS location" : pickupAddress);
+      const resolvedPickupAddress =
+        geocodedPickup?.address ||
+        geocodedPickup?.display ||
+        (riderLocation ? "Current GPS location" : pickupAddress);
       const rideRef = await addDoc(collection(db, "rides"), {
         riderId: user.uid,
         riderName: profile.name,
         riderPhone: profile.phone,
         riderEmail: profile.email,
         riderPhotoUrl: profile.driverPhotoUrl || profile.riderPhotoUrl || null,
-        pickup: pickupAddress,
-        pickupLocationName: null,
-        pickupLocationAddress: pickupAddress,
+        pickup: resolvedPickup,
+        pickupLocationName: geocodedPickup?.placeName || null,
+        pickupLocationAddress: resolvedPickupAddress,
         destination: "Destination to be confirmed with rider",
         riderLocation,
+        emergencySavedAddress: pickupAddress || null,
         status: "open",
         isEmergencyRide: true,
         createdAt: new Date(),
