@@ -58,7 +58,7 @@ export default function SignupTermsPage() {
       setSubmitting(true);
       setStatusMessage("Creating account...");
       await finalizeSignupFromDraft(draft, {
-        emergencyRideAddressConsent,
+        emergencyRideAddressConsent: emergencyRideConsent,
       });
       window.sessionStorage.removeItem(SIGNUP_DRAFT_STORAGE_KEY);
       alert("Account created");
