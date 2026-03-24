@@ -386,6 +386,54 @@ button:disabled {
   background: linear-gradient(180deg, rgba(13, 148, 136, 0.92) 0%, rgba(8, 78, 59, 0.98) 100%);
 }
 
+.profile-menu-panel {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.96);
+  transform-origin: top right;
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0ms linear 220ms;
+}
+
+.profile-menu-panel-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition:
+    opacity 180ms ease,
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0ms linear 0ms;
+}
+
+.profile-menu-item-wrap {
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 160ms ease,
+    transform 200ms ease;
+}
+
+.profile-menu-panel-open .profile-menu-item-wrap {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.profile-menu-panel-open .profile-menu-item-wrap:nth-child(1) {
+  transition-delay: 30ms;
+}
+
+.profile-menu-panel-open .profile-menu-item-wrap:nth-child(2) {
+  transition-delay: 80ms;
+}
+
+.profile-menu-panel-open .profile-menu-item-wrap:nth-child(3) {
+  transition-delay: 130ms;
+}
+
 @media (max-width: 640px) {
   .loading-runway {
     grid-template-columns: 1fr;

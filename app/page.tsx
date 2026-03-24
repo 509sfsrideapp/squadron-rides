@@ -182,23 +182,24 @@ export default function HomePage() {
               )}
             </button>
 
-            {profileMenuOpen ? (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 10px)",
-                  right: 0,
-                  minWidth: 180,
-                  padding: 8,
-                  borderRadius: 14,
-                  border: "1px solid rgba(148, 163, 184, 0.18)",
-                  backgroundColor: "rgba(9, 15, 25, 0.96)",
-                  boxShadow: "0 18px 40px rgba(2, 6, 23, 0.32)",
-                  display: "grid",
-                  gap: 6,
-                  zIndex: 20,
-                }}
-              >
+            <div
+              className={`profile-menu-panel${profileMenuOpen ? " profile-menu-panel-open" : ""}`}
+              style={{
+                position: "absolute",
+                top: "calc(100% + 10px)",
+                right: 0,
+                minWidth: 180,
+                padding: 8,
+                borderRadius: 14,
+                border: "1px solid rgba(148, 163, 184, 0.18)",
+                backgroundColor: "rgba(9, 15, 25, 0.96)",
+                boxShadow: "0 18px 40px rgba(2, 6, 23, 0.32)",
+                display: "grid",
+                gap: 6,
+                zIndex: 20,
+              }}
+            >
+              <div className="profile-menu-item-wrap">
                 <Link
                   href="/account"
                   onClick={() => setProfileMenuOpen(false)}
@@ -213,6 +214,8 @@ export default function HomePage() {
                 >
                   Settings
                 </Link>
+              </div>
+              <div className="profile-menu-item-wrap">
                 <Link
                   href="/messages"
                   onClick={() => setProfileMenuOpen(false)}
@@ -227,6 +230,8 @@ export default function HomePage() {
                 >
                   Messages
                 </Link>
+              </div>
+              <div className="profile-menu-item-wrap">
                 <button
                   type="button"
                   onClick={() => {
@@ -245,7 +250,7 @@ export default function HomePage() {
                   Log Out
                 </button>
               </div>
-            ) : null}
+            </div>
           </div>
         ) : null}
       </div>
