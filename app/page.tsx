@@ -187,6 +187,12 @@ export default function HomePage() {
   const rideReady = canRequestRide(profile);
   const driverReady = canDrive(profile);
   const emergencyRideEnabled = Boolean(profile?.emergencyRideAddressConsent);
+  const emergencyRideBlockers = [
+    !emergencyRideEnabled ? "One-tap emergency ride is off until you accept the App Permissions emergency ride setting." : null,
+    profile?.locationServicesEnabled === false
+      ? "One-tap emergency ride needs location services turned on so your current location can still be sent with the request."
+      : null,
+  ].filter(Boolean) as string[];
 
   const handleLogout = async () => {
     try {
@@ -508,34 +514,41 @@ export default function HomePage() {
           {!driverActiveRide && !riderActiveRide ? (
             <div style={{ marginTop: 20 }}>
               {rideReady ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (emergencyRideEnabled) {
-                      void submitEmergencyRide();
-                    } else {
-                      router.push("/request");
-                    }
-                  }}
-                  disabled={submittingEmergencyRide}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    maxWidth: 540,
-                    padding: "18px 22px",
-                    background: "linear-gradient(180deg, #c01d1d 0%, #7f1212 100%)",
-                    color: "white",
-                    borderRadius: 14,
-                    textAlign: "center",
-                    fontSize: 19,
-                    fontFamily: "var(--font-display)",
-                    letterSpacing: "0.08em",
-                    textTransform: "uppercase",
-                    boxShadow: "0 16px 38px rgba(127, 18, 18, 0.34)",
-                  }}
-                >
-                  {submittingEmergencyRide ? "Requesting..." : "Request Emergency Ride"}
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (emergencyRideEnabled) {
+                        void submitEmergencyRide();
+                      } else {
+                        router.push("/request");
+                      }
+                    }}
+                    disabled={submittingEmergencyRide}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      maxWidth: 540,
+                      padding: "18px 22px",
+                      background: "linear-gradient(180deg, #c01d1d 0%, #7f1212 100%)",
+                      color: "white",
+                      borderRadius: 14,
+                      textAlign: "center",
+                      fontSize: 19,
+                      fontFamily: "var(--font-display)",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      boxShadow: "0 16px 38px rgba(127, 18, 18, 0.34)",
+                    }}
+                  >
+                    {submittingEmergencyRide ? "Requesting..." : "Request Emergency Ride"}
+                  </button>
+                  {emergencyRideBlockers.length > 0 ? (
+                    <p style={{ maxWidth: 540, marginTop: 10, marginBottom: 0, color: "#94a3b8", fontSize: 13 }}>
+                      {emergencyRideBlockers.join(" ")}
+                    </p>
+                  ) : null}
+                </>
               ) : (
                 <>
                   <div
