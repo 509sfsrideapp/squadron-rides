@@ -74,7 +74,6 @@ export default function AdminPage() {
   const [rides, setRides] = useState<Ride[]>([]);
   const [users, setUsers] = useState<AppUser[]>([]);
   const [selectedDriversByRide, setSelectedDriversByRide] = useState<Record<string, string>>({});
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [accountSearch, setAccountSearch] = useState("");
   const [accountStatusFilter, setAccountStatusFilter] = useState("all");
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
@@ -331,8 +330,14 @@ export default function AdminPage() {
   const arrivedRides = rides.filter((ride) => ride.status === "arrived");
   const pickedUpRides = rides.filter((ride) => ride.status === "picked_up");
   const completedRides = rides.filter((ride) => ride.status === "completed");
+  const activeRideBoard = rides.filter(
+    (ride) =>
+      ride.status === "open" ||
+      ride.status === "accepted" ||
+      ride.status === "arrived" ||
+      ride.status === "picked_up"
+  );
   const availableDrivers = users.filter((appUser) => appUser.available);
-  const filteredRides = statusFilter === "all" ? rides : rides.filter((ride) => ride.status === statusFilter);
   const normalizedAccountSearch = accountSearch.trim().toLowerCase();
   const uniqueFlights = Array.from(new Set(users.map((appUser) => appUser.flight).filter(Boolean))).sort();
   const uniqueRanks = Array.from(new Set(users.map((appUser) => appUser.rank).filter(Boolean))).sort();
@@ -433,6 +438,22 @@ export default function AdminPage() {
         <div style={{ padding: 14, borderRadius: 10, backgroundColor: "rgba(31, 41, 55, 0.88)", color: "#e5e7eb", border: "1px solid rgba(148, 163, 184, 0.2)" }}>
           <strong>Completed Rides:</strong> {completedRides.length}
         </div>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <Link
+          href="/admin/history"
+          style={{
+            display: "inline-block",
+            padding: "10px 16px",
+            backgroundColor: "#1d4ed8",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: 8,
+          }}
+        >
+          Open Ride History
+        </Link>
       </div>
 
       <section style={{ marginTop: 32 }}>
@@ -672,30 +693,14 @@ export default function AdminPage() {
       </section>
 
       <section style={{ marginTop: 32 }}>
-        <h2>All Ride Activity</h2>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
-          {["all", "open", "accepted", "arrived", "picked_up", "completed", "canceled"].map((filter) => (
-            <button
-              key={filter}
-              type="button"
-              onClick={() => setStatusFilter(filter)}
-              style={{
-                padding: "8px 12px",
-                borderRadius: 999,
-                border: "1px solid rgba(148, 163, 184, 0.18)",
-                backgroundColor: statusFilter === filter ? "#0f766e" : "rgba(15, 23, 42, 0.78)",
-                color: "white",
-                cursor: "pointer",
-              }}
-            >
-              {filter === "all" ? "All" : getRideStatusLabel(filter)}
-            </button>
-          ))}
-        </div>
-        {filteredRides.length === 0 ? (
-          <p>No rides have been submitted yet.</p>
+        <h2>Live Ride Board</h2>
+        <p style={{ maxWidth: 720 }}>
+          This board stays focused on open and active rides. Completed and canceled rides now live under the separate ride history screen.
+        </p>
+        {activeRideBoard.length === 0 ? (
+          <p>No open or active rides right now.</p>
         ) : (
-          filteredRides.map((ride) => (
+          activeRideBoard.map((ride) => (
             <div
               key={ride.id}
               style={{
@@ -748,9 +753,6 @@ export default function AdminPage() {
               </p>
               <p>
                 <strong>Picked Up:</strong> {formatRideTimestamp(ride.pickedUpAt) || "N/A"}
-              </p>
-              <p>
-                <strong>Closed:</strong> {formatRideTimestamp(ride.completedAt || ride.canceledAt) || "N/A"}
               </p>
               <p>
                 <strong>Driver GPS:</strong>{" "}
