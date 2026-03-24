@@ -84,6 +84,14 @@ export default async function DeveloperPage() {
             Open Bug Reports
           </Link>
         </div>
+
+        <div style={featureCardStyle}>
+          <h2 style={{ marginTop: 0 }}>Suggestions</h2>
+          <p style={{ maxWidth: 320 }}>Review submitted suggestions and feedback from the live suggestions page.</p>
+          <Link href="/developer/suggestions" style={featureLinkStyle}>
+            Open Suggestions
+          </Link>
+        </div>
       </div>
     </main>
   );
