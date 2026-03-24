@@ -20,7 +20,6 @@ type UserProfile = {
   rank?: string;
   flight?: string;
   username?: string;
-  rank?: string;
   phone: string;
   email: string;
   available: boolean;
