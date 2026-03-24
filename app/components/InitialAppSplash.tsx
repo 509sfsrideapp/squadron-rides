@@ -4,11 +4,25 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import afgscLogo from "../afgsc.png";
 
+const splashSessionKey = "defender-drivers-initial-splash-seen";
+
 export default function InitialAppSplash() {
-  const [visible, setVisible] = useState(true);
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === "undefined") {
+      return false;
+    }
+
+    return window.sessionStorage.getItem(splashSessionKey) !== "true";
+  });
   const [fadingOut, setFadingOut] = useState(false);
 
   useEffect(() => {
+    if (!visible || typeof window === "undefined") {
+      return;
+    }
+
+    window.sessionStorage.setItem(splashSessionKey, "true");
+
     const fadeTimer = window.setTimeout(() => {
       setFadingOut(true);
     }, 2700);
@@ -21,7 +35,7 @@ export default function InitialAppSplash() {
       window.clearTimeout(fadeTimer);
       window.clearTimeout(hideTimer);
     };
-  }, []);
+  }, [visible]);
 
   if (!visible) {
     return null;
