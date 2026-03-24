@@ -8,19 +8,38 @@ type ForwardGeocodeResponse = Array<{
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { query?: string };
+    const body = (await request.json()) as {
+      query?: string;
+      street?: string;
+      city?: string;
+      state?: string;
+      zip?: string;
+    };
     const query = body.query?.trim();
+    const street = body.street?.trim() || "";
+    const city = body.city?.trim() || "";
+    const state = body.state?.trim() || "";
+    const zip = body.zip?.trim() || "";
 
-    if (!query) {
+    if (!query && !street && !city && !state && !zip) {
       return NextResponse.json({ error: "Address is required." }, { status: 400 });
     }
 
     const acceptLanguage = request.headers.get("accept-language") || "en-US,en;q=0.9";
     const searchUrl = new URL("https://nominatim.openstreetmap.org/search");
     searchUrl.searchParams.set("format", "jsonv2");
-    searchUrl.searchParams.set("q", query);
     searchUrl.searchParams.set("addressdetails", "1");
     searchUrl.searchParams.set("limit", "1");
+    searchUrl.searchParams.set("countrycodes", "us");
+
+    if (street || city || state || zip) {
+      if (street) searchUrl.searchParams.set("street", street);
+      if (city) searchUrl.searchParams.set("city", city);
+      if (state) searchUrl.searchParams.set("state", state);
+      if (zip) searchUrl.searchParams.set("postalcode", zip);
+    } else if (query) {
+      searchUrl.searchParams.set("q", query);
+    }
 
     const response = await fetch(searchUrl, {
       headers: {

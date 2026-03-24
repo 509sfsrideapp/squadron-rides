@@ -6,6 +6,7 @@ import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, getDoc, writeBatch } from "firebase/firestore";
+import { buildHomeAddress } from "../../lib/home-address";
 import { isValidUsername, normalizeUsername } from "../../lib/username";
 
 const flightOptions = ["Alpha", "Bravo", "Charlie", "Delta", "Foxtrot", "Staff"] as const;
@@ -21,7 +22,10 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [homeAddress, setHomeAddress] = useState("");
+  const [homeStreet, setHomeStreet] = useState("");
+  const [homeCity, setHomeCity] = useState("");
+  const [homeState, setHomeState] = useState("");
+  const [homeZip, setHomeZip] = useState("");
   const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
   const [carYear, setCarYear] = useState("");
   const [carMake, setCarMake] = useState("");
@@ -150,10 +154,23 @@ export default function SignupPage() {
         return;
       }
 
-      let normalizedHomeAddress = homeAddress.trim();
+      const rawHomeAddress = buildHomeAddress({
+        street: homeStreet,
+        city: homeCity,
+        state: homeState,
+        zip: homeZip,
+      });
+      const hasAnyAddressField = Boolean(homeStreet.trim() || homeCity.trim() || homeState.trim() || homeZip.trim());
+      let normalizedHomeAddress = rawHomeAddress;
       let homeAddressVerified = false;
 
-      if (normalizedHomeAddress) {
+      if (hasAnyAddressField) {
+        if (!homeStreet.trim() || !homeCity.trim() || !homeState.trim() || !homeZip.trim()) {
+          setStatusMessage("Complete street address, city, state, and ZIP code or leave the address blank for now.");
+          setAddressCheckMessage("");
+          return;
+        }
+
         setAddressCheckMessage("Verifying home address...");
 
         const validationResponse = await fetch("/api/geocode/validate", {
@@ -161,7 +178,13 @@ export default function SignupPage() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ query: normalizedHomeAddress }),
+          body: JSON.stringify({
+            query: normalizedHomeAddress,
+            street: homeStreet.trim(),
+            city: homeCity.trim(),
+            state: homeState.trim(),
+            zip: homeZip.trim(),
+          }),
         });
 
         const validationDetails = (await validationResponse.json().catch(() => null)) as
@@ -199,6 +222,10 @@ export default function SignupPage() {
         phone: phone.trim(),
         email: email.trim(),
         homeAddress: normalizedHomeAddress,
+        homeStreet: homeStreet.trim(),
+        homeCity: homeCity.trim(),
+        homeState: homeState.trim().toUpperCase(),
+        homeZip: homeZip.trim(),
         homeAddressVerified,
         riderPhotoUrl: trimmedPhoto,
         driverPhotoUrl: trimmedPhoto,
@@ -331,14 +358,47 @@ export default function SignupPage() {
           }}
         >
           <input
-            value={homeAddress}
+            value={homeStreet}
             onChange={(e) => {
-              setHomeAddress(e.target.value);
+              setHomeStreet(e.target.value);
               setAddressCheckMessage("");
             }}
-            placeholder="Home Address"
+            placeholder="Street Address"
             style={{ display: "block", marginBottom: 10, width: "100%" }}
           />
+
+          <input
+            value={homeCity}
+            onChange={(e) => {
+              setHomeCity(e.target.value);
+              setAddressCheckMessage("");
+            }}
+            placeholder="City"
+            style={{ display: "block", marginBottom: 10, width: "100%" }}
+          />
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 10 }}>
+            <input
+              value={homeState}
+              onChange={(e) => {
+                setHomeState(e.target.value.toUpperCase());
+                setAddressCheckMessage("");
+              }}
+              placeholder="State"
+              style={{ width: "100%" }}
+              maxLength={2}
+            />
+
+            <input
+              value={homeZip}
+              onChange={(e) => {
+                setHomeZip(e.target.value);
+                setAddressCheckMessage("");
+              }}
+              placeholder="ZIP Code"
+              style={{ width: "100%" }}
+            />
+          </div>
 
           <div style={{ marginBottom: 12 }}>
             {profilePhotoUrl ? (

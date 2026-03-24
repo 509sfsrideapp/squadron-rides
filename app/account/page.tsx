@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
+import { buildHomeAddress, splitHomeAddress } from "../../lib/home-address";
 import { disablePushNotifications, enablePushNotifications } from "../../lib/push-notifications";
 import { useActiveRides } from "../../lib/use-active-rides";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -21,6 +22,10 @@ type UserProfile = {
   phone?: string;
   email?: string;
   homeAddress?: string;
+  homeStreet?: string;
+  homeCity?: string;
+  homeState?: string;
+  homeZip?: string;
   homeAddressVerified?: boolean;
   available?: boolean;
   rank?: string;
@@ -62,7 +67,10 @@ export default function AccountPage() {
     username: "",
     phone: "",
     email: "",
-    homeAddress: "",
+    homeStreet: "",
+    homeCity: "",
+    homeState: "",
+    homeZip: "",
     rank: "",
     flight: "",
     profilePhotoUrl: "",
@@ -102,6 +110,13 @@ export default function AccountPage() {
         }
 
         const [fallbackFirstName = "", ...fallbackLastNameParts] = (data?.name || "").trim().split(/\s+/);
+        const fallbackAddress = splitHomeAddress(data?.homeAddress);
+        const parsedAddress = {
+          street: data?.homeStreet || fallbackAddress.street,
+          city: data?.homeCity || fallbackAddress.city,
+          state: data?.homeState || fallbackAddress.state,
+          zip: data?.homeZip || fallbackAddress.zip,
+        };
 
         setForm({
           firstName: data?.firstName || fallbackFirstName,
@@ -109,7 +124,10 @@ export default function AccountPage() {
           username: data?.username || "",
           phone: data?.phone || "",
           email: data?.email || currentUser.email || "",
-          homeAddress: data?.homeAddress || "",
+          homeStreet: parsedAddress.street,
+          homeCity: parsedAddress.city,
+          homeState: parsedAddress.state,
+          homeZip: parsedAddress.zip,
           rank: data?.rank || data?.rankOrRole || "",
           flight: data?.flight || "",
           profilePhotoUrl: data?.driverPhotoUrl || data?.riderPhotoUrl || "",
@@ -307,17 +325,38 @@ export default function AccountPage() {
         }
       }
 
+      const rawHomeAddress = buildHomeAddress({
+        street: form.homeStreet,
+        city: form.homeCity,
+        state: form.homeState,
+        zip: form.homeZip,
+      });
+      const hasAnyAddressField = Boolean(
+        form.homeStreet.trim() || form.homeCity.trim() || form.homeState.trim() || form.homeZip.trim()
+      );
       let verifiedHomeAddress = false;
-      let normalizedHomeAddress = form.homeAddress.trim();
+      let normalizedHomeAddress = rawHomeAddress;
 
-      if (normalizedHomeAddress) {
+      if (hasAnyAddressField) {
+        if (!form.homeStreet.trim() || !form.homeCity.trim() || !form.homeState.trim() || !form.homeZip.trim()) {
+          setStatusMessage("Complete street address, city, state, and ZIP code before saving your home address.");
+          setAddressCheckMessage("");
+          return;
+        }
+
         setAddressCheckMessage("Verifying home address...");
         const validationResponse = await fetch("/api/geocode/validate", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ query: normalizedHomeAddress }),
+          body: JSON.stringify({
+            query: normalizedHomeAddress,
+            street: form.homeStreet.trim(),
+            city: form.homeCity.trim(),
+            state: form.homeState.trim(),
+            zip: form.homeZip.trim(),
+          }),
         });
         const validationDetails = (await validationResponse.json().catch(() => null)) as
           | { valid?: boolean; normalizedAddress?: string; error?: string }
@@ -349,6 +388,10 @@ export default function AccountPage() {
           phone: form.phone.trim(),
           email: form.email.trim(),
           homeAddress: normalizedHomeAddress,
+          homeStreet: form.homeStreet.trim(),
+          homeCity: form.homeCity.trim(),
+          homeState: form.homeState.trim().toUpperCase(),
+          homeZip: form.homeZip.trim(),
           homeAddressVerified: verifiedHomeAddress,
           rank: form.rank.trim(),
           flight: form.flight.trim(),
@@ -384,7 +427,13 @@ export default function AccountPage() {
 
       setOriginalUsername(normalizedUsername);
       setHomeAddressVerified(verifiedHomeAddress);
-      setForm((prev) => ({ ...prev, homeAddress: normalizedHomeAddress }));
+      setForm((prev) => ({
+        ...prev,
+        homeStreet: form.homeStreet.trim(),
+        homeCity: form.homeCity.trim(),
+        homeState: form.homeState.trim().toUpperCase(),
+        homeZip: form.homeZip.trim(),
+      }));
       setStatusMessage("Account details saved.");
     } catch (error) {
       console.error(error);
@@ -530,11 +579,29 @@ export default function AccountPage() {
         </p>
         <input value={form.phone} onChange={(e) => handleChange("phone", e.target.value)} placeholder="Phone Number" style={{ marginBottom: 10 }} />
         <input value={form.email} onChange={(e) => handleChange("email", e.target.value)} placeholder="Email" style={{ marginBottom: 10 }} />
-        <input value={form.homeAddress} onChange={(e) => {
-          handleChange("homeAddress", e.target.value);
+        <h2 style={{ marginTop: 24 }}>Home Address</h2>
+        <input value={form.homeStreet} onChange={(e) => {
+          handleChange("homeStreet", e.target.value);
           setHomeAddressVerified(false);
           setAddressCheckMessage("");
-        }} placeholder="Home Address" style={{ marginBottom: 6 }} />
+        }} placeholder="Street Address" style={{ marginBottom: 10 }} />
+        <input value={form.homeCity} onChange={(e) => {
+          handleChange("homeCity", e.target.value);
+          setHomeAddressVerified(false);
+          setAddressCheckMessage("");
+        }} placeholder="City" style={{ marginBottom: 10 }} />
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 6, maxWidth: "28rem" }}>
+          <input value={form.homeState} onChange={(e) => {
+            handleChange("homeState", e.target.value.toUpperCase());
+            setHomeAddressVerified(false);
+            setAddressCheckMessage("");
+          }} placeholder="State" maxLength={2} />
+          <input value={form.homeZip} onChange={(e) => {
+            handleChange("homeZip", e.target.value);
+            setHomeAddressVerified(false);
+            setAddressCheckMessage("");
+          }} placeholder="ZIP Code" />
+        </div>
         <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: homeAddressVerified ? "#86efac" : "#94a3b8" }}>
           {homeAddressVerified ? "Home address verified." : "Home address will be verified when you save Account Settings."}
         </p>
