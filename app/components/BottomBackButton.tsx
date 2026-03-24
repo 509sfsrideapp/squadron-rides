@@ -7,7 +7,7 @@ export default function BottomBackButton() {
     <div
       style={{
         position: "fixed",
-        right: "calc(env(safe-area-inset-right) + 18px)",
+        left: "calc(env(safe-area-inset-left) + 18px)",
         bottom: "calc(env(safe-area-inset-bottom) + 22px)",
         zIndex: 70,
       }}

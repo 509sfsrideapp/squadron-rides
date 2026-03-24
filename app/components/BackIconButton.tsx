@@ -40,11 +40,18 @@ export default function BackIconButton({ style }: BackIconButtonProps) {
       onClick={handleBack}
       style={{ ...baseStyle, ...style }}
     >
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
-          d="M15.5 5.5 9 12l6.5 6.5"
+          d="M14.5 4.5 7 12l7.5 7.5"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="2.4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M8 12h9"
+          stroke="currentColor"
+          strokeWidth="2.4"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
