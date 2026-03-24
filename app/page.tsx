@@ -34,7 +34,7 @@ type UserProfile = {
   carColor?: string;
 };
 
-const appTilePlaceholderCount = 7;
+const appTilePlaceholderCount = 6;
 
 function SteeringWheelIcon() {
   return (
@@ -75,6 +75,30 @@ function MessagesIcon() {
       <path d="M12 16h40a6 6 0 0 1 6 6v20a6 6 0 0 1-6 6H28l-10 8v-8h-6a6 6 0 0 1-6-6V22a6 6 0 0 1 6-6Z" />
       <path d="M20 28h24" />
       <path d="M20 36h18" />
+    </svg>
+  );
+}
+
+function DevIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 64 64"
+      width="34"
+      height="34"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M38 12 52 26 46 32 32 18 38 12Z" />
+      <path d="M28 20 16 32l4 4-6 6" />
+      <path d="m26 40-6 6" />
+      <path d="m15 22-5 5 5 5" />
+      <path d="m49 22 5 5-5 5" />
+      <path d="M28 49h8" />
+      <path d="M26 17h-8" />
     </svg>
   );
 }
@@ -576,6 +600,50 @@ export default function HomePage() {
                       }}
                     >
                       Messages
+                    </span>
+                  </Link>
+
+                  <Link
+                    href="/developer"
+                    style={{
+                      minHeight: 112,
+                      padding: "14px 12px",
+                      borderRadius: 18,
+                      textDecoration: "none",
+                      color: "#e5edf7",
+                      background: "linear-gradient(180deg, rgba(15, 23, 42, 0.94) 0%, rgba(9, 15, 25, 0.98) 100%)",
+                      border: "1px solid rgba(96, 165, 250, 0.18)",
+                      boxShadow: "0 14px 30px rgba(2, 6, 23, 0.2)",
+                      display: "grid",
+                      justifyItems: "center",
+                      alignContent: "center",
+                      gap: 10,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 52,
+                        height: 52,
+                        borderRadius: 999,
+                        display: "grid",
+                        placeItems: "center",
+                        backgroundColor: "rgba(59, 130, 246, 0.12)",
+                        color: "#dbeafe",
+                      }}
+                    >
+                      <DevIcon />
+                    </div>
+                    <span
+                      style={{
+                        textAlign: "center",
+                        fontSize: 12,
+                        lineHeight: 1.3,
+                        fontFamily: "var(--font-display)",
+                        letterSpacing: "0.04em",
+                        textTransform: "uppercase",
+                      }}
+                    >
+                      Dev
                     </span>
                   </Link>
 
