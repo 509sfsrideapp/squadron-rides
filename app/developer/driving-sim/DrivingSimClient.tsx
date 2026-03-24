@@ -225,18 +225,18 @@ export default function DrivingSimClient() {
   const [tiltAvailable, setTiltAvailable] = useState(false);
   const [tiltGranted, setTiltGranted] = useState(false);
   const [tiltPrompt, setTiltPrompt] = useState("Tilt your phone to steer. Keyboard still works on desktop.");
-  const [fullscreenActive, setFullscreenActive] = useState(false);
+  const [immersiveMode, setImmersiveMode] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const worldRef = useRef<GameWorld>(createInitialWorld(loadBestScore()));
   const frameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
   const tiltBaselineRef = useRef<number | null>(null);
-  const tiltAxisRef = useRef<"gamma" | "beta" | null>(null);
 
   const enterPlayMode = useCallback(async () => {
     const shell = shellRef.current;
     if (!shell || typeof document === "undefined") {
+      setImmersiveMode(true);
       return;
     }
 
@@ -256,6 +256,8 @@ export default function DrivingSimClient() {
     } catch {
       // Ignore unsupported orientation locks.
     }
+
+    setImmersiveMode(true);
   }, []);
 
   const requestTiltAccess = useCallback(async () => {
@@ -277,7 +279,6 @@ export default function DrivingSimClient() {
         const result = await orientationCtor.requestPermission();
         if (result === "granted") {
           tiltBaselineRef.current = null;
-          tiltAxisRef.current = null;
           setTiltGranted(true);
           setTiltPrompt("Tilt steering armed. Hold the phone level for a second so it can calibrate.");
         } else {
@@ -288,7 +289,6 @@ export default function DrivingSimClient() {
       }
     } else {
       tiltBaselineRef.current = null;
-      tiltAxisRef.current = null;
       setTiltGranted(true);
       setTiltPrompt("Tilt steering armed. Hold the phone level for a second so it can calibrate.");
     }
@@ -329,6 +329,8 @@ export default function DrivingSimClient() {
         // Ignore unsupported fullscreen exits.
       }
     }
+
+    setImmersiveMode(false);
   };
 
   useEffect(() => {
@@ -337,14 +339,11 @@ export default function DrivingSimClient() {
     syncViewportMode();
 
     const handleResize = () => syncViewportMode();
-    const handleFullscreen = () => setFullscreenActive(Boolean(document.fullscreenElement));
 
     window.addEventListener("resize", handleResize);
-    document.addEventListener("fullscreenchange", handleFullscreen);
 
     return () => {
       window.removeEventListener("resize", handleResize);
-      document.removeEventListener("fullscreenchange", handleFullscreen);
     };
   }, [startGame]);
 
@@ -401,20 +400,18 @@ export default function DrivingSimClient() {
       }
 
       const gamma = event.gamma ?? 0;
-      const beta = event.beta ?? 0;
-
-      if (!tiltAxisRef.current) {
-        tiltAxisRef.current = Math.abs(gamma) > Math.abs(beta) ? "gamma" : "beta";
-      }
-
-      const reading = tiltAxisRef.current === "gamma" ? gamma : beta;
+      const orientationAngle =
+        typeof window !== "undefined" && typeof (window as Window & { orientation?: number }).orientation === "number"
+          ? (window as Window & { orientation?: number }).orientation ?? 0
+          : screen.orientation?.angle ?? 0;
+      const direction = orientationAngle === 90 ? -1 : 1;
 
       if (tiltBaselineRef.current == null) {
-        tiltBaselineRef.current = reading;
+        tiltBaselineRef.current = gamma;
         setTiltPrompt("Tilt calibrated. Keep the phone level to stay centered.");
       }
 
-      const normalized = Math.max(-1, Math.min(1, (reading - tiltBaselineRef.current) / 16));
+      const normalized = Math.max(-1, Math.min(1, ((gamma - tiltBaselineRef.current) * direction) / 14));
       worldRef.current.input = normalized;
     };
 
@@ -429,7 +426,11 @@ export default function DrivingSimClient() {
 
   useEffect(() => {
     if (snapshot.phase === "playing" && !isLandscape) {
-      void exitPlayMode();
+      const timeoutId = window.setTimeout(() => {
+        void exitPlayMode();
+      }, 0);
+
+      return () => window.clearTimeout(timeoutId);
     }
   }, [isLandscape, snapshot.phase]);
 
@@ -544,7 +545,7 @@ export default function DrivingSimClient() {
 
   const impairmentBlur = Math.min(7, 1.2 + snapshot.bac * 18);
   const distortionRotation = Math.sin(snapshot.elapsed * 0.58) * 0.65;
-  const shellStyle = fullscreenActive
+  const shellStyle = immersiveMode
     ? {
         position: "fixed" as const,
         inset: 0,
@@ -568,27 +569,27 @@ export default function DrivingSimClient() {
   }, [isTouchDevice, tiltAvailable, tiltPrompt]);
 
   return (
-    <main style={{ padding: fullscreenActive ? 0 : 20 }}>
-      {!fullscreenActive ? <DeveloperBackLink /> : null}
+    <main style={{ padding: immersiveMode ? 0 : 20 }}>
+      {!immersiveMode ? <DeveloperBackLink /> : null}
 
       <section
         ref={shellRef}
         style={{
           maxWidth: 1240,
           margin: "0 auto",
-          padding: fullscreenActive ? 0 : "clamp(1rem, 2vw, 1.4rem)",
-          borderRadius: fullscreenActive ? 0 : 28,
-          border: fullscreenActive ? "none" : "1px solid rgba(96, 165, 250, 0.18)",
+          padding: immersiveMode ? 0 : "clamp(1rem, 2vw, 1.4rem)",
+          borderRadius: immersiveMode ? 0 : 28,
+          border: immersiveMode ? "none" : "1px solid rgba(96, 165, 250, 0.18)",
           background:
             "radial-gradient(circle at top, rgba(37, 99, 235, 0.16), transparent 24%), linear-gradient(180deg, rgba(7, 12, 22, 0.98) 0%, rgba(2, 5, 10, 0.99) 100%)",
-          boxShadow: fullscreenActive ? "none" : "0 28px 80px rgba(2, 6, 23, 0.42)",
-          minHeight: fullscreenActive ? "100dvh" : undefined,
+          boxShadow: immersiveMode ? "none" : "0 28px 80px rgba(2, 6, 23, 0.42)",
+          minHeight: immersiveMode ? "100dvh" : undefined,
           ...shellStyle,
         }}
       >
         <div
           style={{
-            display: fullscreenActive ? "none" : "flex",
+            display: immersiveMode ? "none" : "flex",
             justifyContent: "space-between",
             gap: 18,
             flexWrap: "wrap",
@@ -642,18 +643,18 @@ export default function DrivingSimClient() {
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: fullscreenActive ? "minmax(0, 1fr)" : "minmax(0, 1fr) 310px",
-            gap: fullscreenActive ? 0 : 18,
-            minHeight: fullscreenActive ? "100dvh" : undefined,
+            gridTemplateColumns: immersiveMode ? "minmax(0, 1fr)" : "minmax(0, 1fr) 310px",
+            gap: immersiveMode ? 0 : 18,
+            minHeight: immersiveMode ? "100dvh" : undefined,
           }}
         >
           <div
             style={{
               position: "relative",
-              minHeight: fullscreenActive ? "100dvh" : 720,
+              minHeight: immersiveMode ? "100dvh" : 720,
               overflow: "hidden",
-              borderRadius: fullscreenActive ? 0 : 28,
-              border: fullscreenActive ? "none" : "1px solid rgba(148, 163, 184, 0.16)",
+              borderRadius: immersiveMode ? 0 : 28,
+              border: immersiveMode ? "none" : "1px solid rgba(148, 163, 184, 0.16)",
               background:
                 "linear-gradient(180deg, #58a6ff 0%, #7dd3fc 16%, #9fd6ff 28%, #1f2937 28%, #111827 100%)",
               boxShadow: "inset 0 1px 0 rgba(255,255,255,0.02)",
@@ -672,10 +673,10 @@ export default function DrivingSimClient() {
             <div
               style={{
                 position: "absolute",
-                inset: fullscreenActive ? "2% 2.5% 0" : "7% 8% 10%",
-                borderRadius: fullscreenActive ? 0 : 28,
+                inset: immersiveMode ? "2% 2.5% 0" : "7% 8% 10%",
+                borderRadius: immersiveMode ? 0 : 28,
                 overflow: "hidden",
-                transform: `perspective(1100px) rotateX(${fullscreenActive ? 64 : 61}deg) rotateZ(${distortionRotation}deg)`,
+                transform: `perspective(1100px) rotateX(${immersiveMode ? 64 : 61}deg) rotateZ(${distortionRotation}deg)`,
                 transformOrigin: "center bottom",
                 background: "linear-gradient(180deg, #1f2937 0%, #0f172a 14%, #111827 100%)",
                 boxShadow: `0 18px 42px rgba(2, 6, 23, 0.5), 0 0 0 1px rgba(148, 163, 184, 0.12) inset`,
@@ -790,7 +791,7 @@ export default function DrivingSimClient() {
                 top: 16,
                 display: "grid",
                 gap: 10,
-                maxWidth: fullscreenActive ? 210 : 280,
+                maxWidth: immersiveMode ? 210 : 280,
                 zIndex: 6,
               }}
             >
@@ -806,7 +807,7 @@ export default function DrivingSimClient() {
                 top: 16,
                 display: "grid",
                 gap: 10,
-                maxWidth: fullscreenActive ? 220 : 290,
+                maxWidth: immersiveMode ? 220 : 290,
                 zIndex: 6,
               }}
             >
@@ -914,7 +915,7 @@ export default function DrivingSimClient() {
             ) : null}
           </div>
 
-          {!fullscreenActive ? (
+          {!immersiveMode ? (
             <aside
               style={{
                 display: "grid",
