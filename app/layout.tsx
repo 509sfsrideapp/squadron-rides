@@ -2,6 +2,7 @@ import ForegroundNotificationBridge from "./components/ForegroundNotificationBri
 import AccountAccessGate from "./components/AccountAccessGate";
 import BottomUtilityNav from "./components/BottomUtilityNav";
 import DeveloperAccessCleaner from "./components/DeveloperAccessCleaner";
+import InitialAppSplash from "./components/InitialAppSplash";
 import type { Metadata, Viewport } from "next";
 import NotificationNavigationBridge from "./components/NotificationNavigationBridge";
 import ProfileCompletionGate from "./components/ProfileCompletionGate";
@@ -38,6 +39,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
+        <InitialAppSplash />
         <ForegroundNotificationBridge />
         <NotificationNavigationBridge />
         <DeveloperAccessCleaner />
@@ -53,7 +55,7 @@ export default function RootLayout({
             textAlign: "center",
           }}
         >
-          Version 87
+          Version 88
         </footer>
       </body>
     </html>
