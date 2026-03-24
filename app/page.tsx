@@ -10,7 +10,7 @@ import { auth, db } from "../lib/firebase";
 import { isAdminEmail } from "../lib/admin";
 import { useActiveRides } from "../lib/use-active-rides";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 
 type UserProfile = {
   name: string;
@@ -32,7 +32,6 @@ export default function HomePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [authWarning, setAuthWarning] = useState("");
-  const [hasRideHistory, setHasRideHistory] = useState(false);
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
 
   useEffect(() => {
@@ -88,20 +87,6 @@ export default function HomePage() {
       router.replace(`/ride-status?rideId=${riderActiveRide.id}`);
     }
   }, [activeRideLoading, driverActiveRide, riderActiveRide, router, user]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const activeRideQuery = query(collection(db, "rides"), where("riderId", "==", user.uid));
-    const unsubscribe = onSnapshot(activeRideQuery, (snapshot) => {
-      const statuses = snapshot.docs.map((docSnap) => docSnap.data().status);
-      const hasHistory = statuses.some((status) => status === "completed" || status === "canceled");
-
-      setHasRideHistory(hasHistory);
-    });
-
-    return () => unsubscribe();
-  }, [user]);
 
   const handleClockIn = async () => {
     if (!user) {
@@ -300,12 +285,20 @@ export default function HomePage() {
             <Link
               href="/request"
               style={{
-                display: "inline-block",
-                padding: "10px 16px",
-                backgroundColor: "#1f2937",
+                display: "block",
+                width: "100%",
+                maxWidth: 540,
+                padding: "16px 20px",
+                background: "linear-gradient(180deg, #c01d1d 0%, #7f1212 100%)",
                 color: "white",
                 textDecoration: "none",
-                borderRadius: 8,
+                borderRadius: 14,
+                textAlign: "center",
+                fontSize: 18,
+                fontFamily: "var(--font-display)",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                boxShadow: "0 16px 38px rgba(127, 18, 18, 0.34)",
               }}
             >
               Request Ride
@@ -327,24 +320,6 @@ export default function HomePage() {
                 }}
               >
                 Current Ride Status
-              </Link>
-            </div>
-          ) : null}
-
-          {hasRideHistory ? (
-            <div style={{ marginTop: 20 }}>
-              <Link
-                href="/history"
-                style={{
-                  display: "inline-block",
-                  padding: "10px 16px",
-                  backgroundColor: "#111827",
-                  color: "white",
-                  textDecoration: "none",
-                  borderRadius: 8,
-                }}
-              >
-                Ride History
               </Link>
             </div>
           ) : null}

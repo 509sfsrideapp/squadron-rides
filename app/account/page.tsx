@@ -10,7 +10,7 @@ import { auth, db } from "../../lib/firebase";
 import { disablePushNotifications, enablePushNotifications } from "../../lib/push-notifications";
 import { useActiveRides } from "../../lib/use-active-rides";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query, where, writeBatch } from "firebase/firestore";
 import { isValidUsername, normalizeUsername } from "../../lib/username";
 
 type UserProfile = {
@@ -49,6 +49,8 @@ export default function AccountPage() {
   const [notificationTokenCount, setNotificationTokenCount] = useState(0);
   const [notificationPermission, setNotificationPermission] = useState("unknown");
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(true);
+  const [hasRideHistory, setHasRideHistory] = useState(false);
+  const [hasDriverHistory, setHasDriverHistory] = useState(false);
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
   const [form, setForm] = useState({
     firstName: "",
@@ -138,6 +140,36 @@ export default function AccountPage() {
       router.replace(`/ride-status?rideId=${riderActiveRide.id}`);
     }
   }, [activeRideLoading, driverActiveRide, riderActiveRide, router, user]);
+
+  useEffect(() => {
+    if (!user) {
+      setHasRideHistory(false);
+      setHasDriverHistory(false);
+      return;
+    }
+
+    const riderHistoryQuery = query(collection(db, "rides"), where("riderId", "==", user.uid));
+    const driverHistoryQuery = query(collection(db, "rides"), where("acceptedBy", "==", user.uid));
+
+    const unsubscribeRider = onSnapshot(riderHistoryQuery, (snapshot) => {
+      setHasRideHistory(snapshot.docs.some((docSnap) => {
+        const status = docSnap.data().status;
+        return status === "completed" || status === "canceled";
+      }));
+    });
+
+    const unsubscribeDriver = onSnapshot(driverHistoryQuery, (snapshot) => {
+      setHasDriverHistory(snapshot.docs.some((docSnap) => {
+        const status = docSnap.data().status;
+        return status === "completed" || status === "canceled";
+      }));
+    });
+
+    return () => {
+      unsubscribeRider();
+      unsubscribeDriver();
+    };
+  }, [user]);
 
   const handleChange = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -578,6 +610,38 @@ export default function AccountPage() {
         <input value={form.carModel} onChange={(e) => handleChange("carModel", e.target.value)} placeholder="Car model (optional)" style={{ marginBottom: 10 }} />
         <input value={form.carColor} onChange={(e) => handleChange("carColor", e.target.value)} placeholder="Car color (optional)" style={{ marginBottom: 10 }} />
         <input value={form.carPlate} onChange={(e) => handleChange("carPlate", e.target.value)} placeholder="License plate (optional)" style={{ marginBottom: 10 }} />
+
+        <h2 style={{ marginTop: 24 }}>History</h2>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
+          <Link
+            href="/history"
+            style={{
+              display: "inline-block",
+              padding: "10px 16px",
+              backgroundColor: hasRideHistory ? "#111827" : "rgba(15, 23, 42, 0.72)",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: 8,
+              opacity: hasRideHistory ? 1 : 0.74,
+            }}
+          >
+            Rider History
+          </Link>
+          <Link
+            href="/driver/history"
+            style={{
+              display: "inline-block",
+              padding: "10px 16px",
+              backgroundColor: hasDriverHistory ? "#111827" : "rgba(15, 23, 42, 0.72)",
+              color: "white",
+              textDecoration: "none",
+              borderRadius: 8,
+              opacity: hasDriverHistory ? 1 : 0.74,
+            }}
+          >
+            Driver History
+          </Link>
+        </div>
 
         <button type="button" onClick={handleSave} disabled={saving || uploadingPhoto}>
           Save Account Settings

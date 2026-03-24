@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppLoadingState from "../components/AppLoadingState";
@@ -70,7 +69,6 @@ export default function DriverPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [openRides, setOpenRides] = useState<Ride[]>([]);
   const [acceptedRides, setAcceptedRides] = useState<Ride[]>([]);
-  const [hasDriverHistory, setHasDriverHistory] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -118,7 +116,6 @@ export default function DriverPage() {
         }));
       const rideList: Ride[] = allDriverRides
         .filter((ride) => ACTIVE_RIDE_STATUSES.includes(ride.status as (typeof ACTIVE_RIDE_STATUSES)[number]));
-      setHasDriverHistory(allDriverRides.some((ride) => ride.status === "completed" || ride.status === "canceled"));
       setAcceptedRides(rideList);
     });
 
@@ -251,24 +248,6 @@ export default function DriverPage() {
       </p>
 
       <PushNotificationsCard />
-
-      {hasDriverHistory ? (
-        <div style={{ marginTop: 20 }}>
-          <Link
-            href="/driver/history"
-            style={{
-              display: "inline-block",
-              padding: "10px 16px",
-              backgroundColor: "#111827",
-              color: "white",
-              textDecoration: "none",
-              borderRadius: 8,
-            }}
-          >
-            Driver History
-          </Link>
-        </div>
-      ) : null}
 
       <div style={{ marginTop: 30 }}>
         <h3>Current Accepted Rides</h3>
