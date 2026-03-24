@@ -2,38 +2,15 @@
 
 import Image from "next/image";
 import { ChangeEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 import HomeIconLink from "../components/HomeIconLink";
-import { auth, db } from "../../lib/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, getDoc, writeBatch } from "firebase/firestore";
-import { buildHomeAddress } from "../../lib/home-address";
-import { isValidUsername, normalizeUsername } from "../../lib/username";
+import { validateSignupDraft, SIGNUP_DRAFT_STORAGE_KEY, type SignupDraft } from "../../lib/signup";
 
 const flightOptions = ["Alpha", "Bravo", "Charlie", "Delta", "Foxtrot", "Staff"] as const;
 const rankOptions = ["AB", "Amn", "A1C", "SrA", "SSgt", "TSgt", "MSgt", "SMSgt", "CMSgt", "2d Lt", "1st Lt", "Capt", "Maj", "Lt Col", "Col", "Brig Gen", "Maj Gen", "Lt Gen", "Gen"] as const;
 
-function getSignupErrorMessage(error: unknown) {
-  const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
-
-  switch (code) {
-    case "auth/email-already-in-use":
-      return "That email is already being used by another account.";
-    case "auth/invalid-email":
-      return "Enter a valid email address.";
-    case "auth/weak-password":
-      return "Password must be at least 6 characters.";
-    case "auth/network-request-failed":
-      return "Network error while creating the account. Try again.";
-    default:
-      if (error instanceof Error && error.message) {
-        return `Signup failed: ${error.message}`;
-      }
-
-      return "Signup failed. Check the email and password and try again.";
-  }
-}
-
 export default function SignupPage() {
+  const router = useRouter();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [rank, setRank] = useState("");
@@ -139,104 +116,41 @@ export default function SignupPage() {
   };
 
   const handleSignup = async () => {
-    if (
-      !firstName.trim() ||
-      !lastName.trim() ||
-      !rank.trim() ||
-      !flight.trim() ||
-      !phone.trim() ||
-      !username.trim() ||
-      !email.trim() ||
-      !password.trim() ||
-      !confirmPassword.trim()
-    ) {
-      setStatusMessage("Fill out every required field before creating your account.");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setStatusMessage("Password and verify password must match.");
-      return;
-    }
-
     try {
-      const normalizedUsername = normalizeUsername(username);
+      const draft: SignupDraft = {
+        firstName,
+        lastName,
+        rank,
+        flight,
+        phone,
+        username,
+        email,
+        password,
+        confirmPassword,
+        homeStreet,
+        homeCity,
+        homeState,
+        homeZip,
+        profilePhotoUrl,
+        carYear,
+        carMake,
+        carModel,
+        carColor,
+      };
 
-      if (!isValidUsername(normalizedUsername)) {
-        setStatusMessage("Usernames must be 3-24 characters using letters, numbers, dots, dashes, or underscores.");
+      const validation = await validateSignupDraft(draft);
+
+      if (!validation.ok) {
+        setStatusMessage(validation.message);
         return;
       }
 
-      const usernameSnap = await getDoc(doc(db, "usernames", normalizedUsername));
-
-      if (usernameSnap.exists()) {
-        setStatusMessage("That username is already taken.");
-        return;
-      }
-
-      const rawHomeAddress = buildHomeAddress({
-        street: homeStreet,
-        city: homeCity,
-        state: homeState,
-        zip: homeZip,
-      });
-      const hasAnyAddressField = Boolean(homeStreet.trim() || homeCity.trim() || homeState.trim() || homeZip.trim());
-      const normalizedHomeAddress = rawHomeAddress;
-
-      if (hasAnyAddressField) {
-        if (!homeStreet.trim() || !homeCity.trim() || !homeState.trim() || !homeZip.trim()) {
-          setStatusMessage("Complete street address, city, state, and ZIP code or leave the address blank for now.");
-          return;
-        }
-      }
-
-      setStatusMessage("Creating account...");
-
-      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
-      const trimmedPhoto = profilePhotoUrl.trim();
-
-      const batch = writeBatch(db);
-      batch.set(doc(db, "users", userCredential.user.uid), {
-        name: fullName,
-        firstName: firstName.trim(),
-        lastName: lastName.trim(),
-        rank: rank.trim(),
-        rankOrRole: rank.trim(),
-        flight: flight.trim(),
-        username: normalizedUsername,
-        phone: phone.trim(),
-        email: email.trim(),
-        homeAddress: normalizedHomeAddress,
-        homeStreet: homeStreet.trim(),
-        homeCity: homeCity.trim(),
-        homeState: homeState.trim().toUpperCase(),
-        homeZip: homeZip.trim(),
-        riderPhotoUrl: trimmedPhoto,
-        driverPhotoUrl: trimmedPhoto,
-        carYear: carYear.trim(),
-        carMake: carMake.trim(),
-        carModel: carModel.trim(),
-        carColor: carColor.trim(),
-        carPlate: "",
-        available: false,
-        createdAt: new Date(),
-      });
-
-      batch.set(doc(db, "usernames", normalizedUsername), {
-        uid: userCredential.user.uid,
-        username: normalizedUsername,
-        email: userCredential.user.email,
-        createdAt: new Date(),
-      });
-
-      await batch.commit();
-
-      alert("Account created");
-      window.location.href = "/login";
+      setStatusMessage("Saving your signup info and opening terms...");
+      window.sessionStorage.setItem(SIGNUP_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+      router.push("/signup/terms");
     } catch (error) {
       console.error(error);
-      setStatusMessage(getSignupErrorMessage(error));
+      setStatusMessage(error instanceof Error ? error.message : "Could not prepare your signup.");
     }
   };
 
@@ -444,7 +358,7 @@ export default function SignupPage() {
         </div>
 
         <button type="button" onClick={handleSignup} style={{ padding: 10 }} disabled={uploadingPhoto}>
-          Create Account
+          Continue to Terms
         </button>
       </div>
     </main>
