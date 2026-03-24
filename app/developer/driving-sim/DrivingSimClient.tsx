@@ -231,6 +231,8 @@ export default function DrivingSimClient() {
   const frameRef = useRef<number | null>(null);
   const lastTimeRef = useRef<number | null>(null);
   const shellRef = useRef<HTMLDivElement | null>(null);
+  const tiltBaselineRef = useRef<number | null>(null);
+  const tiltAxisRef = useRef<"gamma" | "beta" | null>(null);
 
   const enterPlayMode = useCallback(async () => {
     const shell = shellRef.current;
@@ -274,8 +276,10 @@ export default function DrivingSimClient() {
       try {
         const result = await orientationCtor.requestPermission();
         if (result === "granted") {
+          tiltBaselineRef.current = null;
+          tiltAxisRef.current = null;
           setTiltGranted(true);
-          setTiltPrompt("Tilt steering armed. Hold the phone steady to stay centered.");
+          setTiltPrompt("Tilt steering armed. Hold the phone level for a second so it can calibrate.");
         } else {
           setTiltPrompt("Tilt permission was denied. Steering will fall back to keyboard only.");
         }
@@ -283,8 +287,10 @@ export default function DrivingSimClient() {
         setTiltPrompt("Tilt permission could not be enabled. Keyboard fallback is still available.");
       }
     } else {
+      tiltBaselineRef.current = null;
+      tiltAxisRef.current = null;
       setTiltGranted(true);
-      setTiltPrompt("Tilt steering armed. Hold the phone steady to stay centered.");
+      setTiltPrompt("Tilt steering armed. Hold the phone level for a second so it can calibrate.");
     }
   }, []);
 
@@ -395,7 +401,20 @@ export default function DrivingSimClient() {
       }
 
       const gamma = event.gamma ?? 0;
-      const normalized = Math.max(-1, Math.min(1, gamma / 18));
+      const beta = event.beta ?? 0;
+
+      if (!tiltAxisRef.current) {
+        tiltAxisRef.current = Math.abs(gamma) > Math.abs(beta) ? "gamma" : "beta";
+      }
+
+      const reading = tiltAxisRef.current === "gamma" ? gamma : beta;
+
+      if (tiltBaselineRef.current == null) {
+        tiltBaselineRef.current = reading;
+        setTiltPrompt("Tilt calibrated. Keep the phone level to stay centered.");
+      }
+
+      const normalized = Math.max(-1, Math.min(1, (reading - tiltBaselineRef.current) / 16));
       worldRef.current.input = normalized;
     };
 
@@ -604,6 +623,19 @@ export default function DrivingSimClient() {
             <p style={{ margin: "0.2rem 0 0", color: "#94a3b8", fontSize: 13 }}>
               Rotate back upright and the game releases fullscreen automatically.
             </p>
+            <button
+              type="button"
+              onClick={() => void enterPlayMode()}
+              style={{
+                width: "100%",
+                marginTop: 12,
+                minHeight: 48,
+                borderRadius: 16,
+                background: "linear-gradient(180deg, rgba(37, 99, 235, 0.92) 0%, rgba(30, 64, 175, 0.98) 100%)",
+              }}
+            >
+              Enter Full Screen
+            </button>
           </div>
         </div>
 
