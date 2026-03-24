@@ -1,4 +1,6 @@
 type AppLoadingStateProps = {
+  title?: string;
+  caption?: string;
   compact?: boolean;
 };
 
