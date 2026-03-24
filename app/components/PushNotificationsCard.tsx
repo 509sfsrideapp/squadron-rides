@@ -112,7 +112,11 @@ export default function PushNotificationsCard() {
     }
   };
 
-  if (loaded && permissionState === "granted" && (tokenCount ?? 0) > 0) {
+  if (!loaded) {
+    return null;
+  }
+
+  if (permissionState === "granted" && (tokenCount ?? 0) > 0) {
     return null;
   }
 

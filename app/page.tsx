@@ -436,7 +436,7 @@ export default function HomePage() {
             </div>
           ) : null}
 
-          <PushNotificationsCard />
+          {!checkingAuth && !activeRideLoading && !driverActiveRide && !riderActiveRide ? <PushNotificationsCard /> : null}
         </div>
       )}
 

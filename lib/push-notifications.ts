@@ -5,6 +5,8 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 
 let messagingPromise: Promise<Messaging | null> | null = null;
+const deviceIdStorageKey = "squadron-rides-device-id";
+const pushTokenStorageKey = "squadron-rides-push-token";
 
 function isIosDevice() {
   if (typeof window === "undefined") return false;
@@ -45,13 +47,12 @@ function getVapidKey() {
 function getDeviceId() {
   if (typeof window === "undefined") return "unknown-device";
 
-  const storageKey = "squadron-rides-device-id";
-  const existing = window.localStorage.getItem(storageKey);
+  const existing = window.localStorage.getItem(deviceIdStorageKey);
 
   if (existing) return existing;
 
   const created = `device-${crypto.randomUUID()}`;
-  window.localStorage.setItem(storageKey, created);
+  window.localStorage.setItem(deviceIdStorageKey, created);
   return created;
 }
 
@@ -65,18 +66,21 @@ async function saveTokenToProfile(token: string) {
   const userRef = doc(db, "users", currentUser.uid);
   const userSnap = await getDoc(userRef);
   const existingTokens = userSnap.exists() ? ((userSnap.data().notificationTokens as string[] | undefined) ?? []) : [];
+  const previousToken = typeof window === "undefined" ? null : window.localStorage.getItem(pushTokenStorageKey);
+  const nextTokens = Array.from(
+    new Set(
+      existingTokens
+        .filter((existingToken) => existingToken && existingToken !== previousToken)
+        .concat(token)
+    )
+  );
 
-  if (existingTokens.includes(token)) {
-    await setDoc(userRef, {
-      notificationsEnabled: true,
-      notificationsUpdatedAt: new Date(),
-      notificationDeviceId: getDeviceId(),
-    }, { merge: true });
-    return;
+  if (typeof window !== "undefined") {
+    window.localStorage.setItem(pushTokenStorageKey, token);
   }
 
   await setDoc(userRef, {
-    notificationTokens: [...existingTokens, token],
+    notificationTokens: nextTokens,
     notificationsEnabled: true,
     notificationsUpdatedAt: new Date(),
     notificationDeviceId: getDeviceId(),
@@ -175,6 +179,10 @@ export async function disablePushNotifications() {
   if (token) {
     await removeTokenFromProfile(token);
     await deleteToken(messaging).catch(() => undefined);
+
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(pushTokenStorageKey);
+    }
   } else {
     const currentUser = auth.currentUser;
 
@@ -197,13 +205,6 @@ export async function attachForegroundNotificationListener(onForegroundNotificat
   return onMessage(messaging, (payload) => {
     const title = payload.notification?.title || "Defender Drivers";
     const body = payload.notification?.body || "You have a new update.";
-
-    if (document.visibilityState === "visible" && Notification.permission === "granted") {
-      new Notification(title, {
-        body,
-        icon: "/window.svg",
-      });
-    }
 
     onForegroundNotification?.({ title, body });
   });
