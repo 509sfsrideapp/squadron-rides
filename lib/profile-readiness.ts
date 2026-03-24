@@ -1,4 +1,10 @@
 type ProfileReadinessShape = {
+  firstName?: string | null;
+  lastName?: string | null;
+  rank?: string | null;
+  flight?: string | null;
+  username?: string | null;
+  phone?: string | null;
   homeAddress?: string | null;
   homeAddressVerified?: boolean | null;
   riderPhotoUrl?: string | null;
@@ -8,6 +14,23 @@ type ProfileReadinessShape = {
   carModel?: string | null;
   carColor?: string | null;
 };
+
+export function getRequiredAccountIssues(profile: ProfileReadinessShape | null | undefined) {
+  const issues: string[] = [];
+
+  if (!profile?.firstName?.trim()) issues.push("Add your first name.");
+  if (!profile?.lastName?.trim()) issues.push("Add your last name.");
+  if (!profile?.rank?.trim()) issues.push("Add your rank.");
+  if (!profile?.flight?.trim()) issues.push("Select your flight.");
+  if (!profile?.username?.trim()) issues.push("Set your username.");
+  if (!profile?.phone?.trim()) issues.push("Add your phone number.");
+
+  return issues;
+}
+
+export function hasRequiredAccountInfo(profile: ProfileReadinessShape | null | undefined) {
+  return getRequiredAccountIssues(profile).length === 0;
+}
 
 export function hasProfilePhoto(profile: ProfileReadinessShape | null | undefined) {
   return Boolean(profile?.riderPhotoUrl?.trim() || profile?.driverPhotoUrl?.trim());

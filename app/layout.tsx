@@ -2,6 +2,7 @@ import ForegroundNotificationBridge from "./components/ForegroundNotificationBri
 import BottomUtilityNav from "./components/BottomUtilityNav";
 import type { Metadata, Viewport } from "next";
 import NotificationNavigationBridge from "./components/NotificationNavigationBridge";
+import ProfileCompletionGate from "./components/ProfileCompletionGate";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col">
         <ForegroundNotificationBridge />
         <NotificationNavigationBridge />
+        <ProfileCompletionGate />
         <div className="flex-1">{children}</div>
         <BottomUtilityNav />
         <footer
@@ -47,7 +49,7 @@ export default function RootLayout({
             textAlign: "center",
           }}
         >
-          Version 67
+          Version 68
         </footer>
       </body>
     </html>

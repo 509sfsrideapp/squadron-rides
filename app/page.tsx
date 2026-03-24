@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import PushNotificationsCard from "./components/PushNotificationsCard";
 import { auth, db } from "../lib/firebase";
 import { isAdminEmail } from "../lib/admin";
-import { getDriverReadinessIssues } from "../lib/profile-readiness";
+import { canDrive, canRequestRide, getDriverReadinessIssues, getRideReadinessIssues } from "../lib/profile-readiness";
 import { useActiveRides } from "../lib/use-active-rides";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -19,6 +19,7 @@ type UserProfile = {
   lastName?: string;
   rank?: string;
   flight?: string;
+  username?: string;
   phone: string;
   email: string;
   available: boolean;
@@ -129,6 +130,11 @@ export default function HomePage() {
       alert("Failed to clock in");
     }
   };
+
+  const rideIssues = getRideReadinessIssues(profile);
+  const driverIssues = getDriverReadinessIssues(profile);
+  const rideReady = canRequestRide(profile);
+  const driverReady = canDrive(profile);
 
   const handleClockOut = async () => {
     if (!user) return;
@@ -297,27 +303,56 @@ export default function HomePage() {
 
           {!driverActiveRide && !riderActiveRide ? (
             <div style={{ marginTop: 20 }}>
-            <Link
-              href="/request"
-              style={{
-                display: "block",
-                width: "100%",
-                maxWidth: 540,
-                padding: "16px 20px",
-                background: "linear-gradient(180deg, #c01d1d 0%, #7f1212 100%)",
-                color: "white",
-                textDecoration: "none",
-                borderRadius: 14,
-                textAlign: "center",
-                fontSize: 18,
-                fontFamily: "var(--font-display)",
-                letterSpacing: "0.08em",
-                textTransform: "uppercase",
-                boxShadow: "0 16px 38px rgba(127, 18, 18, 0.34)",
-              }}
-            >
-              Request Ride
-            </Link>
+            {rideReady ? (
+              <Link
+                href="/request"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  maxWidth: 540,
+                  padding: "16px 20px",
+                  background: "linear-gradient(180deg, #c01d1d 0%, #7f1212 100%)",
+                  color: "white",
+                  textDecoration: "none",
+                  borderRadius: 14,
+                  textAlign: "center",
+                  fontSize: 18,
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  boxShadow: "0 16px 38px rgba(127, 18, 18, 0.34)",
+                }}
+              >
+                Request Ride
+              </Link>
+            ) : (
+              <>
+                <div
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    maxWidth: 540,
+                    padding: "16px 20px",
+                    background: "linear-gradient(180deg, rgba(71, 85, 105, 0.92) 0%, rgba(51, 65, 85, 0.96) 100%)",
+                    color: "#cbd5e1",
+                    borderRadius: 14,
+                    textAlign: "center",
+                    fontSize: 18,
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    boxShadow: "0 16px 38px rgba(15, 23, 42, 0.18)",
+                    opacity: 0.82,
+                  }}
+                >
+                  Request Ride
+                </div>
+                <p style={{ maxWidth: 540, marginTop: 10, color: "#94a3b8" }}>
+                  You must complete additional account information in order to use this feature.
+                </p>
+                {rideIssues[0] ? <p style={{ maxWidth: 540, marginTop: 0, color: "#fca5a5" }}>{rideIssues[0]}</p> : null}
+              </>
+            )}
             </div>
           ) : null}
 
@@ -342,35 +377,78 @@ export default function HomePage() {
           {!driverActiveRide && !riderActiveRide ? (
             <div style={{ marginTop: 20 }}>
             {!profile?.available ? (
-              <button
-                onClick={handleClockIn}
-                style={{
-                  padding: "10px 16px",
-                  backgroundColor: "#1f2937",
-                  color: "white",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                }}
-              >
-                Clock In as Driver
-              </button>
-            ) : (
-              <>
-                <Link
-                  href="/driver"
+              driverReady ? (
+                <button
+                  onClick={handleClockIn}
                   style={{
-                    display: "inline-block",
                     padding: "10px 16px",
                     backgroundColor: "#1f2937",
                     color: "white",
-                    textDecoration: "none",
+                    border: "none",
                     borderRadius: 8,
-                    marginRight: 12,
+                    cursor: "pointer",
                   }}
                 >
-                  Driver Dashboard
-                </Link>
+                  Clock In as Driver
+                </button>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      display: "inline-block",
+                      padding: "10px 16px",
+                      backgroundColor: "rgba(51, 65, 85, 0.9)",
+                      color: "#cbd5e1",
+                      borderRadius: 8,
+                      opacity: 0.82,
+                    }}
+                  >
+                    Clock In as Driver
+                  </div>
+                  <p style={{ maxWidth: 540, marginTop: 10, color: "#94a3b8" }}>
+                    You must complete additional account information in order to use this feature.
+                  </p>
+                  {driverIssues[0] ? <p style={{ maxWidth: 540, marginTop: 0, color: "#fca5a5" }}>{driverIssues[0]}</p> : null}
+                </>
+              )
+            ) : (
+              <>
+                {driverReady ? (
+                  <Link
+                    href="/driver"
+                    style={{
+                      display: "inline-block",
+                      padding: "10px 16px",
+                      backgroundColor: "#1f2937",
+                      color: "white",
+                      textDecoration: "none",
+                      borderRadius: 8,
+                      marginRight: 12,
+                    }}
+                  >
+                    Driver Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <div
+                      style={{
+                        display: "inline-block",
+                        padding: "10px 16px",
+                        backgroundColor: "rgba(51, 65, 85, 0.9)",
+                        color: "#cbd5e1",
+                        borderRadius: 8,
+                        marginRight: 12,
+                        opacity: 0.82,
+                      }}
+                    >
+                      Driver Dashboard
+                    </div>
+                    <p style={{ maxWidth: 540, marginTop: 10, color: "#94a3b8" }}>
+                      You must complete additional account information in order to use this feature.
+                    </p>
+                    {driverIssues[0] ? <p style={{ maxWidth: 540, marginTop: 0, color: "#fca5a5" }}>{driverIssues[0]}</p> : null}
+                  </>
+                )}
 
                 <button
                   onClick={handleClockOut}
