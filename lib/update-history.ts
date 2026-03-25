@@ -7,7 +7,7 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
-    commit: "pending",
+    commit: "036da0c",
     title: "Single-Path Notification Delivery",
     summary: "Changed push alerts to a data-driven notification flow so the service worker is the only path that shows ride-request notifications, which should stop double alerts.",
   },
