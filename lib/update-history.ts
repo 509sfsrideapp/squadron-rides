@@ -7,7 +7,7 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
-    commit: "pending",
+    commit: "cf948fe",
     title: "Vault Overlay Cleanup",
     summary: "Removed the leftover circular target-style overlay from the startup vault screen so the hardware visuals stay clean.",
   },
