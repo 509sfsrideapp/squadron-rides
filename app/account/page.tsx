@@ -703,6 +703,25 @@ export default function AccountPage() {
           Open App Permissions
         </Link>
 
+        <h2 style={{ marginTop: 24 }}>Security</h2>
+        <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
+          Update your password from a separate secure page.
+        </p>
+        <Link
+          href="/account/change-password"
+          style={{
+            display: "inline-block",
+            padding: "10px 16px",
+            backgroundColor: "#111827",
+            color: "white",
+            textDecoration: "none",
+            borderRadius: 8,
+            marginBottom: 18,
+          }}
+        >
+          Change Password
+        </Link>
+
         <h2 style={{ marginTop: 24 }}>Vehicle Details</h2>
         <input value={form.carYear} onChange={(e) => handleChange("carYear", e.target.value)} placeholder="Car year (optional)" style={{ marginBottom: 10 }} />
         <input value={form.carMake} onChange={(e) => handleChange("carMake", e.target.value)} placeholder="Car make (optional)" style={{ marginBottom: 10 }} />
