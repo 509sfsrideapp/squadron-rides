@@ -883,7 +883,7 @@ export default function HomePage() {
             </div>
           ) : null}
 
-          {isAdminEmail(user.email) && !driverActiveRide && !riderActiveRide ? (
+          {user && isAdminEmail(user.email) && !driverActiveRide && !riderActiveRide ? (
             <div style={{ marginTop: 20 }}>
               <Link
                 href="/admin"
