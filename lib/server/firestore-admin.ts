@@ -6,7 +6,8 @@ type FirestoreValue =
   | { integerValue: string }
   | { doubleValue: number }
   | { nullValue: null }
-  | { timestampValue: string };
+  | { timestampValue: string }
+  | { mapValue: { fields?: Record<string, FirestoreValue> } };
 
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "ride-app-dd741";
 
@@ -32,6 +33,45 @@ function toFirestoreValue(value: unknown): FirestoreValue {
   }
 
   throw new Error("Unsupported Firestore admin value type.");
+}
+
+function fromFirestoreValue(value: FirestoreValue | undefined): unknown {
+  if (!value) {
+    return null;
+  }
+
+  if ("stringValue" in value) {
+    return value.stringValue;
+  }
+
+  if ("booleanValue" in value) {
+    return value.booleanValue;
+  }
+
+  if ("integerValue" in value) {
+    return Number(value.integerValue);
+  }
+
+  if ("doubleValue" in value) {
+    return value.doubleValue;
+  }
+
+  if ("timestampValue" in value) {
+    return value.timestampValue;
+  }
+
+  if ("nullValue" in value) {
+    return null;
+  }
+
+  if ("mapValue" in value) {
+    const fields = value.mapValue.fields || {};
+    return Object.fromEntries(
+      Object.entries(fields).map(([field, fieldValue]) => [field, fromFirestoreValue(fieldValue)])
+    );
+  }
+
+  return null;
 }
 
 export async function patchFirestoreDocument(documentPath: string, fields: Record<string, unknown>) {
@@ -84,4 +124,42 @@ export async function deleteFirestoreDocument(documentPath: string) {
     const details = await response.text().catch(() => "");
     throw new Error(`Could not delete Firestore document ${documentPath}: ${details || response.statusText}`);
   }
+}
+
+export async function listFirestoreDocuments(collectionPath: string) {
+  const accessToken = await getGoogleAccessToken();
+  const encodedPath = collectionPath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+  const response = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${encodedPath}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    const details = await response.text().catch(() => "");
+    throw new Error(`Could not list Firestore documents for ${collectionPath}: ${details || response.statusText}`);
+  }
+
+  const data = (await response.json()) as {
+    documents?: Array<{
+      name: string;
+      fields?: Record<string, FirestoreValue>;
+    }>;
+  };
+
+  return (data.documents || []).map((document) => ({
+    id: document.name.split("/").pop() || "",
+    ...Object.fromEntries(
+      Object.entries(document.fields || {}).map(([field, value]) => [field, fromFirestoreValue(value)])
+    ),
+  }));
 }
