@@ -87,7 +87,6 @@ export default function InitialAppSplash() {
         <div className="initial-app-splash-panel">
           <div className="initial-app-splash-grid" aria-hidden="true" />
           <div className="initial-app-splash-scanline" aria-hidden="true" />
-          <div className="initial-app-splash-seal" aria-hidden="true" />
           <Image
             src={afgscLogo}
             alt="Air Force Global Strike Command"
