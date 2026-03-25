@@ -54,6 +54,14 @@ export default async function DeveloperPage() {
         }}
       >
         <div style={featureCardStyle}>
+          <h2 style={{ marginTop: 0 }}>Update History</h2>
+          <p style={{ maxWidth: 320 }}>Read the full plain-language release log from the start of the project up to the newest shipped build.</p>
+          <Link href="/developer/updates" style={featureLinkStyle}>
+            Open Update History
+          </Link>
+        </div>
+
+        <div style={featureCardStyle}>
           <h2 style={{ marginTop: 0 }}>Global Chat</h2>
           <p style={{ maxWidth: 320 }}>Open the live chat page while we keep refining the feature.</p>
           <Link href="/chat" style={featureLinkStyle}>

@@ -7,6 +7,7 @@ import type { Metadata, Viewport } from "next";
 import { Manrope, Rajdhani } from "next/font/google";
 import NotificationNavigationBridge from "./components/NotificationNavigationBridge";
 import ProfileCompletionGate from "./components/ProfileCompletionGate";
+import { CURRENT_APP_VERSION } from "../lib/app-version";
 import "./globals.css";
 
 const bodyFont = Manrope({
@@ -69,7 +70,7 @@ export default function RootLayout({
             textAlign: "center",
           }}
         >
-          Version 118
+          Version {CURRENT_APP_VERSION}
         </footer>
       </body>
     </html>
