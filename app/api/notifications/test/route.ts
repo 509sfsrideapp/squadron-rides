@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     await sendPushMessage({
       tokens,
-      title: "Defender Drivers Test",
+      title: "Designated Defenders Test",
       body: "Push notifications are working on this device.",
       link: "/",
       origin: new URL(request.url).origin,

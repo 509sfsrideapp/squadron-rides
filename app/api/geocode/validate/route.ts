@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const response = await fetch(searchUrl, {
       headers: {
         "Accept-Language": acceptLanguage,
-        "User-Agent": "DefenderDrivers/1.0 (home address validation)",
+        "User-Agent": "DesignatedDefenders/1.0 (home address validation)",
       },
       cache: "no-store",
     });

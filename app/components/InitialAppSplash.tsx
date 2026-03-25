@@ -42,7 +42,7 @@ export default function InitialAppSplash() {
   }
 
   return (
-    <div className={`initial-app-splash${fadingOut ? " initial-app-splash-hidden" : ""}`} aria-label="Opening Defender Drivers">
+    <div className={`initial-app-splash${fadingOut ? " initial-app-splash-hidden" : ""}`} aria-label="Opening Designated Defenders">
       <div className="initial-app-splash-panel">
         <div className="initial-app-splash-grid" aria-hidden="true" />
         <div className="initial-app-splash-ring" aria-hidden="true" />
@@ -53,7 +53,7 @@ export default function InitialAppSplash() {
           className="initial-app-splash-logo"
         />
         <p className="initial-app-splash-kicker">System Launch</p>
-        <h1 className="initial-app-splash-title">Defender Drivers</h1>
+        <h1 className="initial-app-splash-title">Designated Defenders</h1>
         <div className="initial-app-splash-bar" aria-hidden="true">
           <div className="initial-app-splash-bar-fill" />
         </div>

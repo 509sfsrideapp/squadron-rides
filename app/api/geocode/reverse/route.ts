@@ -59,7 +59,7 @@ export async function POST(request: Request) {
     const response = await fetch(reverseUrl, {
       headers: {
         "Accept-Language": acceptLanguage,
-        "User-Agent": "DefenderDrivers/1.0 (reverse geocoding for ride pickup labels)",
+        "User-Agent": "DesignatedDefenders/1.0 (reverse geocoding for ride pickup labels)",
       },
       cache: "no-store",
     });

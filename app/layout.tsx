@@ -23,8 +23,8 @@ const displayFont = Rajdhani({
 });
 
 export const metadata: Metadata = {
-  title: "Defender Drivers",
-  description: "Request and manage squadron rides with Defender Drivers.",
+  title: "Designated Defenders",
+  description: "Request and manage squadron rides with Designated Defenders.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/new-logo.jpg",
@@ -69,7 +69,7 @@ export default function RootLayout({
             textAlign: "center",
           }}
         >
-          Version 113
+          Version 114
         </footer>
       </body>
     </html>
