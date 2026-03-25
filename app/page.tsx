@@ -7,6 +7,7 @@ import AppLoadingState from "./components/AppLoadingState";
 import { useRouter } from "next/navigation";
 import PushNotificationsCard from "./components/PushNotificationsCard";
 import { auth, db } from "../lib/firebase";
+import { isAdminEmail } from "../lib/admin";
 import { canDrive, canRequestRide, getDriverReadinessIssues, getRideReadinessIssues } from "../lib/profile-readiness";
 import { getLatestActiveRideForRider } from "../lib/ride-state";
 import { useActiveRides } from "../lib/use-active-rides";
