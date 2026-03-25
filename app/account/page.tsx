@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
+import { isAdminEmail } from "../../lib/admin";
 import { buildHomeAddress, splitHomeAddress } from "../../lib/home-address";
 import { disablePushNotifications, enablePushNotifications } from "../../lib/push-notifications";
 import { useActiveRides } from "../../lib/use-active-rides";
