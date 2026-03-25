@@ -353,7 +353,7 @@ export default function AccountPage() {
 
       const batch = writeBatch(db);
       const profilePhotoUrl = form.profilePhotoUrl.trim();
-      const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim() || profile?.name?.trim() || "Admin";
+      const fullName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim() || user.email?.split("@")[0] || "Admin";
       batch.set(
         doc(db, "users", user.uid),
         {
