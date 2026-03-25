@@ -43,21 +43,14 @@ export async function sendPushMessage({ tokens, title, body, link = "/", origin 
           body: JSON.stringify({
             message: {
               token,
-              notification: {
-                title,
-                body,
-              },
               webpush: {
-                notification: {
-                  title,
-                  body,
-                  icon: "/window.svg",
-                },
                 fcm_options: {
                   link: resolvedLink,
                 },
               },
               data: {
+                title,
+                body,
                 link: resolvedLink,
               },
             },

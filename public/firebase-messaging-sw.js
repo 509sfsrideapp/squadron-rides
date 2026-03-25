@@ -14,8 +14,8 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || "Designated Defenders";
-  const body = payload.notification?.body || "You have a new ride update.";
+  const title = payload.data?.title || payload.notification?.title || "Designated Defenders";
+  const body = payload.data?.body || payload.notification?.body || "You have a new ride update.";
   const link = payload.data?.link || "/";
 
   self.registration.showNotification(title, {
