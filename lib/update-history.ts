@@ -7,7 +7,7 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
-    commit: "pending",
+    commit: "e287ca9",
     title: "Notification Token Deduping",
     summary: "Changed push notification storage to keep one active token per device so ride request alerts stop duplicating on the same phone.",
   },
