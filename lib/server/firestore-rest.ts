@@ -21,6 +21,7 @@ export type FirestoreUserDoc = {
   name?: string;
   email?: string;
   notificationTokens?: string[];
+  notificationTokenMap?: Record<string, string>;
 };
 
 export type FirestoreRideDoc = {
@@ -66,7 +67,18 @@ function parseDocument(document: FirestoreDocument): FirestoreUserDoc {
     name: parseValue(fields.name) as string | undefined,
     email: parseValue(fields.email) as string | undefined,
     notificationTokens: (parseValue(fields.notificationTokens) as string[] | undefined) || [],
+    notificationTokenMap: (parseValue(fields.notificationTokenMap) as Record<string, string> | undefined) || {},
   };
+}
+
+function getPreferredNotificationTokens(user: FirestoreUserDoc) {
+  const mappedTokens = Object.values(user.notificationTokenMap || {}).filter(Boolean);
+
+  if (mappedTokens.length > 0) {
+    return Array.from(new Set(mappedTokens));
+  }
+
+  return Array.from(new Set((user.notificationTokens || []).filter(Boolean)));
 }
 
 export async function getAvailableDriverNotificationTokens() {
@@ -103,7 +115,7 @@ export async function getAvailableDriverNotificationTokens() {
   return data
     .map((entry) => (entry.document ? parseDocument(entry.document) : null))
     .filter((entry): entry is FirestoreUserDoc => Boolean(entry))
-    .flatMap((entry) => entry.notificationTokens || []);
+    .flatMap((entry) => getPreferredNotificationTokens(entry));
 }
 
 export async function getUserNotificationTokens(userId: string) {
@@ -123,7 +135,7 @@ export async function getUserNotificationTokens(userId: string) {
 
   const document = (await response.json()) as FirestoreDocument;
   const parsed = parseDocument(document);
-  return parsed.notificationTokens || [];
+  return getPreferredNotificationTokens(parsed);
 }
 
 export async function getRideDoc(rideId: string) {
