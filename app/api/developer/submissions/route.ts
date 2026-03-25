@@ -3,6 +3,12 @@ import { listFirestoreDocuments } from "../../../../lib/server/firestore-admin";
 
 const DEVELOPER_COOKIE_NAME = "developer_access";
 
+type SubmissionDocument = {
+  id: string;
+  createdAt?: string | null;
+  [key: string]: unknown;
+};
+
 function getAllowedCollection(type: string | null) {
   if (type === "bugReports") {
     return "bugReports";
@@ -29,7 +35,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unsupported submission type." }, { status: 400 });
     }
 
-    const documents = await listFirestoreDocuments(collectionName);
+    const documents = (await listFirestoreDocuments(collectionName)) as SubmissionDocument[];
     const sorted = documents.sort((a, b) => {
       const aTime = typeof a.createdAt === "string" ? Date.parse(a.createdAt) : 0;
       const bTime = typeof b.createdAt === "string" ? Date.parse(b.createdAt) : 0;
