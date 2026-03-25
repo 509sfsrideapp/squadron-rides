@@ -8,6 +8,8 @@ let messagingPromise: Promise<Messaging | null> | null = null;
 const deviceIdStorageKey = "squadron-rides-device-id";
 const pushTokenStorageKey = "squadron-rides-push-token";
 
+type NotificationTokenMap = Record<string, string>;
+
 function isIosDevice() {
   if (typeof window === "undefined") return false;
 
@@ -66,12 +68,27 @@ async function saveTokenToProfile(token: string) {
   const userRef = doc(db, "users", currentUser.uid);
   const userSnap = await getDoc(userRef);
   const existingTokens = userSnap.exists() ? ((userSnap.data().notificationTokens as string[] | undefined) ?? []) : [];
+  const existingTokenMap = userSnap.exists()
+    ? ((userSnap.data().notificationTokenMap as NotificationTokenMap | undefined) ?? {})
+    : {};
   const previousToken = typeof window === "undefined" ? null : window.localStorage.getItem(pushTokenStorageKey);
+  const deviceId = getDeviceId();
+  const previousDeviceToken = existingTokenMap[deviceId] || null;
+  const nextTokenMap: NotificationTokenMap = {
+    ...existingTokenMap,
+    [deviceId]: token,
+  };
   const nextTokens = Array.from(
     new Set(
-      existingTokens
-        .filter((existingToken) => existingToken && existingToken !== previousToken)
-        .concat(token)
+      [
+        ...Object.values(nextTokenMap),
+        ...existingTokens.filter(
+          (existingToken) =>
+            existingToken &&
+            existingToken !== previousToken &&
+            existingToken !== previousDeviceToken
+        ),
+      ].filter(Boolean)
     )
   );
 
@@ -80,10 +97,11 @@ async function saveTokenToProfile(token: string) {
   }
 
   await setDoc(userRef, {
+    notificationTokenMap: nextTokenMap,
     notificationTokens: nextTokens,
     notificationsEnabled: true,
     notificationsUpdatedAt: new Date(),
-    notificationDeviceId: getDeviceId(),
+    notificationDeviceId: deviceId,
   }, { merge: true });
 }
 
@@ -97,9 +115,23 @@ async function removeTokenFromProfile(token: string) {
   const userRef = doc(db, "users", currentUser.uid);
   const userSnap = await getDoc(userRef);
   const existingTokens = userSnap.exists() ? ((userSnap.data().notificationTokens as string[] | undefined) ?? []) : [];
-  const nextTokens = existingTokens.filter((existingToken) => existingToken !== token);
+  const existingTokenMap = userSnap.exists()
+    ? ((userSnap.data().notificationTokenMap as NotificationTokenMap | undefined) ?? {})
+    : {};
+  const deviceId = getDeviceId();
+  const nextTokenMap = { ...existingTokenMap };
+  delete nextTokenMap[deviceId];
+  const nextTokens = Array.from(
+    new Set(
+      existingTokens
+        .filter((existingToken) => existingToken !== token && !Object.values(existingTokenMap).includes(existingToken))
+        .concat(Object.values(nextTokenMap))
+        .filter(Boolean)
+    )
+  );
 
   await setDoc(userRef, {
+    notificationTokenMap: nextTokenMap,
     notificationTokens: nextTokens,
     notificationsEnabled: nextTokens.length > 0,
     notificationsUpdatedAt: new Date(),

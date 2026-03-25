@@ -49,6 +49,7 @@ service cloud.firestore {
         "locationServicesEnabled",
         "notificationsEnabled",
         "notificationTokens",
+        "notificationTokenMap",
         "notificationDeviceId",
         "notificationsUpdatedAt",
         "available",
