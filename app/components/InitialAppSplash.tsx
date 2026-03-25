@@ -73,16 +73,6 @@ export default function InitialAppSplash() {
           </div>
         </div>
       </div>
-      <div className="initial-app-splash-lock-assembly" aria-hidden="true">
-        <div className="initial-app-splash-lock-core">
-          <div className="initial-app-splash-lock-ring" />
-          <div className="initial-app-splash-lock-pin initial-app-splash-lock-pin-top" />
-          <div className="initial-app-splash-lock-pin initial-app-splash-lock-pin-right" />
-          <div className="initial-app-splash-lock-pin initial-app-splash-lock-pin-bottom" />
-          <div className="initial-app-splash-lock-pin initial-app-splash-lock-pin-left" />
-        </div>
-      </div>
-
       <div className="initial-app-splash-core">
         <div className="initial-app-splash-panel">
           <div className="initial-app-splash-grid" aria-hidden="true" />

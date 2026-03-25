@@ -405,75 +405,6 @@ button:disabled {
   line-height: 1.2;
 }
 
-.initial-app-splash-lock-assembly {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  display: grid;
-  place-items: center;
-}
-
-.initial-app-splash-lock-core {
-  position: relative;
-  width: 7.6rem;
-  height: 7.6rem;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.16), transparent 20%),
-    linear-gradient(180deg, rgba(93, 102, 115, 0.98) 0%, rgba(34, 41, 51, 0.99) 46%, rgba(16, 20, 28, 1) 100%);
-  border: 1px solid rgba(214, 222, 232, 0.22);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 -16px 24px rgba(0, 0, 0, 0.3),
-    0 20px 38px rgba(2, 6, 23, 0.38);
-}
-
-.initial-app-splash-lock-ring {
-  position: absolute;
-  inset: 1rem;
-  border-radius: 50%;
-  border: 0.24rem solid rgba(168, 180, 194, 0.28);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-    0 0 0 0.3rem rgba(17, 24, 39, 0.46);
-}
-
-.initial-app-splash-lock-pin {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0.8rem;
-  height: 2.3rem;
-  margin-left: -0.4rem;
-  margin-top: -1.15rem;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(209, 216, 224, 0.95) 0%, rgba(91, 101, 112, 0.98) 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 0 0 1px rgba(15, 23, 42, 0.24);
-}
-
-.initial-app-splash-lock-pin-top {
-  transform: translateY(-2.55rem);
-}
-
-.initial-app-splash-lock-pin-right {
-  transform: rotate(90deg) translateY(-2.55rem);
-}
-
-.initial-app-splash-lock-pin-bottom {
-  transform: rotate(180deg) translateY(-2.55rem);
-}
-
-.initial-app-splash-lock-pin-left {
-  transform: rotate(270deg) translateY(-2.55rem);
-}
-
-.initial-app-splash-hidden .initial-app-splash-lock-core {
-  animation: splash-lock-release 460ms ease-out forwards;
-}
-
 .initial-app-splash-hidden .initial-app-splash-door-left .initial-app-splash-door-panel {
   animation: splash-door-open-left 2000ms ease-in-out forwards;
 }
@@ -673,18 +604,6 @@ button:disabled {
   }
 }
 
-@keyframes splash-lock-release {
-  from {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-    filter: brightness(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.92) rotate(18deg);
-    filter: brightness(1.15);
-  }
-}
 
 
 .vault-screen {
