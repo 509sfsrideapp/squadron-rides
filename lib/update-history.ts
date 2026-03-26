@@ -7,7 +7,7 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
-    commit: "PENDING",
+    commit: "93ba6e9",
     title: "Ride Refresh and Dispatch Reliability",
     summary: "Made the rider status page hold onto the requested ride across pull-to-refresh and changed ride-request notifications to finish sending before the app redirects away.",
   },
