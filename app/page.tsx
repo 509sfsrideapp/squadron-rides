@@ -511,7 +511,7 @@ export default function HomePage() {
           >
             509 SFS
           </p>
-          <h1 style={{ margin: "0.4rem 0 0" }}>Designated Defenders</h1>
+          <h1 style={{ margin: "0.4rem 0 0" }}>Defender One</h1>
         </div>
         {user ? (
           <div ref={profileMenuRef} style={{ position: "relative", display: "grid", justifyItems: "end" }}>

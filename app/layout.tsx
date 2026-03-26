@@ -25,8 +25,8 @@ const displayFont = Rajdhani({
 });
 
 export const metadata: Metadata = {
-  title: "Designated Defenders",
-  description: "Request and manage squadron rides with Designated Defenders.",
+  title: "Defender One",
+  description: "Request and manage squadron rides with Defender One.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: "/new-logo.jpg",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   },
   appleWebApp: {
     capable: true,
-    title: "509 SFS",
+    title: "Defender One",
     statusBarStyle: "black-translucent",
   },
 };

@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "c64004b",
+    title: "Defender One Rebrand",
+    summary: "Renamed the user-facing app branding to Defender One across the homepage, startup screen, install name, and notification fallback labels.",
+  },
+  {
     commit: "280f8ef",
     title: "Timed Live Ride Tracking Return",
     summary: "Brought live ride tracking back in a lower-risk way with slower timed location updates and manual refresh buttons for both rider and driver, instead of constant location syncing.",

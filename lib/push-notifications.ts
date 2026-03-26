@@ -207,7 +207,7 @@ export async function attachForegroundNotificationListener(onForegroundNotificat
   }
 
   return onMessage(messaging, (payload) => {
-    const title = payload.data?.title || payload.notification?.title || "Designated Defenders";
+    const title = payload.data?.title || payload.notification?.title || "Defender One";
     const body = payload.data?.body || payload.notification?.body || "You have a new update.";
 
     onForegroundNotification?.({ title, body });

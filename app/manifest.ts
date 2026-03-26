@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Designated Defenders",
-    short_name: "509 SFS",
-    description: "Request and manage squadron rides with Designated Defenders.",
+    name: "Defender One",
+    short_name: "Defender One",
+    description: "Request and manage squadron rides with Defender One.",
     start_url: "/",
     display: "standalone",
     background_color: "#08111d",

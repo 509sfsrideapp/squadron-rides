@@ -50,7 +50,7 @@ export default function InitialAppSplash() {
   }
 
   return (
-    <div className={`initial-app-splash${fadingOut ? " initial-app-splash-hidden" : ""}`} aria-label="Opening Designated Defenders">
+    <div className={`initial-app-splash${fadingOut ? " initial-app-splash-hidden" : ""}`} aria-label="Opening Defender One">
       <div className="initial-app-splash-door initial-app-splash-door-left" aria-hidden="true">
         <div className="initial-app-splash-door-panel">
           <div className="initial-app-splash-door-screen-frame">
@@ -84,7 +84,7 @@ export default function InitialAppSplash() {
             className="initial-app-splash-logo"
           />
           <p className="initial-app-splash-kicker">Secure Vault Access</p>
-          <h1 className="initial-app-splash-title">Designated Defenders</h1>
+          <h1 className="initial-app-splash-title">Defender One</h1>
           <p className="initial-app-splash-subtitle">509 SFS emergency ride network</p>
           <div className="initial-app-splash-bar" aria-hidden="true">
             <div className="initial-app-splash-bar-fill" />

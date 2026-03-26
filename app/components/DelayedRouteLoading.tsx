@@ -26,7 +26,7 @@ export default function DelayedRouteLoading({ delayMs = 2000 }: DelayedRouteLoad
   }
 
   return (
-    <main className="loading-screen" aria-label="Loading Designated Defenders">
+    <main className="loading-screen" aria-label="Loading Defender One">
       <div className="loading-minimal">
         <div className="loading-b2 loading-b2-minimal" aria-hidden="true">
           <svg viewBox="0 0 160 72" fill="none" role="presentation" className="loading-b2-shape">
