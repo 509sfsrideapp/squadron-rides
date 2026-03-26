@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "pending",
+    title: "Startup Splash Viewport Smoothing",
+    summary: "Adjusted the startup splash to use steadier mobile viewport sizing and cleaner safe-area padding so it stays flush with the screen during the vault animation.",
+  },
+  {
     commit: "4d7267b",
     title: "Driver Live Map and Rider Tracking",
     summary: "Added the live map to the driver active ride page and made the rider location keep updating during the ride so both rider and driver pages stay live.",
