@@ -2,14 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { use, useEffect, useMemo, useRef, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppLoadingState from "../../../components/AppLoadingState";
 import LiveRideMap, { type MapPoint } from "../../../components/LiveRideMap";
 import { auth, db } from "../../../../lib/firebase";
 import { formatRideTimestamp, getRideLifecycleSteps, getRideStatusLabel } from "../../../../lib/ride-lifecycle";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, onSnapshot, runTransaction, updateDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, runTransaction, setDoc, updateDoc } from "firebase/firestore";
 
 type Ride = {
   id: string;
@@ -86,7 +86,34 @@ type RiderProfile = {
   driverPhotoUrl?: string;
 };
 
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+type RideLiveState = {
+  riderLocation?: {
+    latitude?: number;
+    longitude?: number;
+  } | null;
+  driverLocation?: {
+    latitude?: number;
+    longitude?: number;
+  } | null;
+};
+
 const ACTIVE_RIDE_STATUSES = ["accepted", "arrived", "picked_up"] as const;
+const DRIVER_LOCATION_AUTO_REFRESH_MS = 30_000;
+const LOCATION_CHANGE_THRESHOLD = 0.00025;
+
+function hasMovedEnough(previous: Coordinates | null, next: Coordinates) {
+  if (!previous) return true;
+
+  return (
+    Math.abs(previous.latitude - next.latitude) > LOCATION_CHANGE_THRESHOLD ||
+    Math.abs(previous.longitude - next.longitude) > LOCATION_CHANGE_THRESHOLD
+  );
+}
 
 function isPlaceholderDestination(destination?: string | null) {
   const normalized = destination?.trim().toLowerCase() || "";
@@ -151,8 +178,12 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
   const [ride, setRide] = useState<Ride | null>(null);
   const [loading, setLoading] = useState(true);
   const [locationServicesEnabled, setLocationServicesEnabled] = useState(true);
+  const [liveRideState, setLiveRideState] = useState<RideLiveState | null>(null);
   const [copyStatus, setCopyStatus] = useState("");
+  const [locationRefreshStatus, setLocationRefreshStatus] = useState("");
+  const [refreshingDriverLocation, setRefreshingDriverLocation] = useState(false);
   const launchedNavigationKeyRef = useRef<string | null>(null);
+  const driverRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -302,17 +333,45 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     void syncRiderPhoto();
   }, [ride, user]);
 
+  useEffect(() => {
+    if (!ride) {
+      setLiveRideState(null);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(doc(db, "rideLive", ride.id), (snapshot) => {
+      if (!snapshot.exists()) {
+        setLiveRideState(null);
+        return;
+      }
+
+      setLiveRideState(snapshot.data() as RideLiveState);
+    });
+
+    return () => unsubscribe();
+  }, [ride]);
+
   const mapsUrl = useMemo(() => (ride ? buildMapsUrl(ride, userAgent) : null), [ride, userAgent]);
   const lifecycleSteps = useMemo(() => (ride ? getRideLifecycleSteps(ride) : []), [ride]);
   const riderLocation: MapPoint | null =
-    ride?.riderLocation?.latitude != null && ride.riderLocation?.longitude != null
+    liveRideState?.riderLocation?.latitude != null && liveRideState.riderLocation?.longitude != null
+      ? {
+          latitude: liveRideState.riderLocation.latitude,
+          longitude: liveRideState.riderLocation.longitude,
+        }
+      : ride?.riderLocation?.latitude != null && ride.riderLocation?.longitude != null
       ? {
           latitude: ride.riderLocation.latitude,
           longitude: ride.riderLocation.longitude,
         }
       : null;
   const liveDriverLocation: MapPoint | null =
-    ride?.driverLocation?.latitude != null && ride.driverLocation?.longitude != null
+    liveRideState?.driverLocation?.latitude != null && liveRideState.driverLocation?.longitude != null
+      ? {
+          latitude: liveRideState.driverLocation.latitude,
+          longitude: liveRideState.driverLocation.longitude,
+        }
+      : ride?.driverLocation?.latitude != null && ride.driverLocation?.longitude != null
       ? {
           latitude: ride.driverLocation.latitude,
           longitude: ride.driverLocation.longitude,
@@ -335,10 +394,109 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     return () => window.clearTimeout(timeoutId);
   }, [mapsUrl, ride, shouldAutoLaunchMaps]);
 
+  const refreshDriverLocation = useCallback(async (manual = false, force = false) => {
+    if (
+      !user ||
+      !ride ||
+      ride.acceptedBy !== user.uid ||
+      !locationServicesEnabled ||
+      !geolocationAvailable ||
+      !ACTIVE_RIDE_STATUSES.includes(ride.status as (typeof ACTIVE_RIDE_STATUSES)[number])
+    ) {
+      return;
+    }
+
+    if (driverRefreshInFlightRef.current) {
+      return;
+    }
+
+    driverRefreshInFlightRef.current = true;
+
+    if (manual) {
+      setRefreshingDriverLocation(true);
+      setLocationRefreshStatus("Refreshing driver location...");
+    }
+
+    try {
+      const nextCoordinates = await new Promise<Coordinates>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) =>
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            }),
+          (error) => reject(error),
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 5000,
+          }
+        );
+      });
+
+      const previousCoordinates =
+        liveRideState?.driverLocation?.latitude != null && liveRideState.driverLocation?.longitude != null
+          ? {
+              latitude: liveRideState.driverLocation.latitude,
+              longitude: liveRideState.driverLocation.longitude,
+            }
+          : ride.driverLocation?.latitude != null && ride.driverLocation?.longitude != null
+            ? {
+                latitude: ride.driverLocation.latitude,
+                longitude: ride.driverLocation.longitude,
+              }
+            : null;
+
+      if (!force && !manual && !hasMovedEnough(previousCoordinates, nextCoordinates)) {
+        setLocationRefreshStatus("Driver location is still current.");
+        return;
+      }
+
+      await setDoc(
+        doc(db, "rideLive", ride.id),
+        {
+          driverLocation: nextCoordinates,
+          driverLocationUpdatedAt: new Date(),
+        },
+        { merge: true }
+      );
+      setLocationRefreshStatus(manual ? "Driver location refreshed." : "Driver location updated.");
+    } catch (error) {
+      console.error(error);
+      setLocationRefreshStatus("We could not refresh driver location.");
+    } finally {
+      driverRefreshInFlightRef.current = false;
+      if (manual) {
+        setRefreshingDriverLocation(false);
+      }
+    }
+  }, [geolocationAvailable, liveRideState, locationServicesEnabled, ride, user]);
+
+  useEffect(() => {
+    if (
+      !user ||
+      !ride ||
+      ride.acceptedBy !== user.uid ||
+      !locationServicesEnabled ||
+      !geolocationAvailable ||
+      !ACTIVE_RIDE_STATUSES.includes(ride.status as (typeof ACTIVE_RIDE_STATUSES)[number])
+    ) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refreshDriverLocation(false);
+    }, DRIVER_LOCATION_AUTO_REFRESH_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [geolocationAvailable, locationServicesEnabled, ride, user, liveRideState, refreshDriverLocation]);
+
   const updateRideStage = async (status: "arrived" | "picked_up") => {
     if (!ride || !user) return;
 
     try {
+      await refreshDriverLocation(false, true);
+
       await runTransaction(db, async (transaction) => {
         const rideRef = doc(db, "rides", ride.id);
         const rideSnap = await transaction.get(rideRef);
@@ -406,6 +564,8 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     if (!confirmed) return;
 
     try {
+      await refreshDriverLocation(false, true);
+
       await runTransaction(db, async (transaction) => {
         const rideRef = doc(db, "rides", ride.id);
         const driverRef = doc(db, "users", user.uid);
@@ -428,7 +588,13 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         transaction.update(rideRef, {
           status: "completed",
           completedAt: new Date(),
-          driverLocation: currentRide.driverLocation ?? null,
+          driverLocation:
+            liveRideState?.driverLocation?.latitude != null && liveRideState.driverLocation?.longitude != null
+              ? {
+                  latitude: liveRideState.driverLocation.latitude,
+                  longitude: liveRideState.driverLocation.longitude,
+                }
+              : currentRide.driverLocation ?? null,
         });
         transaction.update(driverRef, {
           available: true,
@@ -475,7 +641,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
   const riderTextHref = riderPhone ? `sms:${riderPhone}` : null;
   const displayedDriverLocationStatus = locationServicesEnabled
     ? geolocationAvailable
-      ? "Live driver location sharing is temporarily turned off while stability fixes are in progress."
+      ? "Driver location updates every 30 seconds during the active ride."
       : "This browser cannot share live driver location."
     : "Location services are turned off in Account Settings.";
 
@@ -826,6 +992,38 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         }
         maxWidth={640}
       />
+
+      <div
+        style={{
+          marginTop: 14,
+          maxWidth: 640,
+          marginInline: "auto",
+          display: "flex",
+          gap: 12,
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => void refreshDriverLocation(true)}
+          disabled={refreshingDriverLocation || !locationServicesEnabled || !geolocationAvailable}
+          style={{
+            padding: "10px 14px",
+            backgroundColor: "#1d4ed8",
+            color: "white",
+            border: "none",
+            borderRadius: 10,
+            cursor:
+              refreshingDriverLocation || !locationServicesEnabled || !geolocationAvailable
+                ? "wait"
+                : "pointer",
+          }}
+        >
+          {refreshingDriverLocation ? "Refreshing Driver Location..." : "Refresh Driver Location"}
+        </button>
+        {locationRefreshStatus ? <span style={{ color: "#cbd5e1" }}>{locationRefreshStatus}</span> : null}
+      </div>
     </main>
   );
 }

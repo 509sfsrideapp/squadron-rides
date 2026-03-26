@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
@@ -11,7 +11,7 @@ import { formatEtaLabel } from "../../lib/eta";
 import { auth, db } from "../../lib/firebase";
 import { formatRideTimestamp, getRideLifecycleSteps, getRideStatusLabel } from "../../lib/ride-lifecycle";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, doc, getDoc, onSnapshot, query, runTransaction, where } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query, runTransaction, setDoc, where } from "firebase/firestore";
 
 type Ride = {
   id: string;
@@ -72,7 +72,34 @@ type RiderProfile = {
   locationServicesEnabled?: boolean;
 };
 
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+type RideLiveState = {
+  riderLocation?: {
+    latitude?: number;
+    longitude?: number;
+  } | null;
+  driverLocation?: {
+    latitude?: number;
+    longitude?: number;
+  } | null;
+};
+
 const ACTIVE_RIDE_STATUSES = ["open", "accepted", "arrived", "picked_up"] as const;
+const RIDER_LOCATION_AUTO_REFRESH_MS = 60_000;
+const LOCATION_CHANGE_THRESHOLD = 0.00025;
+
+function hasMovedEnough(previous: Coordinates | null, next: Coordinates) {
+  if (!previous) return true;
+
+  return (
+    Math.abs(previous.latitude - next.latitude) > LOCATION_CHANGE_THRESHOLD ||
+    Math.abs(previous.longitude - next.longitude) > LOCATION_CHANGE_THRESHOLD
+  );
+}
 
 function getStatusMessage(status?: string) {
   switch (status) {
@@ -101,7 +128,10 @@ export default function RideStatusPage() {
   const [loading, setLoading] = useState(true);
   const [cancelingRide, setCancelingRide] = useState(false);
   const [riderLocationServicesEnabled, setRiderLocationServicesEnabled] = useState(true);
-  void riderLocationServicesEnabled;
+  const [liveRideState, setLiveRideState] = useState<RideLiveState | null>(null);
+  const [locationRefreshStatus, setLocationRefreshStatus] = useState("");
+  const [refreshingLocation, setRefreshingLocation] = useState(false);
+  const riderRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -194,17 +224,45 @@ export default function RideStatusPage() {
     return () => unsubscribe();
   }, [user]);
 
+  useEffect(() => {
+    if (!activeRide) {
+      setLiveRideState(null);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(doc(db, "rideLive", activeRide.id), (snapshot) => {
+      if (!snapshot.exists()) {
+        setLiveRideState(null);
+        return;
+      }
+
+      setLiveRideState(snapshot.data() as RideLiveState);
+    });
+
+    return () => unsubscribe();
+  }, [activeRide]);
+
   const activeRide = useMemo(() => rides[0] ?? fallbackRide ?? null, [fallbackRide, rides]);
 
   const riderLocation: MapPoint | null =
-    activeRide?.riderLocation?.latitude != null && activeRide.riderLocation?.longitude != null
+    liveRideState?.riderLocation?.latitude != null && liveRideState.riderLocation?.longitude != null
+      ? {
+          latitude: liveRideState.riderLocation.latitude,
+          longitude: liveRideState.riderLocation.longitude,
+        }
+      : activeRide?.riderLocation?.latitude != null && activeRide.riderLocation?.longitude != null
       ? {
           latitude: activeRide.riderLocation.latitude,
           longitude: activeRide.riderLocation.longitude,
         }
       : null;
   const driverLocation: MapPoint | null =
-    activeRide?.driverLocation?.latitude != null && activeRide.driverLocation?.longitude != null
+    liveRideState?.driverLocation?.latitude != null && liveRideState.driverLocation?.longitude != null
+      ? {
+          latitude: liveRideState.driverLocation.latitude,
+          longitude: liveRideState.driverLocation.longitude,
+        }
+      : activeRide?.driverLocation?.latitude != null && activeRide.driverLocation?.longitude != null
       ? {
           latitude: activeRide.driverLocation.latitude,
           longitude: activeRide.driverLocation.longitude,
@@ -213,6 +271,102 @@ export default function RideStatusPage() {
   const canCancelRide = activeRide?.status === "open" || activeRide?.status === "accepted" || activeRide?.status === "arrived";
   const lifecycleSteps = activeRide ? getRideLifecycleSteps(activeRide) : [];
   const eta = formatEtaLabel(driverLocation, riderLocation);
+
+  const refreshRiderLocation = useCallback(async (manual = false) => {
+    if (
+      !user ||
+      !activeRide ||
+      !riderLocationServicesEnabled ||
+      typeof window === "undefined" ||
+      !("geolocation" in navigator)
+    ) {
+      return;
+    }
+
+    if (riderRefreshInFlightRef.current) {
+      return;
+    }
+
+    riderRefreshInFlightRef.current = true;
+
+    if (manual) {
+      setRefreshingLocation(true);
+      setLocationRefreshStatus("Refreshing your pickup location...");
+    }
+
+    try {
+      const nextCoordinates = await new Promise<Coordinates>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          (position) =>
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            }),
+          (error) => reject(error),
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 5000,
+          }
+        );
+      });
+
+      const previousCoordinates =
+        liveRideState?.riderLocation?.latitude != null && liveRideState.riderLocation?.longitude != null
+          ? {
+              latitude: liveRideState.riderLocation.latitude,
+              longitude: liveRideState.riderLocation.longitude,
+            }
+          : activeRide.riderLocation?.latitude != null && activeRide.riderLocation?.longitude != null
+            ? {
+                latitude: activeRide.riderLocation.latitude,
+                longitude: activeRide.riderLocation.longitude,
+              }
+            : null;
+
+      if (!manual && !hasMovedEnough(previousCoordinates, nextCoordinates)) {
+        setLocationRefreshStatus("Your pickup location is still current.");
+        return;
+      }
+
+      await setDoc(
+        doc(db, "rideLive", activeRide.id),
+        {
+          riderLocation: nextCoordinates,
+          riderLocationUpdatedAt: new Date(),
+        },
+        { merge: true }
+      );
+      setLocationRefreshStatus(manual ? "Pickup location refreshed." : "Pickup location updated.");
+    } catch (error) {
+      console.error(error);
+      setLocationRefreshStatus("We could not refresh your pickup location.");
+    } finally {
+      riderRefreshInFlightRef.current = false;
+      if (manual) {
+        setRefreshingLocation(false);
+      }
+    }
+  }, [activeRide, liveRideState, user, riderLocationServicesEnabled]);
+
+  useEffect(() => {
+    if (
+      !user ||
+      !activeRide ||
+      !riderLocationServicesEnabled ||
+      typeof window === "undefined" ||
+      !("geolocation" in navigator) ||
+      !ACTIVE_RIDE_STATUSES.includes(activeRide.status as (typeof ACTIVE_RIDE_STATUSES)[number])
+    ) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void refreshRiderLocation(false);
+    }, RIDER_LOCATION_AUTO_REFRESH_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [activeRide, riderLocationServicesEnabled, user, liveRideState, refreshRiderLocation]);
 
   const cancelRide = async () => {
     if (!activeRide || !user) return;
@@ -521,6 +675,34 @@ export default function RideStatusPage() {
           </div>
 
           <LiveRideMap riderLocation={riderLocation} driverLocation={driverLocation} />
+
+          <div
+            style={{
+              marginTop: 14,
+              maxWidth: 640,
+              display: "flex",
+              gap: 12,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => void refreshRiderLocation(true)}
+              disabled={refreshingLocation || !riderLocationServicesEnabled}
+              style={{
+                padding: "10px 14px",
+                backgroundColor: "#1d4ed8",
+                color: "white",
+                border: "none",
+                borderRadius: 10,
+                cursor: refreshingLocation || !riderLocationServicesEnabled ? "wait" : "pointer",
+              }}
+            >
+              {refreshingLocation ? "Refreshing Location..." : "Refresh My Location"}
+            </button>
+            {locationRefreshStatus ? <span style={{ color: "#cbd5e1" }}>{locationRefreshStatus}</span> : null}
+          </div>
 
           {canCancelRide ? (
             <div style={{ marginTop: 18 }}>

@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "280f8ef",
+    title: "Timed Live Ride Tracking Return",
+    summary: "Brought live ride tracking back in a lower-risk way with slower timed location updates and manual refresh buttons for both rider and driver, instead of constant location syncing.",
+  },
+  {
     commit: "6d8b743",
     title: "Backend Hardening and Audit Pass",
     summary: "Added stronger shared admin checks, cleaner notification logging, a new admin audit log view, and tighter ride update rules so the backend is safer and easier to trace without changing normal app flow.",
