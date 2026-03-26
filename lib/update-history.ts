@@ -7,7 +7,7 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
-    commit: "pending",
+    commit: "d64424c",
     title: "Driver Pickup Copy Cleanup",
     summary: "Removed the extra navigation helper sentence on the driver active ride page and added a warning that resolved pickup locations may need rider confirmation.",
   },
