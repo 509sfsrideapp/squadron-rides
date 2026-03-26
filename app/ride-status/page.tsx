@@ -480,6 +480,54 @@ export default function RideStatusPage() {
               </p>
             </div>
 
+            {activeRide.driverPhone ? (
+              <div
+                style={{
+                  marginBottom: 20,
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+                  gap: 12,
+                }}
+              >
+                <a
+                  href={`tel:${activeRide.driverPhone}`}
+                  style={{
+                    display: "block",
+                    padding: "14px 20px",
+                    backgroundColor: "#1d4ed8",
+                    color: "white",
+                    textDecoration: "none",
+                    borderRadius: 12,
+                    textAlign: "center",
+                    fontSize: "1.05rem",
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Call Driver
+                </a>
+                <a
+                  href={`sms:${activeRide.driverPhone}`}
+                  style={{
+                    display: "block",
+                    padding: "14px 20px",
+                    backgroundColor: "#0f766e",
+                    color: "white",
+                    textDecoration: "none",
+                    borderRadius: 12,
+                    textAlign: "center",
+                    fontSize: "1.05rem",
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "0.06em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Text Driver
+                </a>
+              </div>
+            ) : null}
+
             <div
               style={{
                 marginBottom: 20,
@@ -540,69 +588,6 @@ export default function RideStatusPage() {
             </p>
             <p>
               <strong>Driver Phone:</strong> {activeRide.driverPhone || "Not available yet"}
-            </p>
-            <p>
-              <strong>Driver Email:</strong> {activeRide.driverEmail || "Not available yet"}
-            </p>
-            {activeRide.driverPhone ? (
-              <div
-                style={{
-                  marginBottom: 16,
-                  marginTop: 16,
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                  gap: 12,
-                }}
-              >
-                <a
-                  href={`tel:${activeRide.driverPhone}`}
-                  style={{
-                    display: "block",
-                    padding: "14px 20px",
-                    backgroundColor: "#1d4ed8",
-                    color: "white",
-                    textDecoration: "none",
-                    borderRadius: 12,
-                    textAlign: "center",
-                    fontSize: "1.05rem",
-                    fontFamily: "var(--font-display)",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Call Driver
-                </a>
-                <a
-                  href={`sms:${activeRide.driverPhone}`}
-                  style={{
-                    display: "block",
-                    padding: "14px 20px",
-                    backgroundColor: "#0f766e",
-                    color: "white",
-                    textDecoration: "none",
-                    borderRadius: 12,
-                    textAlign: "center",
-                    fontSize: "1.05rem",
-                    fontFamily: "var(--font-display)",
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                  }}
-                >
-                  Text Driver
-                </a>
-              </div>
-            ) : null}
-            <p>
-              <strong>Driver GPS:</strong>{" "}
-              {activeRide.driverLocation?.latitude != null && activeRide.driverLocation?.longitude != null
-                ? `${activeRide.driverLocation.latitude.toFixed(6)}, ${activeRide.driverLocation.longitude.toFixed(6)}`
-                : "Driver location not shared yet"}
-            </p>
-            <p>
-              <strong>Pickup GPS:</strong>{" "}
-              {activeRide.riderLocation?.latitude != null && activeRide.riderLocation?.longitude != null
-                ? `${activeRide.riderLocation.latitude.toFixed(6)}, ${activeRide.riderLocation.longitude.toFixed(6)}`
-                : "Not shared"}
             </p>
           </div>
 
