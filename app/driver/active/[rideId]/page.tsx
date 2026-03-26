@@ -162,6 +162,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
   const launchedNavigationKeyRef = useRef<string | null>(null);
   const watchIdRef = useRef<number | null>(null);
   const lastSentRef = useRef<{ latitude: number; longitude: number; sentAt: number } | null>(null);
+  const locationUpdateInFlightRef = useRef(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -372,16 +373,17 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
 
         const now = Date.now();
         const lastSent = lastSentRef.current;
-        const latitudeChanged = !lastSent || Math.abs(lastSent.latitude - nextCoordinates.latitude) > 0.0001;
-        const longitudeChanged = !lastSent || Math.abs(lastSent.longitude - nextCoordinates.longitude) > 0.0001;
-        const enoughTimePassed = !lastSent || now - lastSent.sentAt > 15000;
+        const latitudeChanged = !lastSent || Math.abs(lastSent.latitude - nextCoordinates.latitude) > 0.00035;
+        const longitudeChanged = !lastSent || Math.abs(lastSent.longitude - nextCoordinates.longitude) > 0.00035;
+        const enoughTimePassed = !lastSent || now - lastSent.sentAt > 30000;
 
-        if (!latitudeChanged && !longitudeChanged && !enoughTimePassed) {
+        if ((!latitudeChanged && !longitudeChanged && !enoughTimePassed) || locationUpdateInFlightRef.current) {
           setDriverLocationStatus("Live driver location is active.");
           return;
         }
 
         try {
+          locationUpdateInFlightRef.current = true;
           await updateDoc(doc(db, "rides", ride.id), {
             driverLocation: nextCoordinates,
             driverLocationUpdatedAt: new Date(),
@@ -391,6 +393,8 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         } catch (error) {
           console.error(error);
           setDriverLocationStatus("We could not update live driver location.");
+        } finally {
+          locationUpdateInFlightRef.current = false;
         }
       },
       () => {

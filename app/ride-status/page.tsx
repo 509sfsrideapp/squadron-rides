@@ -100,6 +100,7 @@ export default function RideStatusPage() {
   const [riderLocationServicesEnabled, setRiderLocationServicesEnabled] = useState(true);
   const riderWatchIdRef = useRef<number | null>(null);
   const lastRiderLocationSentRef = useRef<{ latitude: number; longitude: number; sentAt: number } | null>(null);
+  const riderLocationUpdateInFlightRef = useRef(false);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -194,15 +195,16 @@ export default function RideStatusPage() {
 
         const now = Date.now();
         const lastSent = lastRiderLocationSentRef.current;
-        const latitudeChanged = !lastSent || Math.abs(lastSent.latitude - nextCoordinates.latitude) > 0.0001;
-        const longitudeChanged = !lastSent || Math.abs(lastSent.longitude - nextCoordinates.longitude) > 0.0001;
-        const enoughTimePassed = !lastSent || now - lastSent.sentAt > 15000;
+        const latitudeChanged = !lastSent || Math.abs(lastSent.latitude - nextCoordinates.latitude) > 0.00035;
+        const longitudeChanged = !lastSent || Math.abs(lastSent.longitude - nextCoordinates.longitude) > 0.00035;
+        const enoughTimePassed = !lastSent || now - lastSent.sentAt > 30000;
 
-        if (!latitudeChanged && !longitudeChanged && !enoughTimePassed) {
+        if ((!latitudeChanged && !longitudeChanged && !enoughTimePassed) || riderLocationUpdateInFlightRef.current) {
           return;
         }
 
         try {
+          riderLocationUpdateInFlightRef.current = true;
           await updateDoc(doc(db, "rides", activeRide.id), {
             riderLocation: nextCoordinates,
             riderLocationUpdatedAt: new Date(),
@@ -210,6 +212,8 @@ export default function RideStatusPage() {
           lastRiderLocationSentRef.current = { ...nextCoordinates, sentAt: now };
         } catch (error) {
           console.error(error);
+        } finally {
+          riderLocationUpdateInFlightRef.current = false;
         }
       },
       (error) => {
