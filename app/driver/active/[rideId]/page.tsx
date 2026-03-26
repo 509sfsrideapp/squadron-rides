@@ -5,6 +5,7 @@ import Link from "next/link";
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppLoadingState from "../../../components/AppLoadingState";
+import LiveRideMap, { type MapPoint } from "../../../components/LiveRideMap";
 import { auth, db } from "../../../../lib/firebase";
 import { formatRideTimestamp, getRideLifecycleSteps, getRideStatusLabel } from "../../../../lib/ride-lifecycle";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -312,6 +313,22 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
 
   const mapsUrl = useMemo(() => (ride ? buildMapsUrl(ride, userAgent) : null), [ride, userAgent]);
   const lifecycleSteps = useMemo(() => (ride ? getRideLifecycleSteps(ride) : []), [ride]);
+  const riderLocation: MapPoint | null =
+    ride?.riderLocation?.latitude != null && ride.riderLocation?.longitude != null
+      ? {
+          latitude: ride.riderLocation.latitude,
+          longitude: ride.riderLocation.longitude,
+        }
+      : null;
+  const liveDriverLocation: MapPoint | null =
+    driverCoordinates?.latitude != null && driverCoordinates?.longitude != null
+      ? driverCoordinates
+      : ride?.driverLocation?.latitude != null && ride.driverLocation?.longitude != null
+        ? {
+            latitude: ride.driverLocation.latitude,
+            longitude: ride.driverLocation.longitude,
+          }
+        : null;
   const shouldAutoLaunchMaps =
     Boolean(ride && mapsUrl && isMobileDevice) &&
     ACTIVE_RIDE_STATUSES.includes(ride?.status as (typeof ACTIVE_RIDE_STATUSES)[number]);
@@ -872,6 +889,19 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
           Complete Ride
         </button>
       </div>
+
+      <LiveRideMap
+        riderLocation={riderLocation}
+        driverLocation={liveDriverLocation}
+        title="Live Ride Map"
+        emptyLabel="Pickup coordinates are not available yet, so the live map cannot be drawn."
+        footerLabel={
+          liveDriverLocation
+            ? "Blue is your live driver location. Orange is the rider pickup spot."
+            : "Waiting for driver location to appear on the live map."
+        }
+        maxWidth={640}
+      />
     </main>
   );
 }

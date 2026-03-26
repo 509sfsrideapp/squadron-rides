@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
@@ -10,7 +10,7 @@ import { formatEtaLabel } from "../../lib/eta";
 import { auth, db } from "../../lib/firebase";
 import { formatRideTimestamp, getRideLifecycleSteps, getRideStatusLabel } from "../../lib/ride-lifecycle";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, doc, onSnapshot, query, runTransaction, where } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, runTransaction, updateDoc, where } from "firebase/firestore";
 
 type Ride = {
   id: string;
@@ -67,6 +67,10 @@ type Ride = {
   };
 };
 
+type RiderProfile = {
+  locationServicesEnabled?: boolean;
+};
+
 const ACTIVE_RIDE_STATUSES = ["open", "accepted", "arrived", "picked_up"] as const;
 
 function getStatusMessage(status?: string) {
@@ -112,6 +116,9 @@ export default function RideStatusPage() {
   const [rides, setRides] = useState<Ride[]>([]);
   const [loading, setLoading] = useState(true);
   const [cancelingRide, setCancelingRide] = useState(false);
+  const [riderLocationServicesEnabled, setRiderLocationServicesEnabled] = useState(true);
+  const riderWatchIdRef = useRef<number | null>(null);
+  const lastRiderLocationSentRef = useRef<{ latitude: number; longitude: number; sentAt: number } | null>(null);
 
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
@@ -125,6 +132,25 @@ export default function RideStatusPage() {
 
     return () => unsubscribeAuth();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadRiderLocationPreference = async () => {
+      try {
+        const profileSnap = await getDoc(doc(db, "users", user.uid));
+
+        if (!profileSnap.exists()) return;
+
+        const profile = profileSnap.data() as RiderProfile;
+        setRiderLocationServicesEnabled(profile.locationServicesEnabled !== false);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    void loadRiderLocationPreference();
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -165,6 +191,63 @@ export default function RideStatusPage() {
   const canCancelRide = activeRide?.status === "open" || activeRide?.status === "accepted" || activeRide?.status === "arrived";
   const lifecycleSteps = activeRide ? getRideLifecycleSteps(activeRide) : [];
   const eta = formatEtaLabel(driverLocation, riderLocation);
+
+  useEffect(() => {
+    if (
+      !user ||
+      !activeRide ||
+      !riderLocationServicesEnabled ||
+      typeof window === "undefined" ||
+      !("geolocation" in navigator) ||
+      !ACTIVE_RIDE_STATUSES.includes(activeRide.status as (typeof ACTIVE_RIDE_STATUSES)[number])
+    ) {
+      return;
+    }
+
+    riderWatchIdRef.current = navigator.geolocation.watchPosition(
+      async (position) => {
+        const nextCoordinates = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        };
+
+        const now = Date.now();
+        const lastSent = lastRiderLocationSentRef.current;
+        const latitudeChanged = !lastSent || Math.abs(lastSent.latitude - nextCoordinates.latitude) > 0.0001;
+        const longitudeChanged = !lastSent || Math.abs(lastSent.longitude - nextCoordinates.longitude) > 0.0001;
+        const enoughTimePassed = !lastSent || now - lastSent.sentAt > 15000;
+
+        if (!latitudeChanged && !longitudeChanged && !enoughTimePassed) {
+          return;
+        }
+
+        try {
+          await updateDoc(doc(db, "rides", activeRide.id), {
+            riderLocation: nextCoordinates,
+            riderLocationUpdatedAt: new Date(),
+          });
+          lastRiderLocationSentRef.current = { ...nextCoordinates, sentAt: now };
+        } catch (error) {
+          console.error(error);
+        }
+      },
+      (error) => {
+        console.error("Rider location watch failed", error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 5000,
+      }
+    );
+
+    return () => {
+      if (riderWatchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(riderWatchIdRef.current);
+        riderWatchIdRef.current = null;
+      }
+    };
+  }, [activeRide, riderLocationServicesEnabled, user]);
 
   const cancelRide = async () => {
     if (!activeRide || !user) return;
