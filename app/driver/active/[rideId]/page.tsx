@@ -379,7 +379,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
       : null;
   const shouldAutoLaunchMaps =
     Boolean(ride && mapsUrl && isMobileDevice) &&
-    ACTIVE_RIDE_STATUSES.includes(ride?.status as (typeof ACTIVE_RIDE_STATUSES)[number]);
+    (ride?.status === "accepted" || ride?.status === "picked_up");
 
   useEffect(() => {
     if (!ride || !mapsUrl || !shouldAutoLaunchMaps) return;
