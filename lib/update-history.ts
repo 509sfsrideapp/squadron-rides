@@ -7,7 +7,7 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
-    commit: "pending",
+    commit: "6178386",
     title: "Pickup Navigation GPS Lock",
     summary: "Changed driver pickup navigation so when rider GPS is available, the maps app gets only the rider’s coordinates and not a readable pickup label that could override the pin.",
   },
