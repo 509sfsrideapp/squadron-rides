@@ -428,7 +428,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         transaction.update(rideRef, {
           status: "completed",
           completedAt: new Date(),
-          driverLocation: driverCoordinates ?? currentRide.driverLocation ?? null,
+          driverLocation: currentRide.driverLocation ?? null,
         });
         transaction.update(driverRef, {
           available: true,
