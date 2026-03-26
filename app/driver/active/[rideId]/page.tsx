@@ -191,7 +191,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
       setRide(nextRide);
       setLoading(false);
 
-      if (nextRide.status === "completed") {
+      if (nextRide.status === "completed" || nextRide.status === "canceled") {
         router.replace("/driver");
       }
     });
@@ -312,9 +312,12 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
 
   const mapsUrl = useMemo(() => (ride ? buildMapsUrl(ride, userAgent) : null), [ride, userAgent]);
   const lifecycleSteps = useMemo(() => (ride ? getRideLifecycleSteps(ride) : []), [ride]);
+  const shouldAutoLaunchMaps =
+    Boolean(ride && mapsUrl && isMobileDevice) &&
+    ACTIVE_RIDE_STATUSES.includes(ride?.status as (typeof ACTIVE_RIDE_STATUSES)[number]);
 
   useEffect(() => {
-    if (!ride || !mapsUrl || !isMobileDevice) return;
+    if (!ride || !mapsUrl || !shouldAutoLaunchMaps) return;
     const navigationKey = `${ride.id}:${ride.status}:${mapsUrl}`;
     if (launchedNavigationKeyRef.current === navigationKey) return;
 
@@ -324,7 +327,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     }, 700);
 
     return () => window.clearTimeout(timeoutId);
-  }, [isMobileDevice, mapsUrl, ride]);
+  }, [mapsUrl, ride, shouldAutoLaunchMaps]);
 
   useEffect(() => {
     if (
