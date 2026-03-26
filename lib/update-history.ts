@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "pending",
+    title: "Rider Status Layout Tightening",
+    summary: "Removed the extra top ride-status bubble on the rider page and moved the Cancel Ride button to sit directly under the live map.",
+  },
+  {
     commit: "9f61beb",
     title: "Single Active Push Token Per Driver",
     summary: "Changed push registration so each account keeps just one current active token, which should stop the same driver phone from getting duplicate ride request alerts from old saved sessions.",

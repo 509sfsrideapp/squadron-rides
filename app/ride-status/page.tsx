@@ -92,25 +92,6 @@ function getStatusMessage(status?: string) {
   }
 }
 
-function getStatusAccent(status?: string) {
-  switch (status) {
-    case "open":
-      return { backgroundColor: "rgba(77, 53, 15, 0.88)", color: "#fef3c7" };
-    case "accepted":
-      return { backgroundColor: "rgba(16, 44, 84, 0.88)", color: "#dbeafe" };
-    case "arrived":
-      return { backgroundColor: "rgba(86, 42, 19, 0.88)", color: "#ffedd5" };
-    case "picked_up":
-      return { backgroundColor: "rgba(10, 51, 44, 0.88)", color: "#ccfbf1" };
-    case "completed":
-      return { backgroundColor: "rgba(31, 41, 55, 0.88)", color: "#e5e7eb" };
-    case "canceled":
-      return { backgroundColor: "rgba(69, 10, 10, 0.9)", color: "#fecaca" };
-    default:
-      return { backgroundColor: "rgba(31, 41, 55, 0.88)", color: "#e5e7eb" };
-  }
-}
-
 export default function RideStatusPage() {
   const [user, setUser] = useState<User | null>(null);
   const [rides, setRides] = useState<Ride[]>([]);
@@ -332,42 +313,6 @@ export default function RideStatusPage() {
       ) : (
         <>
           <p style={{ fontSize: "1.15rem", maxWidth: 620 }}>{getStatusMessage(activeRide.status)}</p>
-          <div
-            style={{
-              display: "inline-block",
-              padding: "10px 16px",
-              borderRadius: 999,
-              fontWeight: 700,
-              fontSize: "1.1rem",
-              marginBottom: 18,
-              ...getStatusAccent(activeRide.status),
-            }}
-          >
-            {getRideStatusLabel(activeRide.status).toUpperCase()}
-          </div>
-
-          {canCancelRide ? (
-            <div style={{ marginBottom: 18 }}>
-              <button
-                type="button"
-                onClick={cancelRide}
-                disabled={cancelingRide}
-                style={{
-                  padding: "12px 18px",
-                  backgroundColor: "#b91c1c",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: 12,
-                  cursor: cancelingRide ? "wait" : "pointer",
-                  fontFamily: "var(--font-display)",
-                  letterSpacing: "0.04em",
-                  textTransform: "uppercase",
-                }}
-              >
-                {cancelingRide ? "Canceling Ride..." : "Cancel Ride"}
-              </button>
-            </div>
-          ) : null}
 
           <div
             style={{
@@ -592,6 +537,29 @@ export default function RideStatusPage() {
           </div>
 
           <LiveRideMap riderLocation={riderLocation} driverLocation={driverLocation} />
+
+          {canCancelRide ? (
+            <div style={{ marginTop: 18 }}>
+              <button
+                type="button"
+                onClick={cancelRide}
+                disabled={cancelingRide}
+                style={{
+                  padding: "12px 18px",
+                  backgroundColor: "#b91c1c",
+                  color: "#ffffff",
+                  border: "none",
+                  borderRadius: 12,
+                  cursor: cancelingRide ? "wait" : "pointer",
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "0.04em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {cancelingRide ? "Canceling Ride..." : "Cancel Ride"}
+              </button>
+            </div>
+          ) : null}
         </>
       )}
     </main>
