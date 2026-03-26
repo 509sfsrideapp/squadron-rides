@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "pending",
+    title: "Emergency Ride Destination Fix",
+    summary: "Fixed one-tap emergency rides so once the rider is picked up, navigation uses the saved home address instead of the temporary destination placeholder.",
+  },
+  {
     commit: "698c960",
     title: "Rider Update Notification Wording",
     summary: "Adjusted rider push notifications so acceptance alerts focus on who accepted the ride, while arrival alerts clearly repeat the driver vehicle details.",

@@ -20,6 +20,7 @@ type Ride = {
   pickupLocationName?: string;
   pickupLocationAddress?: string;
   destination?: string;
+  emergencySavedAddress?: string;
   status?: string;
   acceptedBy?: string;
   driverName?: string;
@@ -91,12 +92,25 @@ type Coordinates = {
 
 const ACTIVE_RIDE_STATUSES = ["accepted", "arrived", "picked_up"] as const;
 
+function isPlaceholderDestination(destination?: string | null) {
+  const normalized = destination?.trim().toLowerCase() || "";
+  return normalized === "" || normalized === "destination to be confirmed with rider";
+}
+
+function resolveDestinationLabel(ride: Ride) {
+  if (!isPlaceholderDestination(ride.destination)) {
+    return ride.destination?.trim() || "";
+  }
+
+  return ride.emergencySavedAddress?.trim() || "";
+}
+
 function buildMapsUrl(ride: Ride, userAgent: string) {
   const isIPhone = /iPhone|iPad|iPod/i.test(userAgent);
   const isAndroid = /Android/i.test(userAgent);
   const navigatingToDestination = ride.status === "picked_up";
   const targetLabel = navigatingToDestination
-    ? ride.destination?.trim() || "Destination"
+    ? resolveDestinationLabel(ride) || "Destination"
     : ride.pickup?.trim() || "Pickup";
   const targetLatitude = navigatingToDestination ? undefined : ride.riderLocation?.latitude;
   const targetLongitude = navigatingToDestination ? undefined : ride.riderLocation?.longitude;
@@ -411,6 +425,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
           : {
               status,
               pickedUpAt: new Date(),
+              destination: resolveDestinationLabel(currentRide) || currentRide.destination || null,
             });
       });
 
