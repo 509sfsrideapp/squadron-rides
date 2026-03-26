@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "pending",
+    title: "Mobile Pull-to-Refresh",
+    summary: "Added a mobile pull-down refresh gesture across the app so when you drag down from the top of a page, it refreshes more like a normal phone browser.",
+  },
+  {
     commit: "6178386",
     title: "Pickup Navigation GPS Lock",
     summary: "Changed driver pickup navigation so when rider GPS is available, the maps app gets only the rider’s coordinates and not a readable pickup label that could override the pin.",

@@ -3,6 +3,7 @@ import AccountAccessGate from "./components/AccountAccessGate";
 import BottomUtilityNav from "./components/BottomUtilityNav";
 import DeveloperAccessCleaner from "./components/DeveloperAccessCleaner";
 import InitialAppSplash from "./components/InitialAppSplash";
+import PullToRefresh from "./components/PullToRefresh";
 import type { Metadata, Viewport } from "next";
 import { Manrope, Rajdhani } from "next/font/google";
 import NotificationNavigationBridge from "./components/NotificationNavigationBridge";
@@ -55,6 +56,7 @@ export default function RootLayout({
     <html lang="en" className={`${bodyFont.variable} ${displayFont.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <InitialAppSplash />
+        <PullToRefresh />
         <ForegroundNotificationBridge />
         <NotificationNavigationBridge />
         <DeveloperAccessCleaner />
