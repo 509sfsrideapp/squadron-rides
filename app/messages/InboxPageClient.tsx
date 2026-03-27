@@ -130,7 +130,6 @@ export default function InboxPageClient() {
 
   return (
     <div style={{ marginTop: 22, display: "grid", gap: 14, maxWidth: 780 }}>
-      <h2 style={{ marginBottom: 0 }}>Message Channels</h2>
       {threads.map((thread) => (
         <ThreadCard
           key={thread.id}

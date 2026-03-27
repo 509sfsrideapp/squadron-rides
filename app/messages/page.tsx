@@ -38,9 +38,6 @@ export default function MessagesPage() {
     <main style={{ padding: 20 }}>
       <HomeIconLink />
       <h1>Inbox</h1>
-      <p style={{ maxWidth: 700 }}>
-        Review official Admin updates and developer follow-up messages in one place.
-      </p>
 
       <InboxPageClient />
     </main>
