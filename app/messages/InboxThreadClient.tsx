@@ -32,6 +32,7 @@ export default function InboxThreadClient({ threadId }: { threadId: string }) {
   const thread = getMessageThreadDefinition(threadId);
   const [posts, setPosts] = useState<InboxPost[]>([]);
   const [viewerImage, setViewerImage] = useState<{ src: string; alt: string } | null>(null);
+  const [expandedPostId, setExpandedPostId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!thread) return;
@@ -42,7 +43,6 @@ export default function InboxThreadClient({ threadId }: { threadId: string }) {
         .filter((post) => isMessageThreadId(post.threadId))
         .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0));
       setPosts(nextPosts);
-      markInboxThreadRead(thread.id, nextPosts[0]?.createdAt?.seconds ? nextPosts[0].createdAt.seconds * 1000 : null);
     });
     return () => unsubscribe();
   }, [thread]);
@@ -78,26 +78,56 @@ export default function InboxThreadClient({ threadId }: { threadId: string }) {
         </div>
         <div style={{ padding: 16, display: "grid", gap: 12 }}>
           {posts.length > 0 ? posts.map((post) => (
-            <div key={post.id} style={{ maxWidth: "min(100%, 720px)", padding: "14px 16px", borderRadius: 14, backgroundColor: "rgba(15, 23, 42, 0.72)", border: "1px solid rgba(148, 163, 184, 0.14)" }}>
-              <div style={{ marginBottom: 10, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                <strong>{post.senderLabel}</strong>
-                <span style={{ fontSize: 12, color: "#94a3b8" }}>{formatTimestamp(post.createdAt)}</span>
-              </div>
-              <div style={{ display: "grid", gridTemplateColumns: post.imageUrl ? "120px minmax(0, 1fr)" : "minmax(0, 1fr)", gap: 14, alignItems: "start" }}>
-                {post.imageUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => setViewerImage({ src: post.imageUrl || "", alt: post.title })}
-                    style={{ padding: 0, background: "transparent", border: "none", cursor: "zoom-in" }}
-                  >
-                    <img src={post.imageUrl} alt={post.title} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 12, border: "1px solid rgba(148, 163, 184, 0.14)" }} />
-                  </button>
-                ) : null}
-                <div>
-                  <h3 style={{ marginTop: 0, marginBottom: 8 }}>{post.title}</h3>
-                  <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{post.body}</p>
+            <div key={post.id} style={{ maxWidth: "min(100%, 720px)", borderRadius: 14, backgroundColor: "rgba(15, 23, 42, 0.72)", border: "1px solid rgba(148, 163, 184, 0.14)", overflow: "hidden" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextExpanded = expandedPostId === post.id ? null : post.id;
+                  setExpandedPostId(nextExpanded);
+
+                  if (nextExpanded) {
+                    markInboxThreadRead(thread.id, posts[0]?.createdAt?.seconds ? posts[0].createdAt.seconds * 1000 : null);
+                  }
+                }}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  background: "transparent",
+                  border: "none",
+                  color: "#e5edf7",
+                  textAlign: "left",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ marginBottom: 6, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                      <strong>{post.senderLabel}</strong>
+                      <span style={{ fontSize: 12, color: "#94a3b8" }}>{formatTimestamp(post.createdAt)}</span>
+                    </div>
+                    <h3 style={{ margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{post.title}</h3>
+                  </div>
+                  <span style={{ color: "#94a3b8", fontSize: 20 }}>{expandedPostId === post.id ? "−" : "+"}</span>
                 </div>
-              </div>
+              </button>
+
+              {expandedPostId === post.id ? (
+                <div style={{ padding: "0 16px 16px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: post.imageUrl ? "120px minmax(0, 1fr)" : "minmax(0, 1fr)", gap: 14, alignItems: "start" }}>
+                    {post.imageUrl ? (
+                      <button
+                        type="button"
+                        onClick={() => setViewerImage({ src: post.imageUrl || "", alt: post.title })}
+                        style={{ padding: 0, background: "transparent", border: "none", cursor: "zoom-in" }}
+                      >
+                        <img src={post.imageUrl} alt={post.title} style={{ width: 120, height: 120, objectFit: "cover", borderRadius: 12, border: "1px solid rgba(148, 163, 184, 0.14)" }} />
+                      </button>
+                    ) : null}
+                    <div>
+                      <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{post.body}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
             </div>
           )) : fallbackMessages.map((message) => (
             <div key={message.id} style={{ maxWidth: "min(92%, 560px)", padding: "12px 14px", borderRadius: 14, backgroundColor: "rgba(15, 23, 42, 0.72)", border: "1px solid rgba(148, 163, 184, 0.14)" }}>

@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v165",
+    title: "Inbox Thread Unread Badges",
+    summary: "Added separate unread badges for the Admin and Dev inbox channels and changed message posts to expand on tap, with the unread alert clearing only after a message is actually opened.",
+  },
+  {
     commit: "v164",
     title: "New Defender One Icon",
     summary: "Replaced the app icon, favicon, Apple icon, and install icon references with the new Defender One artwork and kept the installed web app name set to Defender One.",

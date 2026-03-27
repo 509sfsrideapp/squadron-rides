@@ -106,3 +106,21 @@ export function getInboxUnreadCount(posts: InboxUnreadPost[], readState = loadIn
     return createdAtMs > lastReadAt ? count + 1 : count;
   }, 0);
 }
+
+export function getInboxUnreadCountsByThread(posts: InboxUnreadPost[], readState = loadInboxReadState()) {
+  return posts.reduce((counts, post) => {
+    const createdAtMs = toTimestampMs(post.createdAt);
+
+    if (!createdAtMs) {
+      return counts;
+    }
+
+    const lastReadAt = readState[post.threadId] || 0;
+
+    if (createdAtMs > lastReadAt) {
+      counts[post.threadId] = (counts[post.threadId] || 0) + 1;
+    }
+
+    return counts;
+  }, {} as Partial<Record<MessageThreadId, number>>);
+}
