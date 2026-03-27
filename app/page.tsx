@@ -640,7 +640,7 @@ export default function HomePage() {
               fontSize: 12,
             }}
           >
-            509 SFS
+            509 SFS - Whiteman AFB, MO
           </p>
           <h1 style={{ margin: "0.4rem 0 0" }}>Defender One</h1>
         </div>
