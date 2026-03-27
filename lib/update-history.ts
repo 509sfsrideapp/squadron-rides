@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v162",
+    title: "Photo Viewer Close Button",
+    summary: "Replaced the fullscreen inbox photo viewer swipe-down instruction with a simple top-left close button so it does not encourage accidental pull-to-refresh behavior.",
+  },
+  {
     commit: "v161",
     title: "Photo Cropper Gesture Cleanup",
     summary: "Improved the new image cropper so it supports two-finger pinch zoom inside the photo area instead of feeling like a stretched slider-only control.",

@@ -89,6 +89,29 @@ export default function FullscreenImageViewer({
           transition: dragY === 0 ? "transform 180ms ease" : "none",
         }}
       >
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            position: "fixed",
+            top: 18,
+            left: 18,
+            width: 44,
+            height: 44,
+            borderRadius: 999,
+            display: "grid",
+            placeItems: "center",
+            backgroundColor: "rgba(15, 23, 42, 0.9)",
+            color: "#e2e8f0",
+            border: "1px solid rgba(148, 163, 184, 0.24)",
+            fontSize: 24,
+            lineHeight: 1,
+            zIndex: 2,
+          }}
+          aria-label="Close image"
+        >
+          ×
+        </button>
         <img
           src={src}
           alt={alt}
@@ -100,21 +123,6 @@ export default function FullscreenImageViewer({
             boxShadow: "0 20px 46px rgba(0, 0, 0, 0.38)",
           }}
         />
-        <p
-          style={{
-            position: "fixed",
-            bottom: 26,
-            left: "50%",
-            transform: "translateX(-50%)",
-            margin: 0,
-            color: "rgba(226, 232, 240, 0.86)",
-            fontSize: 13,
-            letterSpacing: "0.05em",
-            textTransform: "uppercase",
-          }}
-        >
-          Swipe down or tap outside to close
-        </p>
       </div>
     </div>
   );
