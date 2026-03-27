@@ -791,7 +791,7 @@ export default function HomePage() {
           >
             <div style={{ maxWidth: 760 }}>
               <p style={{ margin: 0, color: "#cbd5e1", fontSize: "1.05rem" }}>
-                Emergency ride coordination for squadron personnel. Request support fast, track live ride status, and keep leadership visibility tight through one shared operations platform.
+                Emergency ride coordination for squadron personnel. Request support quickly, follow ride progress in real time, and keep accountability centralized through one shared operations platform.
               </p>
             </div>
 
@@ -858,11 +858,11 @@ export default function HomePage() {
               gap: 10,
             }}
           >
-            <h2 style={{ margin: 0 }}>What This Handles</h2>
+            <h2 style={{ margin: 0 }}>Core Capabilities</h2>
             <div style={{ display: "grid", gap: 8 }}>
               <p style={{ margin: 0, color: "#cbd5e1" }}>Rapid emergency ride requests with live driver response.</p>
-              <p style={{ margin: 0, color: "#cbd5e1" }}>Driver availability and active-ride mission workflow.</p>
-              <p style={{ margin: 0, color: "#cbd5e1" }}>Administrative oversight for accounts, requests, and ride history.</p>
+              <p style={{ margin: 0, color: "#cbd5e1" }}>Driver availability, dispatch visibility, and active ride workflow.</p>
+              <p style={{ margin: 0, color: "#cbd5e1" }}>Administrative oversight for accounts, ride activity, and operational history.</p>
             </div>
           </section>
         </div>
@@ -950,7 +950,7 @@ export default function HomePage() {
                       opacity: 0.82,
                     }}
                   >
-                    Request Ride
+                    Ride Request Unavailable
                   </div>
                   <p style={{ maxWidth: 680, marginTop: 10, color: "#94a3b8" }}>
                     You must complete additional account information in order to use this feature.

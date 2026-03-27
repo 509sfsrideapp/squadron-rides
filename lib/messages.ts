@@ -24,9 +24,9 @@ const messageThreads: MessageThreadDefinition[] = [
   {
     id: "admin",
     title: "Admin",
-    subtitle: "Admin account messages and notices",
-    description: "Messages from the admin account will show up here once account messaging tools are added.",
-    previewText: "Admin announcements and direct outreach will appear here later.",
+    subtitle: "Official updates and account notices",
+    description: "Official updates, account notices, and administrative outreach appear in this thread.",
+    previewText: "Administrative updates and account notices appear here.",
     channelLabel: "Admin Channel",
     iconKey: "shield",
     iconBackground: "rgba(67, 56, 202, 0.18)",
@@ -35,9 +35,9 @@ const messageThreads: MessageThreadDefinition[] = [
   {
     id: "dev",
     title: "Dev",
-    subtitle: "Bug and suggestion follow-ups",
-    description: "Developer follow-up messages, including responses tied to bug reports and suggestions, will live here.",
-    previewText: "Bug-report replies and development follow-ups will appear here later.",
+    subtitle: "Bug report and feedback follow-up",
+    description: "Developer follow-up messages, including responses tied to bug reports and suggestions, appear in this thread.",
+    previewText: "Developer follow-up and support responses appear here.",
     channelLabel: "Developer Channel",
     iconKey: "spark",
     iconBackground: "rgba(217, 119, 6, 0.18)",
@@ -50,16 +50,16 @@ const systemThreadMessages: Record<MessageThreadId, SystemThreadMessage[]> = {
     {
       id: "admin-seed",
       senderLabel: "Admin",
-      timestampLabel: "Framework ready",
-      text: "Admin-to-user messaging will be added here next.",
+      timestampLabel: "Channel ready",
+      text: "Administrative announcements and account-related updates will appear here.",
     },
   ],
   dev: [
     {
       id: "dev-seed",
       senderLabel: "Dev",
-      timestampLabel: "Framework ready",
-      text: "Bug report and suggestion follow-ups will be routed into this thread later.",
+      timestampLabel: "Channel ready",
+      text: "Developer follow-up on bug reports and suggestions will appear here.",
     },
   ],
 };

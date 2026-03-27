@@ -271,6 +271,9 @@ export default function AdminPage() {
       </div>
 
       <h1>Admin Dashboard</h1>
+      <p style={{ maxWidth: 780, color: "#cbd5e1" }}>
+        Monitor live ride activity, driver availability, account operations, and system messaging from one administrative command view.
+      </p>
       <p>
         <strong>Signed in as:</strong> {user.email}
       </p>
@@ -347,17 +350,17 @@ export default function AdminPage() {
         <InboxPostComposer
           endpoint="/api/admin/inbox-posts"
           threadId="admin"
-          heading="Post to Admin Inbox"
-          description="Send a formatted admin post into the user inbox. Title and message text are required, and an optional photo will appear on the left side of the post."
-          submitLabel="Send Admin Post"
+          heading="Send Admin Message"
+          description="Publish an administrative message to the user inbox. Title and message text are required, and an optional photo appears on the left side of the post."
+          submitLabel="Send Message"
         />
       </section>
 
       <InboxPostManager
         threadId="admin"
         endpointBase="/api/admin/inbox-posts"
-        heading="Review Admin Inbox Posts"
-        description="Review what has already been sent into the Admin inbox thread and edit or delete posts when needed."
+        heading="Manage Admin Messages"
+        description="Review previous Admin messages and edit or delete them as needed."
       />
 
       <section style={{ marginTop: 32 }}>
@@ -402,7 +405,7 @@ export default function AdminPage() {
       <section style={{ marginTop: 32 }}>
         <h2>Live Ride Board</h2>
         <p style={{ maxWidth: 720 }}>
-          This board stays focused on open and active rides. Completed and canceled rides now live under the separate ride history screen.
+          This board stays focused on open and active rides. Completed and canceled rides are kept on the separate ride history screen.
         </p>
         {activeRideBoard.length === 0 ? (
           <p>No open or active rides right now.</p>

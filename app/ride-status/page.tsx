@@ -110,19 +110,19 @@ function hasMovedEnough(previous: Coordinates | null, next: Coordinates) {
 function getStatusMessage(status?: string) {
   switch (status) {
     case "open":
-      return "Your ride request is out to drivers now.";
+      return "Your ride request is active and visible to available drivers.";
     case "accepted":
-      return "A driver accepted your request and is heading your way.";
+      return "A driver accepted your request and is heading to your pickup location.";
     case "arrived":
       return "Your driver has arrived at the pickup location.";
     case "picked_up":
-      return "You have been picked up and the ride is in progress.";
+      return "You have been picked up and the ride is now in progress.";
     case "completed":
-      return "Your ride has been completed.";
+      return "Your ride has been completed successfully.";
     case "canceled":
-      return "This ride was canceled.";
+      return "This ride request has been canceled.";
     default:
-      return "No active ride right now.";
+      return "There is no active ride at the moment.";
   }
 }
 
@@ -507,7 +507,7 @@ export default function RideStatusPage() {
       <h1>Ride Status</h1>
 
       {!activeRide ? (
-        <p>You do not have an active ride right now.</p>
+        <p>You do not have an active ride at the moment.</p>
       ) : (
         <>
           <p style={{ fontSize: "1.15rem", maxWidth: 620 }}>{getStatusMessage(activeRide.status)}</p>
@@ -572,7 +572,7 @@ export default function RideStatusPage() {
                   Your Driver
                 </p>
                 <p style={{ margin: "4px 0 0", fontSize: "2rem", lineHeight: 1.05, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
-                  {activeRide.driverName || "Waiting for driver"}
+                  {activeRide.driverName || "Driver not assigned yet"}
                 </p>
                 <p style={{ margin: "10px 0 0", color: "#cbd5e1" }}>
                   {activeRide.carColor || activeRide.carMake || activeRide.carModel || activeRide.carPlate
@@ -582,7 +582,7 @@ export default function RideStatusPage() {
                       ]
                         .filter(Boolean)
                         .join(" • ")
-                    : "Driver car details have not been added yet."}
+                    : "Vehicle details will appear here once a driver is assigned."}
                 </p>
                 {eta && activeRide.status === "accepted" ? (
                   <div
@@ -616,7 +616,7 @@ export default function RideStatusPage() {
               }}
             >
               <p style={{ margin: 0, fontSize: "0.95rem", color: "#93c5fd", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Ride Status
+                Current Status
               </p>
               <p style={{ margin: "8px 0 0", fontSize: "2.35rem", lineHeight: 1, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
                 {getRideStatusLabel(activeRide.status).toUpperCase()}
@@ -717,20 +717,20 @@ export default function RideStatusPage() {
               }}
             >
               <p style={{ margin: 0, fontSize: "0.95rem", color: "#8ea1b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Pickup Spot
+                Pickup Location
               </p>
               <p style={{ margin: "8px 0 0", fontSize: "1.45rem", lineHeight: 1.1, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
-                {activeRide.pickupLocationName || activeRide.pickup || "Not resolved yet"}
+                {activeRide.pickupLocationName || activeRide.pickup || "Pickup location pending"}
               </p>
               <p style={{ margin: "8px 0 0", color: "#cbd5e1" }}>
-                {activeRide.pickupLocationAddress || activeRide.pickup || "No address available yet"}
+                {activeRide.pickupLocationAddress || activeRide.pickup || "Address details will appear here once available."}
               </p>
             </div>
             <p>
-              <strong>Destination:</strong> {activeRide.destination || "N/A"}
+              <strong>Destination:</strong> {activeRide.destination || "Saved destination not available"}
             </p>
             <p>
-              <strong>Driver Phone:</strong> {activeRide.driverPhone || "Not available yet"}
+              <strong>Driver Phone:</strong> {activeRide.driverPhone || "Available once a driver is assigned"}
             </p>
           </div>
 
@@ -759,7 +759,7 @@ export default function RideStatusPage() {
                 cursor: refreshingLocation || !riderLocationServicesEnabled ? "wait" : "pointer",
               }}
             >
-              {refreshingLocation ? "Refreshing Location..." : "Refresh My Location"}
+              {refreshingLocation ? "Refreshing Location..." : "Refresh Pickup Location"}
             </button>
             {locationRefreshStatus ? <span style={{ color: "#cbd5e1" }}>{locationRefreshStatus}</span> : null}
           </div>

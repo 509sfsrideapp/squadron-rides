@@ -14,6 +14,7 @@ import {
   normalizeRideDispatchMode,
   type EmergencyRideDispatchMode,
 } from "../../lib/ride-dispatch";
+import { getRideStatusLabel } from "../../lib/ride-lifecycle";
 import { getLatestActiveRideForDriver } from "../../lib/ride-state";
 import { onAuthStateChanged, User } from "firebase/auth";
 import {
@@ -86,12 +87,22 @@ type UserProfile = {
 };
 
 function renderPickupSummary(ride: Ride) {
-  return ride.pickupLocationName || ride.pickupLocationAddress || ride.pickup || "Not resolved yet";
+  return ride.pickupLocationName || ride.pickupLocationAddress || ride.pickup || "Pickup location pending";
 }
 
 function renderRiderName(ride: Ride) {
-  return [ride.riderRank?.trim(), ride.riderLastName?.trim()].filter(Boolean).join(" ").trim() || ride.riderName || "N/A";
+  return [ride.riderRank?.trim(), ride.riderLastName?.trim()].filter(Boolean).join(" ").trim() || ride.riderName || "Rider";
 }
+
+const dashboardCardStyle: React.CSSProperties = {
+  border: "1px solid rgba(148, 163, 184, 0.18)",
+  padding: 14,
+  marginBottom: 12,
+  borderRadius: 12,
+  backgroundColor: "rgba(9, 15, 25, 0.88)",
+  color: "#e5edf7",
+  boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
+};
 
 export default function DriverPage() {
   const router = useRouter();
@@ -432,12 +443,18 @@ export default function DriverPage() {
 
       <h1 style={{ marginTop: 20 }}>Driver Dashboard</h1>
 
-      <p>
-        <strong>Driver:</strong> {profile?.name || user.email}
+      <p style={{ maxWidth: 720, color: "#cbd5e1" }}>
+        Manage your availability, review open ride requests, and continue active ride assignments from one place.
       </p>
-      <p>
-        <strong>Status:</strong> {profile?.available ? "Clocked In" : "Clocked Out"}
-      </p>
+
+      <div style={{ ...dashboardCardStyle, maxWidth: 560 }}>
+        <p style={{ margin: 0 }}>
+          <strong>Driver:</strong> {profile?.name || user.email}
+        </p>
+        <p style={{ margin: "8px 0 0" }}>
+          <strong>Status:</strong> {profile?.available ? "Clocked in and available" : "Clocked out"}
+        </p>
+      </div>
 
       <PushNotificationsCard />
 
@@ -452,7 +469,7 @@ export default function DriverPage() {
             backgroundColor: "rgba(69, 10, 10, 0.3)",
           }}
         >
-          <h2 style={{ marginTop: 0 }}>Finish Driver Setup</h2>
+          <h2 style={{ marginTop: 0 }}>Complete Driver Setup</h2>
           {getDriverReadinessIssues(profile).map((issue) => (
             <p key={issue} style={{ marginBottom: 10 }}>
               {issue}
@@ -465,24 +482,19 @@ export default function DriverPage() {
       ) : null}
 
       <div style={{ marginTop: 30 }}>
-        <h3>Current Accepted Rides</h3>
+        <h3>Active Ride Assignments</h3>
 
         {acceptedRides.length === 0 ? (
-          <p>No active rides</p>
+          <p>No active rides are assigned to you right now.</p>
         ) : (
           acceptedRides.map((ride) => (
             <div
               key={ride.id}
               style={{
+                ...dashboardCardStyle,
                 border: "1px solid rgba(45, 212, 191, 0.22)",
-                padding: 14,
-                marginBottom: 12,
-                borderRadius: 12,
-                backgroundColor: "rgba(9, 15, 25, 0.88)",
-                color: "#e5edf7",
-              boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
-            }}
-          >
+              }}
+            >
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 {ride.riderPhotoUrl ? (
                   <Image
@@ -523,7 +535,7 @@ export default function DriverPage() {
                     <strong>Rider:</strong> {renderRiderName(ride)}
                   </p>
                   <p style={{ margin: "8px 0 0" }}>
-                    <strong>Stage:</strong> {ride.status}
+                    <strong>Status:</strong> {getRideStatusLabel(ride.status)}
                   </p>
                   <p style={{ margin: "8px 0 0" }}>
                     <strong>Pickup:</strong> {renderPickupSummary(ride)}
@@ -559,21 +571,10 @@ export default function DriverPage() {
         <h3>Open Ride Requests</h3>
 
         {visibleOpenRides.length === 0 ? (
-          <p>No open requests</p>
+          <p>No open ride requests are waiting in your queue right now.</p>
         ) : (
           visibleOpenRides.map((ride) => (
-            <div
-              key={ride.id}
-              style={{
-                border: "1px solid rgba(148, 163, 184, 0.18)",
-                padding: 14,
-                marginBottom: 12,
-                borderRadius: 12,
-                backgroundColor: "rgba(9, 15, 25, 0.88)",
-                color: "#e5edf7",
-              boxShadow: "0 12px 32px rgba(2, 6, 23, 0.18)",
-            }}
-          >
+            <div key={ride.id} style={dashboardCardStyle}>
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
                 {ride.riderPhotoUrl ? (
                   <Image
@@ -623,7 +624,7 @@ export default function DriverPage() {
                 onClick={() => acceptRide(ride.id)}
                 style={{ padding: "8px 12px", marginTop: 10 }}
               >
-                Accept Ride
+                Accept Request
               </button>
             </div>
           ))

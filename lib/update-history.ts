@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v166",
+    title: "Presentation Polish Pass",
+    summary: "Cleaned up wording, empty states, labels, and section descriptions across the home page, inbox, rider ride status, driver dashboard, and admin dashboard so the app reads more professionally for leadership review.",
+  },
+  {
     commit: "v165",
     title: "Inbox Thread Unread Badges",
     summary: "Added separate unread badges for the Admin and Dev inbox channels and changed message posts to expand on tap, with the unread alert clearing only after a message is actually opened.",
