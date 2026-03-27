@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
-import { ChangeEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
+import ImageCropField from "../components/ImageCropField";
 import { auth, db } from "../../lib/firebase";
 import { isAdminEmail } from "../../lib/admin";
 import { buildHomeAddress, splitHomeAddress } from "../../lib/home-address";
@@ -172,97 +172,6 @@ export default function AccountPage() {
 
   const handleChange = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const convertImageToDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-          return;
-        }
-
-        reject(new Error("Could not read the selected image."));
-      };
-      reader.onerror = () => reject(new Error("Could not read the selected image."));
-      reader.readAsDataURL(file);
-    });
-
-  const shrinkImage = async (file: File) => {
-    const sourceUrl = await convertImageToDataUrl(file);
-    const image = new window.Image();
-
-    const loaded = new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve();
-      image.onerror = () => reject(new Error("Could not load the selected image."));
-    });
-
-    image.src = sourceUrl;
-    await loaded;
-
-    const maxDimension = 480;
-    const scale = Math.min(maxDimension / image.width, maxDimension / image.height, 1);
-    const width = Math.max(1, Math.round(image.width * scale));
-    const height = Math.max(1, Math.round(image.height * scale));
-
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-
-    const context = canvas.getContext("2d");
-
-    if (!context) {
-      throw new Error("Could not process the selected image.");
-    }
-
-    context.drawImage(image, 0, 0, width, height);
-
-    let quality = 0.82;
-    let compressed = canvas.toDataURL("image/jpeg", quality);
-
-    while (compressed.length > 180000 && quality > 0.45) {
-      quality -= 0.08;
-      compressed = canvas.toDataURL("image/jpeg", quality);
-    }
-
-    if (compressed.length > 180000) {
-      throw new Error("That photo is still too large. Please choose a smaller image.");
-    }
-
-    return compressed;
-  };
-
-  const handlePhotoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    if (!user) {
-      setStatusMessage("You need to log in first.");
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      setStatusMessage("Please choose an image file.");
-      return;
-    }
-
-    try {
-      setUploadingPhoto(true);
-      setStatusMessage("Preparing profile photo...");
-
-      const compressedPhoto = await shrinkImage(file);
-
-      setForm((prev) => ({ ...prev, profilePhotoUrl: compressedPhoto }));
-      setStatusMessage("Profile photo is ready. Save account details to keep it.");
-    } catch (error) {
-      console.error(error);
-      setStatusMessage(error instanceof Error ? error.message : "Could not process the profile photo.");
-    } finally {
-      setUploadingPhoto(false);
-      event.target.value = "";
-    }
   };
 
   const handleSave = async () => {
@@ -510,51 +419,24 @@ export default function AccountPage() {
             <strong>Account Photo</strong>
           </p>
 
-              {form.profilePhotoUrl ? (
-            <Image
-              src={form.profilePhotoUrl}
-              alt="Profile preview"
-              width={104}
-              height={104}
-              unoptimized
-              style={{
-                objectFit: "cover",
-                borderRadius: 999,
-                border: "1px solid rgba(148, 163, 184, 0.22)",
-                display: "block",
-                marginBottom: 12,
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                width: 104,
-                height: 104,
-                borderRadius: 999,
-                display: "grid",
-                placeItems: "center",
-                marginBottom: 12,
-                backgroundColor: "rgba(18, 37, 63, 0.72)",
-                color: "#dbeafe",
-                border: "1px solid rgba(96, 165, 250, 0.2)",
-                fontFamily: "var(--font-display)",
-                fontSize: "1.5rem",
-              }}
-            >
-              {form.firstName ? form.firstName.charAt(0).toUpperCase() : "?"}
-            </div>
-          )}
-
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoUpload}
+          <ImageCropField
+            value={form.profilePhotoUrl}
+            onChange={(nextValue) => {
+              setForm((prev) => ({ ...prev, profilePhotoUrl: nextValue }));
+              setStatusMessage(nextValue ? "Profile photo is ready. Save account details to keep it." : "");
+            }}
+            cropShape="circle"
+            previewSize={104}
+            outputSize={480}
+            maxEncodedLength={180000}
             disabled={uploadingPhoto}
-            style={{ marginBottom: 6 }}
+            helperText="Use a clear photo that shows what you look like so riders and drivers know who to look for."
+            statusMessage={uploadingPhoto ? "Preparing profile photo..." : ""}
+            onStatusMessageChange={(message) => {
+              setUploadingPhoto(message.includes("Preparing") || message.includes("Saving"));
+              setStatusMessage(message);
+            }}
           />
-          <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
-            Use a clear photo that shows what you look like so riders and drivers know who to look for.
-          </p>
         </div>
 
         <input

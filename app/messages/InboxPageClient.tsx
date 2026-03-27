@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { markInboxThreadsRead } from "../../lib/inbox-badges";
-import { getAllMessageThreads, type MessageThreadDefinition, type MessageThreadIconKey, type MessageThreadId } from "../../lib/messages";
+import { getAllMessageThreads, isMessageThreadId, type MessageThreadDefinition, type MessageThreadIconKey, type MessageThreadId } from "../../lib/messages";
 
 type InboxPost = {
   id: string;
@@ -15,10 +15,6 @@ type InboxPost = {
 };
 
 function ThreadIcon({ iconKey }: { iconKey: MessageThreadIconKey }) {
-  if (iconKey === "bell") {
-    return <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 4a4 4 0 0 0-4 4v1.3c0 .8-.2 1.5-.6 2.2L6 14h12l-1.4-2.5c-.4-.7-.6-1.4-.6-2.2V8a4 4 0 0 0-4-4Z" /><path d="M10 18a2 2 0 0 0 4 0" /></svg>;
-  }
-
   if (iconKey === "shield") {
     return <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M12 3 5 6v5c0 4.5 2.7 8.5 7 10 4.3-1.5 7-5.5 7-10V6l-7-3Z" /><path d="m9.5 12 1.7 1.7L14.8 10" /></svg>;
   }
@@ -69,7 +65,7 @@ export default function InboxPageClient() {
       const nextMap: Partial<Record<MessageThreadId, InboxPost>> = {};
       snapshot.docs.forEach((docSnap) => {
         const post = { id: docSnap.id, ...(docSnap.data() as Omit<InboxPost, "id">) };
-        if (post.threadId && !nextMap[post.threadId]) {
+        if (isMessageThreadId(post.threadId) && !nextMap[post.threadId]) {
           nextMap[post.threadId] = post;
         }
       });

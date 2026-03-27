@@ -1,9 +1,9 @@
 "use client";
 
-import Image from "next/image";
-import { ChangeEvent, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import HomeIconLink from "../components/HomeIconLink";
+import ImageCropField from "../components/ImageCropField";
 import { validateSignupDraft, SIGNUP_DRAFT_STORAGE_KEY, type SignupDraft } from "../../lib/signup";
 
 const flightOptions = ["Alpha", "Bravo", "Charlie", "Delta", "Foxtrot", "Staff"] as const;
@@ -31,89 +31,6 @@ export default function SignupPage() {
   const [carColor, setCarColor] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-
-  const convertImageToDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        if (typeof reader.result === "string") {
-          resolve(reader.result);
-          return;
-        }
-
-        reject(new Error("Could not read the selected image."));
-      };
-      reader.onerror = () => reject(new Error("Could not read the selected image."));
-      reader.readAsDataURL(file);
-    });
-
-  const shrinkImage = async (file: File) => {
-    const sourceUrl = await convertImageToDataUrl(file);
-    const image = new window.Image();
-
-    const loaded = new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve();
-      image.onerror = () => reject(new Error("Could not load the selected image."));
-    });
-
-    image.src = sourceUrl;
-    await loaded;
-
-    const maxDimension = 480;
-    const scale = Math.min(maxDimension / image.width, maxDimension / image.height, 1);
-    const width = Math.max(1, Math.round(image.width * scale));
-    const height = Math.max(1, Math.round(image.height * scale));
-
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const context = canvas.getContext("2d");
-
-    if (!context) {
-      throw new Error("Could not process the selected image.");
-    }
-
-    context.drawImage(image, 0, 0, width, height);
-
-    let quality = 0.82;
-    let compressed = canvas.toDataURL("image/jpeg", quality);
-
-    while (compressed.length > 180000 && quality > 0.45) {
-      quality -= 0.08;
-      compressed = canvas.toDataURL("image/jpeg", quality);
-    }
-
-    if (compressed.length > 180000) {
-      throw new Error("That photo is still too large. Please choose a smaller image.");
-    }
-
-    return compressed;
-  };
-
-  const handlePhotoUpload = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      setStatusMessage("Please choose an image file.");
-      return;
-    }
-
-    try {
-      setUploadingPhoto(true);
-      setStatusMessage("Preparing profile photo...");
-      const compressedPhoto = await shrinkImage(file);
-      setProfilePhotoUrl(compressedPhoto);
-      setStatusMessage("Profile photo is ready and will be saved with your account.");
-    } catch (error) {
-      console.error(error);
-      setStatusMessage(error instanceof Error ? error.message : "Could not process the profile photo.");
-    } finally {
-      setUploadingPhoto(false);
-      event.target.value = "";
-    }
-  };
 
   const handleSignup = async () => {
     try {
@@ -297,35 +214,24 @@ export default function SignupPage() {
           </p>
 
           <div style={{ marginBottom: 12 }}>
-            {profilePhotoUrl ? (
-              <Image
-                src={profilePhotoUrl}
-                alt="Profile preview"
-                width={96}
-                height={96}
-                unoptimized
-                style={{
-                  width: 96,
-                  height: 96,
-                  objectFit: "cover",
-                  borderRadius: 999,
-                  border: "1px solid rgba(148, 163, 184, 0.22)",
-                  display: "block",
-                  marginBottom: 10,
-                }}
-              />
-            ) : null}
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
+            <ImageCropField
+              value={profilePhotoUrl}
+              onChange={(nextValue) => {
+                setProfilePhotoUrl(nextValue);
+                setStatusMessage(nextValue ? "Profile photo is ready and will be saved with your account." : "");
+              }}
+              cropShape="circle"
+              previewSize={96}
+              outputSize={480}
+              maxEncodedLength={180000}
               disabled={uploadingPhoto}
-              style={{ marginBottom: 6 }}
+              helperText="Use a clear photo that shows what you look like so riders and drivers know who to look for."
+              statusMessage={uploadingPhoto ? "Preparing profile photo..." : ""}
+              onStatusMessageChange={(message) => {
+                setUploadingPhoto(message.includes("Preparing") || message.includes("Saving"));
+                setStatusMessage(message);
+              }}
             />
-            <p style={{ marginTop: 0, marginBottom: 0, fontSize: 13, color: "#94a3b8" }}>
-              Use a clear photo that shows what you look like so riders and drivers know who to look for.
-            </p>
           </div>
 
           <input

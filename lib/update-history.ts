@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v160",
+    title: "Inbox Media and Post Management",
+    summary: "Removed the Notifications inbox channel, added Admin and Dev post review/edit/delete tools, added full-screen image viewing inside inbox messages, and upgraded profile/post photo uploads with zoom-and-pan cropping including a circular preview for profile pictures.",
+  },
+  {
     commit: "v159",
     title: "Inbox Post Backend Fix",
     summary: "Fixed the Firestore admin serializer so admin and dev inbox posts can save structured audit log details without failing on unsupported value type errors.",

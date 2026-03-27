@@ -39,7 +39,7 @@ export default function MessagesPage() {
       <HomeIconLink />
       <h1>Inbox</h1>
       <p style={{ maxWidth: 700 }}>
-        This inbox is set up for notifications, admin messages, and dev follow-ups.
+        This inbox is set up for admin messages and dev follow-ups.
       </p>
 
       <InboxPageClient />

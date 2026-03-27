@@ -1,5 +1,5 @@
-export type MessageThreadId = "notifications" | "admin" | "dev";
-export type MessageThreadIconKey = "bell" | "shield" | "spark";
+export type MessageThreadId = "admin" | "dev";
+export type MessageThreadIconKey = "shield" | "spark";
 
 export type MessageThreadDefinition = {
   id: MessageThreadId;
@@ -21,17 +21,6 @@ type SystemThreadMessage = {
 };
 
 const messageThreads: MessageThreadDefinition[] = [
-  {
-    id: "notifications",
-    title: "Notifications",
-    subtitle: "Ride updates and system notices",
-    description: "Ride acceptance, arrival updates, and other in-app alerts will land here in message form.",
-    previewText: "Future ride and system notifications will appear in this thread.",
-    channelLabel: "System Feed",
-    iconKey: "bell",
-    iconBackground: "rgba(14, 116, 144, 0.18)",
-    iconColor: "#bae6fd",
-  },
   {
     id: "admin",
     title: "Admin",
@@ -57,14 +46,6 @@ const messageThreads: MessageThreadDefinition[] = [
 ];
 
 const systemThreadMessages: Record<MessageThreadId, SystemThreadMessage[]> = {
-  notifications: [
-    {
-      id: "notifications-seed",
-      senderLabel: "System",
-      timestampLabel: "Framework ready",
-      text: "This thread is ready for ride notifications and future system alerts.",
-    },
-  ],
   admin: [
     {
       id: "admin-seed",
@@ -82,6 +63,10 @@ const systemThreadMessages: Record<MessageThreadId, SystemThreadMessage[]> = {
     },
   ],
 };
+
+export function isMessageThreadId(value: string): value is MessageThreadId {
+  return value === "admin" || value === "dev";
+}
 
 export function getAllMessageThreads() {
   return messageThreads;

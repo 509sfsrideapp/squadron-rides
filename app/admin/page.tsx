@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import InboxPostComposer from "../components/InboxPostComposer";
+import InboxPostManager from "../components/InboxPostManager";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
 import { auth, db } from "../../lib/firebase";
 import { formatRideTimestamp, getRideStatusLabel } from "../../lib/ride-lifecycle";
@@ -352,15 +353,12 @@ export default function AdminPage() {
         />
       </section>
 
-      <section style={{ marginTop: 18 }}>
-        <InboxPostComposer
-          endpoint="/api/admin/inbox-posts"
-          threadId="notifications"
-          heading="Post to Notifications Inbox"
-          description="Send a broader system-style notice into the Notifications thread without using a push alert."
-          submitLabel="Send Notification Post"
-        />
-      </section>
+      <InboxPostManager
+        threadId="admin"
+        endpointBase="/api/admin/inbox-posts"
+        heading="Review Admin Inbox Posts"
+        description="Review what has already been sent into the Admin inbox thread and edit or delete posts when needed."
+      />
 
       <section style={{ marginTop: 32 }}>
         <h2>Available Drivers</h2>

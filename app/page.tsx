@@ -15,7 +15,7 @@ import { getLatestActiveRideForRider } from "../lib/ride-state";
 import { useActiveRides } from "../lib/use-active-rides";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, where } from "firebase/firestore";
-import type { MessageThreadId } from "../lib/messages";
+import { isMessageThreadId, type MessageThreadId } from "../lib/messages";
 
 type UserProfile = {
   name: string;
@@ -368,10 +368,12 @@ export default function HomePage() {
     const inboxPostsQuery = query(collection(db, "inboxPosts"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(inboxPostsQuery, (snapshot) => {
       setLatestInboxPosts(
-        snapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...(docSnap.data() as Omit<InboxPost, "id">),
-        }))
+        snapshot.docs
+          .map((docSnap) => ({
+            id: docSnap.id,
+            ...(docSnap.data() as Omit<InboxPost, "id">),
+          }))
+          .filter((post) => isMessageThreadId(post.threadId))
       );
     });
 

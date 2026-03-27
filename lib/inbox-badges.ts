@@ -1,4 +1,4 @@
-import type { MessageThreadId } from "./messages";
+import { isMessageThreadId, type MessageThreadId } from "./messages";
 import { toTimestampMs } from "./ride-dispatch";
 
 export const INBOX_READ_STORAGE_KEY = "defender-one-inbox-read-state";
@@ -34,7 +34,10 @@ export function loadInboxReadState(): InboxReadState {
       return {};
     }
 
-    return JSON.parse(raw) as InboxReadState;
+    const parsed = JSON.parse(raw) as Record<string, number>;
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([threadId, value]) => isMessageThreadId(threadId) && typeof value === "number")
+    ) as InboxReadState;
   } catch (error) {
     console.error("Could not load inbox read state", error);
     return {};

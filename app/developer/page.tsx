@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import DeveloperLogoutButton from "../components/DeveloperLogoutButton";
 import HomeIconLink from "../components/HomeIconLink";
 import InboxPostComposer from "../components/InboxPostComposer";
+import InboxPostManager from "../components/InboxPostManager";
 
 const DEVELOPER_COOKIE_NAME = "developer_access";
 
@@ -55,6 +56,12 @@ export default async function DeveloperPage() {
           submitLabel="Send Dev Post"
         />
       </div>
+      <InboxPostManager
+        threadId="dev"
+        endpointBase="/api/developer/inbox-posts"
+        heading="Review Dev Inbox Posts"
+        description="Review Dev inbox posts here and edit or delete them without leaving the Developer page."
+      />
 
       <div
         style={{

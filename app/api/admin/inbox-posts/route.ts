@@ -3,7 +3,7 @@ import { verifyAdminRequest } from "../../../../lib/server/admin-access";
 import { writeAuditLog } from "../../../../lib/server/audit-log";
 import { createFirestoreDocument } from "../../../../lib/server/firestore-admin";
 
-type InboxThreadId = "notifications" | "admin";
+type InboxThreadId = "admin";
 
 type RequestBody = {
   threadId?: InboxThreadId;
@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     const adminToken = await verifyAdminRequest(request.headers);
     const body = (await request.json()) as RequestBody;
 
-    if (!body.threadId || !["notifications", "admin"].includes(body.threadId)) {
+    if (body.threadId !== "admin") {
       return NextResponse.json({ error: "Unsupported inbox thread." }, { status: 400 });
     }
 
@@ -30,8 +30,8 @@ export async function POST(request: Request) {
       title: body.title.trim(),
       body: body.body.trim(),
       imageUrl: body.imageUrl || null,
-      senderLabel: body.threadId === "notifications" ? "System" : "Admin",
-      senderType: body.threadId === "notifications" ? "system" : "admin",
+      senderLabel: "Admin",
+      senderType: "admin",
       createdAt: new Date(),
       createdByUid: adminToken.sub,
       createdByEmail: adminToken.email || null,

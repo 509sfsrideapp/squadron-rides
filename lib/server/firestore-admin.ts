@@ -219,3 +219,43 @@ export async function listFirestoreDocuments(collectionPath: string) {
     ),
   }));
 }
+
+export async function getFirestoreDocument<T extends Record<string, unknown>>(documentPath: string) {
+  const accessToken = await getGoogleAccessToken();
+  const encodedPath = documentPath
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+  const response = await fetch(
+    `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${encodedPath}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      cache: "no-store",
+    }
+  );
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const details = await response.text().catch(() => "");
+    throw new Error(`Could not get Firestore document ${documentPath}: ${details || response.statusText}`);
+  }
+
+  const data = (await response.json()) as {
+    name: string;
+    fields?: Record<string, FirestoreValue>;
+  };
+
+  return {
+    id: data.name.split("/").pop() || "",
+    ...Object.fromEntries(
+      Object.entries(data.fields || {}).map(([field, value]) => [field, fromFirestoreValue(value)])
+    ),
+  } as { id: string } & T;
+}
