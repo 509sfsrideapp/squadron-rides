@@ -7,7 +7,8 @@ type FirestoreValue =
   | { doubleValue: number }
   | { nullValue: null }
   | { timestampValue: string }
-  | { mapValue: { fields?: Record<string, FirestoreValue> } };
+  | { mapValue: { fields?: Record<string, FirestoreValue> } }
+  | { arrayValue: { values?: FirestoreValue[] } };
 
 const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "ride-app-dd741";
 
@@ -30,6 +31,27 @@ function toFirestoreValue(value: unknown): FirestoreValue {
 
   if (typeof value === "number") {
     return Number.isInteger(value) ? { integerValue: String(value) } : { doubleValue: value };
+  }
+
+  if (Array.isArray(value)) {
+    return {
+      arrayValue: {
+        values: value.map((entry) => toFirestoreValue(entry)),
+      },
+    };
+  }
+
+  if (typeof value === "object") {
+    return {
+      mapValue: {
+        fields: Object.fromEntries(
+          Object.entries(value as Record<string, unknown>).map(([field, nestedValue]) => [
+            field,
+            toFirestoreValue(nestedValue),
+          ])
+        ),
+      },
+    };
   }
 
   throw new Error("Unsupported Firestore admin value type.");
@@ -69,6 +91,10 @@ function fromFirestoreValue(value: FirestoreValue | undefined): unknown {
     return Object.fromEntries(
       Object.entries(fields).map(([field, fieldValue]) => [field, fromFirestoreValue(fieldValue)])
     );
+  }
+
+  if ("arrayValue" in value) {
+    return (value.arrayValue.values || []).map((entry) => fromFirestoreValue(entry));
   }
 
   return null;

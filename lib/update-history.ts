@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v159",
+    title: "Inbox Post Backend Fix",
+    summary: "Fixed the Firestore admin serializer so admin and dev inbox posts can save structured audit log details without failing on unsupported value type errors.",
+  },
+  {
     commit: "v158",
     title: "Home Badge Alerts",
     summary: "Added unread inbox badges to the home profile avatar and Inbox menu entry, plus a live Driver Dashboard badge that shows how many open ride requests a clocked-in driver can currently see.",
