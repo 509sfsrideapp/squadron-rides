@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
@@ -127,6 +127,7 @@ function getStatusMessage(status?: string) {
 }
 
 export default function RideStatusPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [rides, setRides] = useState<Ride[]>([]);
@@ -231,6 +232,12 @@ export default function RideStatusPage() {
   }, [user]);
 
   const activeRide = useMemo(() => rides[0] ?? fallbackRide ?? null, [fallbackRide, rides]);
+
+  useEffect(() => {
+    if (!loading && user && !activeRide) {
+      router.replace("/");
+    }
+  }, [activeRide, loading, router, user]);
 
   useEffect(() => {
     if (!activeRide) {
@@ -506,9 +513,7 @@ export default function RideStatusPage() {
 
       <h1>Ride Status</h1>
 
-      {!activeRide ? (
-        <p>You do not have an active ride at the moment.</p>
-      ) : (
+      {!activeRide ? null : (
         <>
           <p style={{ fontSize: "1.15rem", maxWidth: 620 }}>{getStatusMessage(activeRide.status)}</p>
 
