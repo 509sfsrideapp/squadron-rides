@@ -218,20 +218,21 @@ function SteeringWheelIcon() {
     <svg
       aria-hidden="true"
       viewBox="0 0 64 64"
-      width="34"
-      height="34"
+      width="36"
+      height="36"
       fill="none"
       stroke="currentColor"
-      strokeWidth="3.5"
+      strokeWidth="4"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <circle cx="32" cy="32" r="20" />
-      <circle cx="32" cy="24" r="6" />
-      <path d="M32 30v22" />
-      <path d="M14 38l14-5" />
-      <path d="M50 38l-14-5" />
-      <path d="M20 46c2-6 6-9 12-9s10 3 12 9" />
+      <circle cx="32" cy="32" r="22" />
+      <circle cx="32" cy="24.5" r="6.5" />
+      <path d="M25.5 29.5h13" />
+      <path d="M32 31v22" />
+      <path d="M12 38.5 26 33" />
+      <path d="M52 38.5 38 33" />
+      <path d="M20.5 50c2.4-6.1 6.3-9.2 11.5-9.2S41.1 43.9 43.5 50" />
     </svg>
   );
 }
