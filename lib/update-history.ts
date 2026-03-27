@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v167",
+    title: "Signup Flow Cleanup",
+    summary: "Reordered the required signup fields, removed the old Required Now and Complete Now or Later framing, added stronger password rules, and made signup problems appear clearly under the Continue to Terms button before users can proceed.",
+  },
+  {
     commit: "v166",
     title: "Presentation Polish Pass",
     summary: "Cleaned up wording, empty states, labels, and section descriptions across the home page, inbox, rider ride status, driver dashboard, and admin dashboard so the app reads more professionally for leadership review.",

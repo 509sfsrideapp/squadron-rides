@@ -78,9 +78,6 @@ export default function SignupPage() {
       <h1>Create Account</h1>
 
       <div style={{ marginTop: 20, maxWidth: 460 }}>
-        {statusMessage ? <p style={{ marginBottom: 12 }}>{statusMessage}</p> : null}
-        <h2 style={{ marginTop: 0 }}>Required Now</h2>
-
         <input
           value={firstName}
           onChange={(e) => setFirstName(e.target.value)}
@@ -122,13 +119,6 @@ export default function SignupPage() {
         </select>
 
         <input
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="Phone Number"
-          style={{ display: "block", marginBottom: 10, width: "100%" }}
-        />
-
-        <input
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Username"
@@ -143,12 +133,23 @@ export default function SignupPage() {
         />
 
         <input
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="Phone Number"
+          style={{ display: "block", marginBottom: 10, width: "100%" }}
+        />
+
+        <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
           style={{ display: "block", marginBottom: 10, width: "100%" }}
         />
+
+        <p style={{ marginTop: -2, marginBottom: 12, fontSize: 13, color: "#94a3b8" }}>
+          Password must be at least 8 characters and include 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.
+        </p>
 
         <input
           type="password"
@@ -158,9 +159,8 @@ export default function SignupPage() {
           style={{ display: "block", marginBottom: 16, width: "100%" }}
         />
 
-        <h2>Complete Now or Later</h2>
         <p style={{ marginTop: 0, marginBottom: 12, color: "#94a3b8" }}>
-          Certain features will not be available until this information is completed.
+          The information below is not required for account creation but will be required to request and accept rides.
         </p>
         <div
           style={{
@@ -266,6 +266,11 @@ export default function SignupPage() {
         <button type="button" onClick={handleSignup} style={{ padding: 10 }} disabled={uploadingPhoto}>
           Continue to Terms
         </button>
+        {statusMessage ? (
+          <p style={{ marginTop: 12, marginBottom: 0, color: statusMessage.includes("opening terms") ? "#86efac" : "#fca5a5" }}>
+            {statusMessage}
+          </p>
+        ) : null}
       </div>
     </main>
   );

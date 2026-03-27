@@ -36,7 +36,7 @@ export function getSignupErrorMessage(error: unknown) {
     case "auth/invalid-email":
       return "Enter a valid email address.";
     case "auth/weak-password":
-      return "Password must be at least 6 characters.";
+      return "Password must be at least 8 characters and include uppercase, lowercase, number, and special character requirements.";
     case "auth/network-request-failed":
       return "Network error while creating the account. Try again.";
     default:
@@ -48,23 +48,41 @@ export function getSignupErrorMessage(error: unknown) {
   }
 }
 
+const passwordRule = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
+function getMissingRequiredFieldMessage(draft: SignupDraft) {
+  const requiredFields: Array<[value: string, label: string]> = [
+    [draft.firstName, "First name is required."],
+    [draft.lastName, "Last name is required."],
+    [draft.rank, "Rank is required."],
+    [draft.flight, "Flight is required."],
+    [draft.username, "Username is required."],
+    [draft.email, "Email is required."],
+    [draft.phone, "Phone number is required."],
+    [draft.password, "Password is required."],
+    [draft.confirmPassword, "Verify password is required."],
+  ];
+
+  return requiredFields.find(([value]) => !value.trim())?.[1] || null;
+}
+
 export async function validateSignupDraft(draft: SignupDraft) {
-  if (
-    !draft.firstName.trim() ||
-    !draft.lastName.trim() ||
-    !draft.rank.trim() ||
-    !draft.flight.trim() ||
-    !draft.phone.trim() ||
-    !draft.username.trim() ||
-    !draft.email.trim() ||
-    !draft.password.trim() ||
-    !draft.confirmPassword.trim()
-  ) {
-    return { ok: false as const, message: "Fill out every required field before creating your account." };
+  const missingFieldMessage = getMissingRequiredFieldMessage(draft);
+
+  if (missingFieldMessage) {
+    return { ok: false as const, message: missingFieldMessage };
   }
 
   if (draft.password !== draft.confirmPassword) {
     return { ok: false as const, message: "Password and verify password must match." };
+  }
+
+  if (!passwordRule.test(draft.password)) {
+    return {
+      ok: false as const,
+      message:
+        "Password must be at least 8 characters and include 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
+    };
   }
 
   const normalizedUsername = normalizeUsername(draft.username);
