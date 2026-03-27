@@ -41,6 +41,7 @@ type Ride = {
   pickupLocationAddress?: string;
   destination: string;
   status: string;
+  isTestRide?: boolean;
   createdAt?: {
     seconds?: number;
     nanoseconds?: number;
@@ -130,7 +131,7 @@ export default function DriverPage() {
       const rideList: Ride[] = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...(docSnap.data() as Omit<Ride, "id">),
-      }));
+      })).filter((ride) => !ride.isTestRide);
       setOpenRides(rideList);
     });
 

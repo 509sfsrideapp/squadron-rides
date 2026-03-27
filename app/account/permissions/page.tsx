@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import AppLoadingState from "../../components/AppLoadingState";
 import HomeIconLink from "../../components/HomeIconLink";
@@ -12,20 +13,34 @@ import {
   RIDE_DISPATCH_OPTIONS,
   normalizeRideDispatchMode,
 } from "../../../lib/ride-dispatch";
+import { getLatestActiveRideForRider } from "../../../lib/ride-state";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, updateDoc } from "firebase/firestore";
 
 type UserProfile = {
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  rank?: string;
+  flight?: string;
+  phone?: string;
+  email?: string;
+  homeAddress?: string;
+  riderPhotoUrl?: string;
+  driverPhotoUrl?: string;
   emergencyRideAddressConsent?: boolean;
   emergencyRideDispatchMode?: EmergencyRideDispatchMode;
   locationServicesEnabled?: boolean;
 };
 
 export default function AccountPermissionsPage() {
+  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [runningTestRide, setRunningTestRide] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [emergencyRideAddressConsent, setEmergencyRideAddressConsent] = useState(false);
   const [emergencyRideDispatchMode, setEmergencyRideDispatchMode] =
     useState<EmergencyRideDispatchMode>(DEFAULT_RIDE_DISPATCH_MODE);
@@ -63,6 +78,7 @@ export default function AccountPermissionsPage() {
           setNotificationTokenCount(notificationDetails.tokenCount ?? 0);
         }
 
+        setProfile(data);
         setEmergencyRideAddressConsent(Boolean(data?.emergencyRideAddressConsent));
         setEmergencyRideDispatchMode(normalizeRideDispatchMode(data?.emergencyRideDispatchMode));
         setLocationServicesEnabled(data?.locationServicesEnabled !== false);
@@ -96,6 +112,30 @@ export default function AccountPermissionsPage() {
     }
   };
 
+  const refreshNotificationStatus = async () => {
+    const currentUser = auth.currentUser;
+
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setNotificationPermission(Notification.permission);
+    }
+
+    if (!currentUser) {
+      return;
+    }
+
+    const idToken = await currentUser.getIdToken();
+    const response = await fetch("/api/notifications/debug", {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    });
+
+    if (response.ok) {
+      const details = (await response.json()) as { tokenCount?: number };
+      setNotificationTokenCount(details.tokenCount ?? 0);
+    }
+  };
+
   const handleNotificationToggle = async () => {
     try {
       setUpdatingNotifications(true);
@@ -108,23 +148,7 @@ export default function AccountPermissionsPage() {
       }
 
       await enablePushNotifications();
-      setNotificationPermission("granted");
-
-      const currentUser = auth.currentUser;
-
-      if (currentUser) {
-        const idToken = await currentUser.getIdToken();
-        const response = await fetch("/api/notifications/debug", {
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
-        });
-
-        if (response.ok) {
-          const details = (await response.json()) as { tokenCount?: number };
-          setNotificationTokenCount(details.tokenCount ?? 0);
-        }
-      }
+      await refreshNotificationStatus();
 
       setStatusMessage("Notifications enabled on this device.");
     } catch (error) {
@@ -161,6 +185,93 @@ export default function AccountPermissionsPage() {
       setStatusMessage("Could not update location services.");
     } finally {
       setUpdatingLocationServices(false);
+    }
+  };
+
+  const captureCurrentLocation = async () => {
+    if (typeof window === "undefined" || !("geolocation" in navigator)) {
+      return null;
+    }
+
+    return new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) =>
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          }),
+        () => resolve(null),
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    });
+  };
+
+  const runTestRide = async () => {
+    if (!user || !profile) {
+      setStatusMessage("You need to log in first.");
+      return;
+    }
+
+    try {
+      setRunningTestRide(true);
+      setStatusMessage("Starting a test ride...");
+
+      const existingRide = await getLatestActiveRideForRider(user.uid);
+
+      if (existingRide) {
+        router.push(`/ride-status?rideId=${existingRide.id}`);
+        return;
+      }
+
+      if (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") {
+        try {
+          await enablePushNotifications();
+          await refreshNotificationStatus();
+        } catch (error) {
+          console.error("Notification permission prompt failed during test ride", error);
+        }
+      }
+
+      const riderLocation = locationServicesEnabled ? await captureCurrentLocation() : null;
+      const riderDisplayName =
+        [profile.rank?.trim(), profile.lastName?.trim()].filter(Boolean).join(" ").trim() ||
+        profile.name ||
+        user.email?.split("@")[0] ||
+        "Test Rider";
+
+      const rideRef = await addDoc(collection(db, "rides"), {
+        riderId: user.uid,
+        riderName: riderDisplayName,
+        riderPhone: profile.phone?.trim() || "",
+        riderEmail: profile.email?.trim() || user.email || "",
+        riderPhotoUrl: profile.driverPhotoUrl || profile.riderPhotoUrl || null,
+        riderRank: profile.rank?.trim() || null,
+        riderLastName: profile.lastName?.trim() || null,
+        riderFlight: profile.flight?.trim() || null,
+        pickup: riderLocation ? "Current GPS test location" : profile.homeAddress?.trim() || "Saved home address",
+        pickupLocationName: "Test Ride",
+        pickupLocationAddress: profile.homeAddress?.trim() || null,
+        destination: profile.homeAddress?.trim() || "Test destination",
+        riderLocation,
+        dispatchMode: "all_drivers",
+        dispatchFlight: profile.flight?.trim() || null,
+        dispatchExpandedAt: null,
+        status: "open",
+        isTestRide: true,
+        createdAt: new Date(),
+      });
+
+      setStatusMessage("Test ride created. Opening ride status...");
+      router.push(`/ride-status?rideId=${rideRef.id}`);
+    } catch (error) {
+      console.error(error);
+      setStatusMessage(error instanceof Error ? error.message : "Could not start the test ride.");
+    } finally {
+      setRunningTestRide(false);
     }
   };
 
@@ -289,6 +400,17 @@ export default function AccountPermissionsPage() {
           <p style={{ marginTop: 10, color: "#94a3b8" }}>
             {RIDE_DISPATCH_OPTIONS.find((option) => option.value === emergencyRideDispatchMode)?.description}
           </p>
+        </div>
+
+        <div style={{ marginTop: 24 }}>
+          <h2 style={{ marginBottom: 8 }}>Test Ride</h2>
+          <p style={{ marginTop: 0, color: "#94a3b8" }}>
+            This opens a real rider-side test ride without notifying any drivers, so you can verify permission prompts
+            and ride-screen behavior safely.
+          </p>
+          <button type="button" onClick={() => void runTestRide()} disabled={runningTestRide}>
+            {runningTestRide ? "Starting Test Ride..." : "Run Test Ride"}
+          </button>
         </div>
 
         <div style={{ marginTop: 18, display: "flex", gap: 12, flexWrap: "wrap" }}>

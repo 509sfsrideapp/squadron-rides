@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v156",
+    title: "App Permissions Test Ride",
+    summary: "Added a safe test ride button in App Permissions that opens the normal rider status flow without notifying drivers, so permission prompts and ride behavior can be checked without disrupting operations.",
+  },
+  {
     commit: "v155",
     title: "App Permissions Toggle Cleanup",
     summary: "Moved the notification and location settings out of Account Settings into App Permissions and restyled them as iPhone-style on/off switches.",

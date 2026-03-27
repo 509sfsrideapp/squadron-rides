@@ -153,6 +153,7 @@ service cloud.firestore {
           "dispatchFlight",
           "dispatchExpandedAt",
           "status",
+          "isTestRide",
           "createdAt",
           "isEmergencyRide",
           "emergencySavedAddress"
