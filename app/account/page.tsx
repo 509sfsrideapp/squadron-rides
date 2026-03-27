@@ -9,7 +9,6 @@ import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
 import { isAdminEmail } from "../../lib/admin";
 import { buildHomeAddress, splitHomeAddress } from "../../lib/home-address";
-import { disablePushNotifications, enablePushNotifications } from "../../lib/push-notifications";
 import { useActiveRides } from "../../lib/use-active-rides";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, doc, getDoc, onSnapshot, query, where, writeBatch } from "firebase/firestore";
@@ -38,7 +37,6 @@ type UserProfile = {
   carColor?: string;
   carPlate?: string;
   driverPhotoUrl?: string;
-  locationServicesEnabled?: boolean;
   emergencyRideAddressConsent?: boolean;
 };
 
@@ -50,13 +48,8 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [updatingNotifications, setUpdatingNotifications] = useState(false);
-  const [updatingLocationServices, setUpdatingLocationServices] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [originalUsername, setOriginalUsername] = useState("");
-  const [notificationTokenCount, setNotificationTokenCount] = useState(0);
-  const [notificationPermission, setNotificationPermission] = useState("unknown");
-  const [locationServicesEnabled, setLocationServicesEnabled] = useState(true);
   const [hasRideHistory, setHasRideHistory] = useState(false);
   const [hasDriverHistory, setHasDriverHistory] = useState(false);
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
@@ -93,21 +86,6 @@ export default function AccountPage() {
       try {
         const snap = await getDoc(doc(db, "users", currentUser.uid));
         const data = snap.exists() ? (snap.data() as UserProfile) : null;
-        const idToken = await currentUser.getIdToken();
-        const notificationResponse = await fetch("/api/notifications/debug", {
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
-        }).catch(() => null);
-
-        if (typeof window !== "undefined" && "Notification" in window) {
-          setNotificationPermission(Notification.permission);
-        }
-
-        if (notificationResponse?.ok) {
-          const notificationDetails = (await notificationResponse.json()) as { tokenCount?: number };
-          setNotificationTokenCount(notificationDetails.tokenCount ?? 0);
-        }
 
         const [fallbackFirstName = "", ...fallbackLastNameParts] = (data?.name || "").trim().split(/\s+/);
         const fallbackAddress = splitHomeAddress(data?.homeAddress);
@@ -138,7 +116,6 @@ export default function AccountPage() {
           carPlate: data?.carPlate || "",
         });
         setOriginalUsername(data?.username || "");
-        setLocationServicesEnabled(data?.locationServicesEnabled !== false);
       } catch (error) {
         console.error(error);
         setStatusMessage("We could not load your account details.");
@@ -377,7 +354,6 @@ export default function AccountPage() {
           carColor: form.carColor.trim(),
           carPlate: form.carPlate.trim(),
           driverPhotoUrl: profilePhotoUrl,
-          locationServicesEnabled,
           available: false,
           updatedAt: new Date(),
         },
@@ -417,80 +393,6 @@ export default function AccountPage() {
       }
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleNotificationToggle = async () => {
-    try {
-      setUpdatingNotifications(true);
-
-      if (notificationTokenCount > 0 && notificationPermission === "granted") {
-        await disablePushNotifications();
-        setNotificationTokenCount(0);
-        setStatusMessage("Notifications disabled on this device.");
-        return;
-      }
-
-      await enablePushNotifications();
-      setNotificationPermission("granted");
-
-      const currentUser = auth.currentUser;
-
-      if (currentUser) {
-        const idToken = await currentUser.getIdToken();
-        const response = await fetch("/api/notifications/debug", {
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-          },
-        });
-
-        if (response.ok) {
-          const details = (await response.json()) as { tokenCount?: number };
-          setNotificationTokenCount(details.tokenCount ?? 0);
-        }
-      }
-
-      setStatusMessage("Notifications enabled on this device.");
-    } catch (error) {
-      console.error(error);
-      setStatusMessage(error instanceof Error ? error.message : "Could not update notification settings.");
-    } finally {
-      setUpdatingNotifications(false);
-    }
-  };
-
-  const handleLocationServicesToggle = async () => {
-    if (!user) {
-      setStatusMessage("You need to log in first.");
-      return;
-    }
-
-    const nextValue = !locationServicesEnabled;
-
-    try {
-      setUpdatingLocationServices(true);
-      await writeBatch(db)
-        .set(
-          doc(db, "users", user.uid),
-          {
-            locationServicesEnabled: nextValue,
-            updatedAt: new Date(),
-          },
-          { merge: true }
-        )
-        .commit();
-
-      setLocationServicesEnabled(nextValue);
-      setStatusMessage(
-        nextValue
-          ? "Location services turned on for this account."
-          : "Location services turned off. The app will stop using GPS until you turn it back on."
-      );
-    } catch (error) {
-      console.error(error);
-      setStatusMessage("Could not update location services.");
-    } finally {
-      setUpdatingLocationServices(false);
     }
   };
 
@@ -662,46 +564,9 @@ export default function AccountPage() {
           style={{ marginBottom: 10 }}
         />
 
-        <h2 style={{ marginTop: 24 }}>Notifications</h2>
-        <p style={{ marginTop: 0, color: "#cbd5e1" }}>
-          Status: {notificationTokenCount > 0 && notificationPermission === "granted" ? "Enabled on this device" : "Not enabled on this device"}
-        </p>
-        <button
-          type="button"
-          onClick={handleNotificationToggle}
-          disabled={updatingNotifications}
-          style={{ marginBottom: 18 }}
-        >
-          {updatingNotifications
-            ? "Updating..."
-            : notificationTokenCount > 0 && notificationPermission === "granted"
-              ? "Turn Off Notifications"
-              : "Turn On Notifications"}
-        </button>
-
-        <h2 style={{ marginTop: 24 }}>Location Services</h2>
-        <p style={{ marginTop: 0, color: "#cbd5e1" }}>
-          Status: {locationServicesEnabled ? "Enabled for this account" : "Turned off for this account"}
-        </p>
-        <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
-          This controls whether the app uses GPS for ride requests and driver live location. Browser permission still lives in your device settings.
-        </p>
-        <button
-          type="button"
-          onClick={handleLocationServicesToggle}
-          disabled={updatingLocationServices}
-          style={{ marginBottom: 18 }}
-        >
-          {updatingLocationServices
-            ? "Updating..."
-            : locationServicesEnabled
-              ? "Turn Off Location Services"
-              : "Turn On Location Services"}
-        </button>
-
         <h2 style={{ marginTop: 24 }}>App Permissions</h2>
         <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
-          Review emergency ride permissions and future app access settings here.
+          Review emergency ride permissions, notifications, and location settings here.
         </p>
         <Link
           href="/account/permissions"

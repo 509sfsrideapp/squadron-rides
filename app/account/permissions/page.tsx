@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import AppLoadingState from "../../components/AppLoadingState";
 import HomeIconLink from "../../components/HomeIconLink";
 import { auth, db } from "../../../lib/firebase";
+import { disablePushNotifications, enablePushNotifications } from "../../../lib/push-notifications";
 import {
   DEFAULT_RIDE_DISPATCH_MODE,
   type EmergencyRideDispatchMode,
@@ -17,6 +18,7 @@ import { doc, getDoc, updateDoc } from "firebase/firestore";
 type UserProfile = {
   emergencyRideAddressConsent?: boolean;
   emergencyRideDispatchMode?: EmergencyRideDispatchMode;
+  locationServicesEnabled?: boolean;
 };
 
 export default function AccountPermissionsPage() {
@@ -27,6 +29,11 @@ export default function AccountPermissionsPage() {
   const [emergencyRideAddressConsent, setEmergencyRideAddressConsent] = useState(false);
   const [emergencyRideDispatchMode, setEmergencyRideDispatchMode] =
     useState<EmergencyRideDispatchMode>(DEFAULT_RIDE_DISPATCH_MODE);
+  const [updatingNotifications, setUpdatingNotifications] = useState(false);
+  const [updatingLocationServices, setUpdatingLocationServices] = useState(false);
+  const [notificationTokenCount, setNotificationTokenCount] = useState(0);
+  const [notificationPermission, setNotificationPermission] = useState("unknown");
+  const [locationServicesEnabled, setLocationServicesEnabled] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
@@ -40,8 +47,25 @@ export default function AccountPermissionsPage() {
       try {
         const snap = await getDoc(doc(db, "users", currentUser.uid));
         const data = snap.exists() ? (snap.data() as UserProfile) : null;
+        const idToken = await currentUser.getIdToken();
+        const notificationResponse = await fetch("/api/notifications/debug", {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }).catch(() => null);
+
+        if (typeof window !== "undefined" && "Notification" in window) {
+          setNotificationPermission(Notification.permission);
+        }
+
+        if (notificationResponse?.ok) {
+          const notificationDetails = (await notificationResponse.json()) as { tokenCount?: number };
+          setNotificationTokenCount(notificationDetails.tokenCount ?? 0);
+        }
+
         setEmergencyRideAddressConsent(Boolean(data?.emergencyRideAddressConsent));
         setEmergencyRideDispatchMode(normalizeRideDispatchMode(data?.emergencyRideDispatchMode));
+        setLocationServicesEnabled(data?.locationServicesEnabled !== false);
       } catch (error) {
         console.error(error);
         setStatusMessage("Could not load app permissions.");
@@ -69,6 +93,74 @@ export default function AccountPermissionsPage() {
       setStatusMessage("Could not save app permissions.");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleNotificationToggle = async () => {
+    try {
+      setUpdatingNotifications(true);
+
+      if (notificationTokenCount > 0 && notificationPermission === "granted") {
+        await disablePushNotifications();
+        setNotificationTokenCount(0);
+        setStatusMessage("Notifications disabled on this device.");
+        return;
+      }
+
+      await enablePushNotifications();
+      setNotificationPermission("granted");
+
+      const currentUser = auth.currentUser;
+
+      if (currentUser) {
+        const idToken = await currentUser.getIdToken();
+        const response = await fetch("/api/notifications/debug", {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
+
+        if (response.ok) {
+          const details = (await response.json()) as { tokenCount?: number };
+          setNotificationTokenCount(details.tokenCount ?? 0);
+        }
+      }
+
+      setStatusMessage("Notifications enabled on this device.");
+    } catch (error) {
+      console.error(error);
+      setStatusMessage(error instanceof Error ? error.message : "Could not update notification settings.");
+    } finally {
+      setUpdatingNotifications(false);
+    }
+  };
+
+  const handleLocationServicesToggle = async () => {
+    if (!user) {
+      setStatusMessage("You need to log in first.");
+      return;
+    }
+
+    const nextValue = !locationServicesEnabled;
+
+    try {
+      setUpdatingLocationServices(true);
+      await updateDoc(doc(db, "users", user.uid), {
+        locationServicesEnabled: nextValue,
+        updatedAt: new Date(),
+      });
+
+      setLocationServicesEnabled(nextValue);
+      setStatusMessage(
+        nextValue
+          ? "Location services turned on for this account."
+          : "Location services turned off. The app will stop using GPS until you turn it back on."
+      );
+    } catch (error) {
+      console.error(error);
+      setStatusMessage("Could not update location services.");
+    } finally {
+      setUpdatingLocationServices(false);
     }
   };
 
@@ -126,6 +218,52 @@ export default function AccountPermissionsPage() {
           If this is turned on, the home screen Emergency Ride button becomes a one-tap request using your saved
           address. If it is turned off, the button opens the normal request screen instead.
         </p>
+
+        <div style={{ marginTop: 24, display: "grid", gap: 14 }}>
+          <div className="settings-switch-row">
+            <div>
+              <h2 style={{ margin: 0 }}>Push Notifications</h2>
+              <p style={{ margin: "6px 0 0", color: "#94a3b8" }}>
+                {notificationTokenCount > 0 && notificationPermission === "granted"
+                  ? "Enabled on this device for ride and status alerts."
+                  : "Turn this on to receive ride requests and status notifications on this device."}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={notificationTokenCount > 0 && notificationPermission === "granted"}
+              aria-label="Toggle push notifications"
+              onClick={() => void handleNotificationToggle()}
+              disabled={updatingNotifications}
+              className={`settings-switch${notificationTokenCount > 0 && notificationPermission === "granted" ? " settings-switch-on" : ""}`}
+            >
+              <span className="settings-switch-knob" />
+            </button>
+          </div>
+
+          <div className="settings-switch-row">
+            <div>
+              <h2 style={{ margin: 0 }}>Location Services</h2>
+              <p style={{ margin: "6px 0 0", color: "#94a3b8" }}>
+                {locationServicesEnabled
+                  ? "GPS is enabled for ride requests and live ride location updates."
+                  : "GPS is off for this account until you turn it back on."}
+              </p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={locationServicesEnabled}
+              aria-label="Toggle location services"
+              onClick={() => void handleLocationServicesToggle()}
+              disabled={updatingLocationServices}
+              className={`settings-switch${locationServicesEnabled ? " settings-switch-on" : ""}`}
+            >
+              <span className="settings-switch-knob" />
+            </button>
+          </div>
+        </div>
 
         <div style={{ marginTop: 22 }}>
           <h2 style={{ marginBottom: 8 }}>Emergency Ride Driver Routing</h2>
