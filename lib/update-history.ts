@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v163",
+    title: "Cropper Zoom Render Fix",
+    summary: "Changed the image cropper to zoom from a stable base render using transforms instead of resizing the image box directly, which should stop the profile photo cropper from feeling like it stretches vertically.",
+  },
+  {
     commit: "v162",
     title: "Photo Viewer Close Button",
     summary: "Replaced the fullscreen inbox photo viewer swipe-down instruction with a simple top-left close button so it does not encourage accidental pull-to-refresh behavior.",
