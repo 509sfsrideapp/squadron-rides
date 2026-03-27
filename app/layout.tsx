@@ -29,9 +29,9 @@ export const metadata: Metadata = {
   description: "Request and manage squadron rides with Defender One.",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/new-logo.jpg",
-    shortcut: "/new-logo.jpg",
-    apple: "/new-logo.jpg",
+    icon: "/defender-one-icon.jpeg",
+    shortcut: "/defender-one-icon.jpeg",
+    apple: "/defender-one-icon.jpeg",
   },
   appleWebApp: {
     capable: true,

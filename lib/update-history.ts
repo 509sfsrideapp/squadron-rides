@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v164",
+    title: "New Defender One Icon",
+    summary: "Replaced the app icon, favicon, Apple icon, and install icon references with the new Defender One artwork and kept the installed web app name set to Defender One.",
+  },
+  {
     commit: "v163",
     title: "Cropper Zoom Render Fix",
     summary: "Changed the image cropper to zoom from a stable base render using transforms instead of resizing the image box directly, which should stop the profile photo cropper from feeling like it stretches vertically.",

@@ -11,12 +11,12 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#08111d",
     icons: [
       {
-        src: "/new-logo.jpg",
+        src: "/defender-one-icon.jpeg",
         sizes: "1024x1024",
         type: "image/jpeg",
       },
       {
-        src: "/new-logo.jpg",
+        src: "/defender-one-icon.jpeg",
         sizes: "1024x1024",
         type: "image/jpeg",
       },

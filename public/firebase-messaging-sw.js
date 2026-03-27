@@ -20,7 +20,7 @@ messaging.onBackgroundMessage((payload) => {
 
   self.registration.showNotification(title, {
     body,
-    icon: "/window.svg",
+    icon: "/defender-one-icon.jpeg",
     data: { link },
   });
 });
