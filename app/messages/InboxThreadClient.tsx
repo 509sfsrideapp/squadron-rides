@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { markInboxThreadRead } from "../../lib/inbox-badges";
+import { toTimestampMs } from "../../lib/ride-dispatch";
 import FullscreenImageViewer from "../components/FullscreenImageViewer";
 import { getMessageThreadDefinition, getSystemThreadMessages, isMessageThreadId, type MessageThreadIconKey, type MessageThreadId } from "../../lib/messages";
 
@@ -86,7 +87,7 @@ export default function InboxThreadClient({ threadId }: { threadId: string }) {
                   setExpandedPostId(nextExpanded);
 
                   if (nextExpanded) {
-                    markInboxThreadRead(thread.id, posts[0]?.createdAt?.seconds ? posts[0].createdAt.seconds * 1000 : null);
+                    markInboxThreadRead(thread.id, toTimestampMs(posts[0]?.createdAt));
                   }
                 }}
                 style={{
