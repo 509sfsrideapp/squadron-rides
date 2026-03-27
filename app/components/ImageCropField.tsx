@@ -157,6 +157,15 @@ export default function ImageCropField({
   const [session, setSession] = useState<CropSession | null>(null);
   const [saving, setSaving] = useState(false);
   const dragStartRef = useRef<{ x: number; y: number; offsetX: number; offsetY: number } | null>(null);
+  const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const pinchStartRef = useRef<{
+    distance: number;
+    scale: number;
+    offsetX: number;
+    offsetY: number;
+    centerX: number;
+    centerY: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!session) {
@@ -226,6 +235,80 @@ export default function ImageCropField({
 
   const sessionDisplayWidth = session ? session.naturalWidth * session.scale : 0;
   const sessionDisplayHeight = session ? session.naturalHeight * session.scale : 0;
+
+  const clearGestureRefs = () => {
+    dragStartRef.current = null;
+    activePointersRef.current.clear();
+    pinchStartRef.current = null;
+  };
+
+  const updateSinglePointerDrag = (pointerId: number, clientX: number, clientY: number) => {
+    activePointersRef.current.set(pointerId, { x: clientX, y: clientY });
+    const start = dragStartRef.current;
+
+    if (!start) {
+      return;
+    }
+
+    setSession((current) => {
+      if (!current) {
+        return current;
+      }
+
+      return clampSession({
+        ...current,
+        offsetX: start.offsetX + (clientX - start.x),
+        offsetY: start.offsetY + (clientY - start.y),
+      });
+    });
+  };
+
+  const updatePinchGesture = () => {
+    const pointerEntries = Array.from(activePointersRef.current.values());
+
+    if (pointerEntries.length < 2) {
+      pinchStartRef.current = null;
+      return;
+    }
+
+    const [firstPointer, secondPointer] = pointerEntries;
+    const currentDistance = Math.hypot(secondPointer.x - firstPointer.x, secondPointer.y - firstPointer.y);
+    const currentCenterX = (firstPointer.x + secondPointer.x) / 2;
+    const currentCenterY = (firstPointer.y + secondPointer.y) / 2;
+
+    if (!pinchStartRef.current) {
+      pinchStartRef.current = session
+        ? {
+            distance: currentDistance || 1,
+            scale: session.scale,
+            offsetX: session.offsetX,
+            offsetY: session.offsetY,
+            centerX: currentCenterX,
+            centerY: currentCenterY,
+          }
+        : null;
+      dragStartRef.current = null;
+      return;
+    }
+
+    setSession((current) => {
+      if (!current || !pinchStartRef.current) {
+        return current;
+      }
+
+      const nextScale = Math.min(
+        current.minScale * 3,
+        Math.max(current.minScale, pinchStartRef.current.scale * (currentDistance / pinchStartRef.current.distance))
+      );
+
+      return clampSession({
+        ...current,
+        scale: nextScale,
+        offsetX: pinchStartRef.current.offsetX + (currentCenterX - pinchStartRef.current.centerX),
+        offsetY: pinchStartRef.current.offsetY + (currentCenterY - pinchStartRef.current.centerY),
+      });
+    });
+  };
 
   const saveCrop = async () => {
     if (!session) {
@@ -330,7 +413,7 @@ export default function ImageCropField({
           >
             <h2 style={{ marginTop: 0, marginBottom: 8 }}>Adjust Photo</h2>
             <p style={{ marginTop: 0, marginBottom: 14, color: "#94a3b8" }}>
-              Drag to move the image and use the slider to zoom.
+              Drag to move the image, pinch with two fingers to zoom, or use the slider if you prefer.
             </p>
 
             <div
@@ -346,38 +429,65 @@ export default function ImageCropField({
               }}
               onPointerDown={(event: PointerEvent<HTMLDivElement>) => {
                 event.currentTarget.setPointerCapture(event.pointerId);
-                dragStartRef.current = {
+                activePointersRef.current.set(event.pointerId, {
                   x: event.clientX,
                   y: event.clientY,
-                  offsetX: session.offsetX,
-                  offsetY: session.offsetY,
-                };
-              }}
-              onPointerMove={(event: PointerEvent<HTMLDivElement>) => {
-                const start = dragStartRef.current;
+                });
 
-                if (!start) {
+                if (activePointersRef.current.size === 1) {
+                  dragStartRef.current = {
+                    x: event.clientX,
+                    y: event.clientY,
+                    offsetX: session.offsetX,
+                    offsetY: session.offsetY,
+                  };
+                  pinchStartRef.current = null;
                   return;
                 }
 
-                setSession((current) => {
-                  if (!current) {
-                    return current;
-                  }
+                updatePinchGesture();
+              }}
+              onPointerMove={(event: PointerEvent<HTMLDivElement>) => {
+                if (!activePointersRef.current.has(event.pointerId)) {
+                  return;
+                }
 
-                  return clampSession({
-                    ...current,
-                    offsetX: start.offsetX + (event.clientX - start.x),
-                    offsetY: start.offsetY + (event.clientY - start.y),
+                if (activePointersRef.current.size >= 2) {
+                  activePointersRef.current.set(event.pointerId, {
+                    x: event.clientX,
+                    y: event.clientY,
                   });
-                });
+                  updatePinchGesture();
+                  return;
+                }
+
+                updateSinglePointerDrag(event.pointerId, event.clientX, event.clientY);
               }}
               onPointerUp={(event: PointerEvent<HTMLDivElement>) => {
-                event.currentTarget.releasePointerCapture(event.pointerId);
-                dragStartRef.current = null;
+                if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                  event.currentTarget.releasePointerCapture(event.pointerId);
+                }
+
+                activePointersRef.current.delete(event.pointerId);
+
+                if (activePointersRef.current.size === 1) {
+                  const [remainingPointer] = Array.from(activePointersRef.current.values());
+                  dragStartRef.current = session
+                    ? {
+                        x: remainingPointer.x,
+                        y: remainingPointer.y,
+                        offsetX: session.offsetX,
+                        offsetY: session.offsetY,
+                      }
+                    : null;
+                } else {
+                  dragStartRef.current = null;
+                }
+
+                pinchStartRef.current = null;
               }}
               onPointerCancel={() => {
-                dragStartRef.current = null;
+                clearGestureRefs();
               }}
             >
               <img
