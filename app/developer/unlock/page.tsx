@@ -5,6 +5,7 @@ import HomeIconLink from "../../components/HomeIconLink";
 
 const PIN_LENGTH = 4;
 const keypadDigits = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+const SELF_DESTRUCT_STORAGE_KEY = "developer-self-destruct-overlay";
 
 export default function DeveloperUnlockPage() {
   const [code, setCode] = useState("");
@@ -21,8 +22,9 @@ export default function DeveloperUnlockPage() {
     if (countdown <= 0) {
       setDetonating(true);
       const redirectTimer = window.setTimeout(() => {
+        window.sessionStorage.setItem(SELF_DESTRUCT_STORAGE_KEY, "true");
         window.location.href = "/";
-      }, 700);
+      }, 120);
 
       return () => window.clearTimeout(redirectTimer);
     }
@@ -102,6 +104,26 @@ export default function DeveloperUnlockPage() {
     }
   };
 
+  const digitalScreenLines = (() => {
+    if (countdown !== null) {
+      return [
+        "INCORRECT PIN DETECTED",
+        "INITIATING SELF DESTRUCT",
+        `T-MINUS 00:0${Math.max(countdown, 0)}`,
+      ];
+    }
+
+    if (statusMessage === "Checking developer access...") {
+      return ["AUTHORIZATION CHECK", "VERIFYING DEVELOPER ACCESS", "STAND BY"];
+    }
+
+    if (statusMessage) {
+      return ["ACCESS TERMINAL ACTIVE", statusMessage.toUpperCase(), "AWAITING VALID PIN"];
+    }
+
+    return ["SECURE CHANNEL STANDBY", "ENTER AUTHORIZATION CODE", "FOUR-DIGIT PIN REQUIRED"];
+  })();
+
   return (
     <main className={`vault-screen${detonating ? " vault-screen-detonating" : ""}`}>
       <div className="vault-shell">
@@ -115,12 +137,14 @@ export default function DeveloperUnlockPage() {
           <h1>Access Terminal</h1>
 
           <div className="vault-digital-screen" aria-live="polite">
-            <span className="vault-digital-screen-line">
-              {countdown === null ? "SECURE CHANNEL STANDBY" : "INCORRECT PIN DETECTED"}
-            </span>
-            <span className="vault-digital-screen-line vault-digital-screen-line-secondary">
-              {countdown === null ? "ENTER AUTHORIZATION CODE" : `SELF DESTRUCT IN T-MINUS ${countdown}`}
-            </span>
+            {digitalScreenLines.map((line, index) => (
+              <span
+                key={`${line}-${index}`}
+                className={`vault-digital-screen-line${index > 0 ? " vault-digital-screen-line-secondary" : ""}`}
+              >
+                {line}
+              </span>
+            ))}
           </div>
 
           <div className="vault-display" aria-label="PIN entry">
@@ -131,8 +155,6 @@ export default function DeveloperUnlockPage() {
               />
             ))}
           </div>
-
-          {statusMessage ? <p className="vault-status">{statusMessage}</p> : <div className="vault-status-spacer" />}
 
           <div className="vault-keypad">
             {keypadDigits.map((digit) => (

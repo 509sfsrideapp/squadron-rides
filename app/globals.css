@@ -746,11 +746,13 @@ button:disabled {
 }
 
 .vault-digital-screen-line {
-  font-family: var(--font-display);
-  font-size: 0.82rem;
-  letter-spacing: 0.18em;
+  font-family: var(--font-mono);
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: #9ae6b4;
+  font-variant-numeric: tabular-nums slashed-zero;
   text-shadow: 0 0 10px rgba(74, 222, 128, 0.22);
   line-height: 1.2;
 }
@@ -781,22 +783,11 @@ button:disabled {
   box-shadow: 0 0 18px rgba(56, 189, 248, 0.22);
 }
 
-.vault-status {
-  min-height: 1.6rem;
-  margin: 1rem 0 0;
-  color: #fca5a5;
-  font-size: 0.94rem;
-}
-
-.vault-status-spacer {
-  min-height: 1.6rem;
-  margin-top: 1rem;
-}
-
 .vault-keypad {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.8rem;
+  margin-top: 1rem;
 }
 
 .vault-key {
@@ -824,7 +815,7 @@ button:disabled {
 }
 
 .vault-screen-detonating .vault-panel {
-  animation: vault-self-destruct 700ms ease-in forwards;
+  animation: vault-self-destruct 280ms ease-in forwards;
 }
 
 .vault-screen-detonating .vault-digital-screen {
@@ -834,8 +825,7 @@ button:disabled {
     inset 0 0 28px rgba(248, 113, 113, 0.16);
 }
 
-.vault-screen-detonating .vault-digital-screen-line,
-.vault-screen-detonating .vault-status {
+.vault-screen-detonating .vault-digital-screen-line {
   color: #fecaca;
   text-shadow: 0 0 14px rgba(248, 113, 113, 0.28);
 }
@@ -859,6 +849,161 @@ button:disabled {
     transform: scale(1.22);
     filter: brightness(2.8) blur(10px);
     opacity: 0;
+  }
+}
+
+.self-destruct-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  overflow: hidden;
+  pointer-events: none;
+  background: radial-gradient(circle at center, rgba(255, 241, 214, 0.2), rgba(17, 24, 39, 0.05) 38%, rgba(2, 6, 23, 0.78) 100%);
+}
+
+.self-destruct-flash,
+.self-destruct-fireball,
+.self-destruct-smoke,
+.self-destruct-embers {
+  position: absolute;
+  inset: 0;
+}
+
+.self-destruct-flash {
+  background:
+    radial-gradient(circle at center, rgba(255, 253, 244, 1) 0%, rgba(255, 225, 168, 0.95) 16%, rgba(251, 146, 60, 0.82) 32%, rgba(220, 38, 38, 0.22) 54%, transparent 74%);
+  animation: self-destruct-flash 640ms ease-out forwards;
+}
+
+.self-destruct-fireball {
+  background:
+    radial-gradient(circle at 50% 58%, rgba(255, 253, 244, 0.98) 0%, rgba(255, 216, 122, 0.95) 12%, rgba(249, 115, 22, 0.96) 24%, rgba(220, 38, 38, 0.82) 36%, rgba(17, 24, 39, 0.3) 58%, transparent 72%);
+  transform: scale(0.25);
+  opacity: 0;
+  animation: self-destruct-fireball 1400ms cubic-bezier(0.16, 0.84, 0.22, 1) forwards;
+}
+
+.self-destruct-smoke {
+  opacity: 0;
+  background-repeat: no-repeat;
+  filter: blur(18px);
+}
+
+.self-destruct-smoke-a {
+  background:
+    radial-gradient(circle at 44% 58%, rgba(31, 41, 55, 0.92) 0%, rgba(51, 65, 85, 0.82) 18%, rgba(100, 116, 139, 0.3) 34%, transparent 58%);
+  animation: self-destruct-smoke-a 1700ms ease-out forwards;
+}
+
+.self-destruct-smoke-b {
+  background:
+    radial-gradient(circle at 60% 50%, rgba(17, 24, 39, 0.92) 0%, rgba(51, 65, 85, 0.8) 16%, rgba(100, 116, 139, 0.28) 32%, transparent 56%);
+  animation: self-destruct-smoke-b 1900ms ease-out forwards;
+}
+
+.self-destruct-smoke-c {
+  background:
+    radial-gradient(circle at 50% 64%, rgba(17, 24, 39, 0.86) 0%, rgba(71, 85, 105, 0.74) 14%, rgba(148, 163, 184, 0.2) 30%, transparent 52%);
+  animation: self-destruct-smoke-c 1800ms ease-out forwards;
+}
+
+.self-destruct-embers {
+  background:
+    radial-gradient(circle at 45% 50%, rgba(254, 215, 170, 0.95) 0 0.12rem, transparent 0.16rem),
+    radial-gradient(circle at 53% 44%, rgba(253, 186, 116, 0.9) 0 0.14rem, transparent 0.18rem),
+    radial-gradient(circle at 58% 60%, rgba(251, 146, 60, 0.9) 0 0.13rem, transparent 0.18rem),
+    radial-gradient(circle at 39% 57%, rgba(254, 215, 170, 0.88) 0 0.12rem, transparent 0.18rem),
+    radial-gradient(circle at 62% 52%, rgba(251, 146, 60, 0.88) 0 0.14rem, transparent 0.18rem);
+  animation: self-destruct-embers 1600ms ease-out forwards;
+}
+
+@keyframes self-destruct-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.32);
+  }
+}
+
+@keyframes self-destruct-fireball {
+  0% {
+    opacity: 0;
+    transform: scale(0.22);
+  }
+  16% {
+    opacity: 1;
+    transform: scale(0.72);
+  }
+  48% {
+    opacity: 0.96;
+    transform: scale(1.28);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.92);
+  }
+}
+
+@keyframes self-destruct-smoke-a {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(10%);
+  }
+  28% {
+    opacity: 0.82;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.58) translateY(-12%);
+  }
+}
+
+@keyframes self-destruct-smoke-b {
+  0% {
+    opacity: 0;
+    transform: scale(0.48) translateY(16%);
+  }
+  24% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.72) translateY(-18%);
+  }
+}
+
+@keyframes self-destruct-smoke-c {
+  0% {
+    opacity: 0;
+    transform: scale(0.42) translateY(18%);
+  }
+  30% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.64) translateY(-8%);
+  }
+}
+
+@keyframes self-destruct-embers {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45) translateY(-10%);
   }
 }
 
