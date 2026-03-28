@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v209",
+    title: "Signup Phone Verification Removal",
+    summary: "Removed the SMS phone-verification step from account creation across the signup permissions flow and signup finalizer, so new accounts can be created directly after accepting permissions while still keeping entered signup details saved when navigating back.",
+  },
+  {
     commit: "v208",
     title: "Signup Draft Persistence and Phone Auth Errors",
     summary: "Kept account-creation details saved when backing out of the permissions and phone-verification step by reloading the stored signup draft into the form, and replaced vague Firebase phone-auth failures with clearer messages when the app domain is not authorized or phone sign-in is disabled.",

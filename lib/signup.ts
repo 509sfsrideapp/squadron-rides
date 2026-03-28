@@ -1,5 +1,5 @@
 import { auth, db } from "./firebase";
-import { createUserWithEmailAndPassword, deleteUser, linkWithCredential, PhoneAuthProvider } from "firebase/auth";
+import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { buildHomeAddress } from "./home-address";
 import { isValidUsername, normalizeUsername } from "./username";
@@ -31,25 +31,9 @@ export function getSignupErrorMessage(error: unknown) {
   const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
 
   switch (code) {
-    case "auth/app-not-authorized":
-      return "Phone verification is not authorized for this app or domain yet. Add the current site to Firebase Authentication authorized domains.";
     case "auth/invalid-phone-number":
     case "auth/missing-phone-number":
       return "Enter a valid 10-digit phone number.";
-    case "auth/missing-verification-code":
-      return "Enter the verification code from the text message.";
-    case "auth/invalid-verification-code":
-      return "That verification code is invalid. Double-check the code and try again.";
-    case "auth/session-expired":
-      return "That verification code expired. Request a new code and try again.";
-    case "auth/captcha-check-failed":
-      return "Phone verification could not confirm the reCAPTCHA check. Try sending the code again.";
-    case "auth/operation-not-allowed":
-      return "Phone verification is not enabled for this Firebase project yet. Turn on Phone as a sign-in provider in Firebase Authentication.";
-    case "auth/too-many-requests":
-      return "Too many verification attempts were made. Wait a bit and try again.";
-    case "auth/credential-already-in-use":
-      return "That phone number is already tied to another account.";
     case "auth/email-already-in-use":
       return "That email is already being used by another account.";
     case "auth/invalid-email":
@@ -172,10 +156,6 @@ export async function finalizeSignupFromDraft(
   draft: SignupDraft,
   options?: {
     emergencyRideAddressConsent?: boolean;
-    phoneVerification?: {
-      verificationId: string;
-      verificationCode: string;
-    };
   }
 ) {
   const validation = await validateSignupDraft(draft);
@@ -192,26 +172,12 @@ export async function finalizeSignupFromDraft(
     zip: draft.homeZip,
   });
   const formattedPhone = formatUsPhoneNumber(draft.phone);
-  const phoneE164 = getPhoneE164(draft.phone);
-  const verificationId = options?.phoneVerification?.verificationId?.trim();
-  const verificationCode = options?.phoneVerification?.verificationCode?.trim();
-
-  if (!phoneE164) {
-    throw new Error("Enter a valid 10-digit phone number.");
-  }
-
-  if (!verificationId || !verificationCode) {
-    throw new Error("Complete phone verification before creating your account.");
-  }
 
   const userCredential = await createUserWithEmailAndPassword(auth, draft.email.trim(), draft.password);
   const fullName = `${draft.firstName.trim()} ${draft.lastName.trim()}`.trim();
   const trimmedPhoto = draft.profilePhotoUrl.trim();
 
   try {
-    const phoneCredential = PhoneAuthProvider.credential(verificationId, verificationCode);
-    await linkWithCredential(userCredential.user, phoneCredential);
-
     const batch = writeBatch(db);
     batch.set(doc(db, "users", userCredential.user.uid), {
       name: fullName,
@@ -222,8 +188,6 @@ export async function finalizeSignupFromDraft(
       flight: draft.flight.trim(),
       username: normalizedUsername,
       phone: formattedPhone,
-      phoneVerifiedAt: new Date(),
-      phoneVerificationMethod: "sms",
       email: draft.email.trim(),
       homeAddress: normalizedHomeAddress,
       homeStreet: draft.homeStreet.trim(),
