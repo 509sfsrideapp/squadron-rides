@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v226",
+    title: "Photo Crop Aspect Fix",
+    summary: "Updated the shared photo cropper so non-square uploads keep their natural proportions inside the crop window, with the extra width or height hanging off the viewport and remaining available through panning instead of appearing squeezed into a square.",
+  },
+  {
     commit: "v225",
     title: "Desktop Dropdown Contrast Fix",
     summary: "Fixed the app's shared dropdown styling so desktop select option menus now use the same dark theme as the rest of the interface instead of opening with unreadable white backgrounds.",

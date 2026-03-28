@@ -233,9 +233,8 @@ export default function ImageCropField({
     [cropShape]
   );
 
-  const baseDisplayWidth = session ? session.naturalWidth * session.minScale : 0;
-  const baseDisplayHeight = session ? session.naturalHeight * session.minScale : 0;
-  const zoomFactor = session ? session.scale / session.minScale : 1;
+  const currentDisplayWidth = session ? session.naturalWidth * session.scale : 0;
+  const currentDisplayHeight = session ? session.naturalHeight * session.scale : 0;
 
   const clearGestureRefs = () => {
     dragStartRef.current = null;
@@ -499,9 +498,11 @@ export default function ImageCropField({
                   position: "absolute",
                   left: "50%",
                   top: "50%",
-                  width: baseDisplayWidth,
-                  height: baseDisplayHeight,
-                  transform: `translate(calc(-50% + ${session.offsetX}px), calc(-50% + ${session.offsetY}px)) scale(${zoomFactor})`,
+                  width: currentDisplayWidth,
+                  height: currentDisplayHeight,
+                  maxWidth: "none",
+                  maxHeight: "none",
+                  transform: `translate(calc(-50% + ${session.offsetX}px), calc(-50% + ${session.offsetY}px))`,
                   transformOrigin: "center center",
                   userSelect: "none",
                   touchAction: "none",
