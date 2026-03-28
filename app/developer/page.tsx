@@ -24,7 +24,7 @@ const featureLinkStyle: CSSProperties = {
   color: "white",
   textDecoration: "none",
   borderRadius: 10,
-  border: "1px solid rgba(96, 165, 250, 0.18)",
+  border: "1px solid rgba(132, 177, 116, 0.18)",
 };
 
 export default async function DeveloperPage() {

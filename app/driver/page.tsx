@@ -460,7 +460,7 @@ export default function DriverPage() {
                   height: 58,
                   objectFit: "cover",
                   borderRadius: 999,
-                  border: "1px solid rgba(96, 165, 250, 0.22)",
+                  border: "1px solid rgba(132, 177, 116, 0.22)",
                 }}
               />
             ) : (
@@ -473,7 +473,7 @@ export default function DriverPage() {
                   placeItems: "center",
                   backgroundColor: "rgba(18, 37, 63, 0.72)",
                   color: "#dbeafe",
-                  border: "1px solid rgba(96, 165, 250, 0.2)",
+                  border: "1px solid rgba(132, 177, 116, 0.2)",
                   fontFamily: "var(--font-display)",
                   fontSize: "1.35rem",
                 }}
@@ -627,7 +627,7 @@ export default function DriverPage() {
                       height: 68,
                       objectFit: "cover",
                       borderRadius: 999,
-                      border: "1px solid rgba(96, 165, 250, 0.22)",
+                      border: "1px solid rgba(132, 177, 116, 0.22)",
                     }}
                   />
                 ) : (
@@ -640,7 +640,7 @@ export default function DriverPage() {
                       placeItems: "center",
                       backgroundColor: "rgba(18, 37, 63, 0.72)",
                       color: "#dbeafe",
-                      border: "1px solid rgba(96, 165, 250, 0.2)",
+                      border: "1px solid rgba(132, 177, 116, 0.2)",
                       fontFamily: "var(--font-display)",
                       fontSize: "1.35rem",
                     }}

@@ -570,7 +570,7 @@ export default function RideStatusPage() {
                       height: 88,
                       objectFit: "cover",
                       borderRadius: 999,
-                      border: "1px solid rgba(96, 165, 250, 0.22)",
+                      border: "1px solid rgba(132, 177, 116, 0.22)",
                       background: "linear-gradient(180deg, rgba(24,39,66,0.95) 0%, rgba(12,20,35,0.98) 100%)",
                     }}
                   />
@@ -584,7 +584,7 @@ export default function RideStatusPage() {
                     display: "grid",
                     placeItems: "center",
                     background: "linear-gradient(180deg, rgba(24,39,66,0.95) 0%, rgba(12,20,35,0.98) 100%)",
-                    border: "1px solid rgba(96, 165, 250, 0.22)",
+                    border: "1px solid rgba(132, 177, 116, 0.22)",
                     color: "#dbeafe",
                     fontSize: "1.8rem",
                     fontFamily: "var(--font-display)",
@@ -639,10 +639,10 @@ export default function RideStatusPage() {
                 padding: 16,
                 borderRadius: 14,
                 backgroundColor: "rgba(18, 37, 63, 0.62)",
-                border: "1px solid rgba(96, 165, 250, 0.16)",
+                border: "1px solid rgba(132, 177, 116, 0.16)",
               }}
             >
-              <p style={{ margin: 0, fontSize: "0.95rem", color: "#93c5fd", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              <p style={{ margin: 0, fontSize: "0.95rem", color: "#b4d4a7", textTransform: "uppercase", letterSpacing: "0.08em" }}>
                 Current Status
               </p>
               <p style={{ margin: "8px 0 0", fontSize: "2.35rem", lineHeight: 1, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
@@ -793,7 +793,7 @@ export default function RideStatusPage() {
               padding: 16,
               borderRadius: 14,
               backgroundColor: "rgba(18, 37, 63, 0.4)",
-              border: "1px solid rgba(96, 165, 250, 0.12)",
+              border: "1px solid rgba(132, 177, 116, 0.12)",
             }}
           >
             <button
@@ -816,7 +816,7 @@ export default function RideStatusPage() {
               <span
                 style={{
                   fontSize: "0.95rem",
-                  color: "#93c5fd",
+                  color: "#b4d4a7",
                   textTransform: "uppercase",
                   letterSpacing: "0.08em",
                   fontFamily: "var(--font-display)",

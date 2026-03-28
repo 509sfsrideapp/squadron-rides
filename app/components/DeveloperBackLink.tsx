@@ -11,7 +11,7 @@ const baseStyle: React.CSSProperties = {
   gap: 8,
   padding: "10px 14px",
   borderRadius: 999,
-  border: "1px solid rgba(96, 165, 250, 0.18)",
+  border: "1px solid rgba(132, 177, 116, 0.18)",
   backgroundColor: "rgba(15, 23, 42, 0.92)",
   color: "white",
   textDecoration: "none",

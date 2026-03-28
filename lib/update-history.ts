@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v193",
+    title: "Core Accent Green Shift",
+    summary: "Started replacing the app's remaining blue text and border accents with muted green equivalents across the shared styles, homepage, ride flow pages, admin surfaces, inbox links, and primary developer pages so the overall interface reads less blue and more tactical.",
+  },
+  {
     commit: "v192",
     title: "Background Simplification Pass",
     summary: "Removed the contour-line and scratch/wear layers from the global tactical background so the app keeps the darker grid, grain, scanline, and vignette treatment without the weirder map-and-metal artifacts.",

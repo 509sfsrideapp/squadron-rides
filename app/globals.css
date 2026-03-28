@@ -214,13 +214,13 @@ textarea::placeholder {
 input:focus,
 textarea:focus,
 select:focus {
-  outline: 3px solid rgba(75, 124, 191, 0.16);
-  border-color: rgba(125, 165, 214, 0.76);
+  outline: 3px solid rgba(104, 140, 97, 0.16);
+  border-color: rgba(156, 189, 145, 0.76);
 }
 
 input[type="checkbox"]:focus,
 input[type="radio"]:focus {
-  outline: 3px solid rgba(42, 109, 244, 0.18);
+  outline: 3px solid rgba(108, 168, 112, 0.18);
   outline-offset: 2px;
   border-color: transparent;
 }
@@ -245,7 +245,7 @@ button {
 
 button:hover {
   transform: translateY(-1px);
-  border-color: rgba(125, 165, 214, 0.44);
+  border-color: rgba(156, 189, 145, 0.44);
 }
 
 button:disabled {
@@ -407,8 +407,8 @@ button:disabled {
   overflow: hidden;
   padding: 0;
   background:
-    radial-gradient(circle at 50% 18%, rgba(37, 99, 235, 0.16), transparent 26%),
-    radial-gradient(circle at 50% 84%, rgba(14, 165, 233, 0.08), transparent 30%),
+    radial-gradient(circle at 50% 18%, rgba(84, 127, 69, 0.16), transparent 26%),
+    radial-gradient(circle at 50% 84%, rgba(126, 157, 107, 0.08), transparent 30%),
     linear-gradient(180deg, #020307 0%, #05070d 46%, #010204 100%);
   opacity: 1;
   transition: background-color 240ms ease, background-image 240ms ease;
@@ -443,22 +443,22 @@ button:disabled {
   background:
     linear-gradient(140deg, rgba(114, 123, 136, 0.18) 0%, transparent 18%),
     linear-gradient(180deg, rgba(60, 69, 82, 0.96) 0%, rgba(28, 34, 43, 0.99) 34%, rgba(16, 21, 28, 1) 100%);
-  border-top: 1px solid rgba(125, 211, 252, 0.08);
-  border-bottom: 1px solid rgba(125, 211, 252, 0.08);
+  border-top: 1px solid rgba(159, 210, 145, 0.08);
+  border-bottom: 1px solid rgba(159, 210, 145, 0.08);
   box-shadow:
     inset 0 0 0 1px rgba(194, 205, 219, 0.08),
     inset 0 0 0 2px rgba(29, 39, 53, 0.65),
-    inset 0 0 40px rgba(37, 99, 235, 0.06),
+    inset 0 0 40px rgba(84, 127, 69, 0.06),
     inset 0 24px 40px rgba(255, 255, 255, 0.04),
     inset 0 -26px 36px rgba(0, 0, 0, 0.28);
 }
 
 .initial-app-splash-door-left .initial-app-splash-door-panel {
-  border-right: 1px solid rgba(125, 211, 252, 0.14);
+  border-right: 1px solid rgba(159, 210, 145, 0.14);
 }
 
 .initial-app-splash-door-right .initial-app-splash-door-panel {
-  border-left: 1px solid rgba(125, 211, 252, 0.14);
+  border-left: 1px solid rgba(159, 210, 145, 0.14);
 }
 
 .initial-app-splash-door-panel::before,
@@ -786,7 +786,7 @@ button:disabled {
   position: relative;
   padding: 1.6rem;
   border-radius: 1.6rem;
-  border: 1px solid rgba(96, 165, 250, 0.18);
+  border: 1px solid rgba(132, 177, 116, 0.18);
   background:
     linear-gradient(180deg, rgba(9, 15, 25, 0.96) 0%, rgba(4, 8, 15, 0.98) 100%);
   box-shadow:
@@ -800,14 +800,14 @@ button:disabled {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(96, 165, 250, 0.08), transparent 24%, transparent 76%, rgba(96, 165, 250, 0.08)),
+    linear-gradient(90deg, rgba(132, 177, 116, 0.08), transparent 24%, transparent 76%, rgba(132, 177, 116, 0.08)),
     repeating-linear-gradient(180deg, rgba(148, 163, 184, 0.05), rgba(148, 163, 184, 0.05) 1px, transparent 1px, transparent 20px);
   pointer-events: none;
 }
 
 .vault-kicker {
   margin: 0 0 0.45rem;
-  color: #7dd3fc;
+  color: #9fd28f;
   text-transform: uppercase;
   letter-spacing: 0.16em;
   font-size: 0.78rem;
@@ -860,9 +860,9 @@ button:disabled {
 }
 
 .vault-dot-filled {
-  background: linear-gradient(90deg, #38bdf8 0%, #22c55e 100%);
-  border-color: rgba(125, 211, 252, 0.75);
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.22);
+  background: linear-gradient(90deg, #6fae61 0%, #9fd28f 100%);
+  border-color: rgba(159, 210, 145, 0.75);
+  box-shadow: 0 0 18px rgba(111, 174, 97, 0.22);
 }
 
 .vault-keypad {
@@ -875,7 +875,7 @@ button:disabled {
 .vault-key {
   min-height: 3.4rem;
   border-radius: 1rem;
-  border: 1px solid rgba(96, 165, 250, 0.2);
+  border: 1px solid rgba(132, 177, 116, 0.2);
   background:
     linear-gradient(180deg, rgba(16, 27, 45, 0.98) 0%, rgba(8, 13, 24, 0.98) 100%);
   color: #f8fbff;
@@ -1047,7 +1047,7 @@ button:disabled {
 
 .self-destruct-haze {
   background:
-    radial-gradient(circle at center, rgba(255, 236, 197, 0.12) 0%, rgba(125, 211, 252, 0.05) 28%, rgba(15, 23, 42, 0.26) 54%, transparent 76%);
+    radial-gradient(circle at center, rgba(255, 236, 197, 0.12) 0%, rgba(159, 210, 145, 0.05) 28%, rgba(15, 23, 42, 0.26) 54%, transparent 76%);
   filter: blur(28px);
   opacity: 0;
   animation: self-destruct-haze 2600ms ease-out forwards;
@@ -1347,7 +1347,7 @@ button:disabled {
   gap: 0.65rem;
   padding: 0.72rem 1rem;
   border-radius: 999px;
-  border: 1px solid rgba(96, 165, 250, 0.22);
+  border: 1px solid rgba(132, 177, 116, 0.22);
   background: linear-gradient(180deg, rgba(9, 15, 25, 0.95) 0%, rgba(5, 8, 14, 0.98) 100%);
   box-shadow: 0 14px 30px rgba(2, 6, 23, 0.32);
 }
@@ -1356,9 +1356,9 @@ button:disabled {
   width: 1rem;
   height: 1rem;
   border-radius: 999px;
-  border: 2px solid rgba(125, 211, 252, 0.3);
-  border-top-color: #7dd3fc;
-  border-right-color: #60a5fa;
+  border: 2px solid rgba(159, 210, 145, 0.3);
+  border-top-color: #9fd28f;
+  border-right-color: #8fc07d;
   transition: transform 120ms linear;
 }
 

@@ -372,7 +372,7 @@ export default function AdminPage() {
             <div
               key={driver.id}
               style={{
-                border: "1px solid rgba(96, 165, 250, 0.2)",
+                border: "1px solid rgba(132, 177, 116, 0.2)",
                 backgroundColor: "rgba(10, 16, 27, 0.86)",
                 color: "#e5edf7",
                 borderRadius: 12,

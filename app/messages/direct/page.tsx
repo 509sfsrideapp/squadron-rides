@@ -62,7 +62,7 @@ export default function DirectMessagesPage() {
           style={{
             display: "inline-block",
             marginTop: 16,
-            color: "#93c5fd",
+            color: "#b4d4a7",
             textDecoration: "none",
           }}
         >

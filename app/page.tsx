@@ -721,7 +721,7 @@ export default function HomePage() {
           <p
             style={{
               margin: 0,
-              color: "#7dd3fc",
+              color: "#9fd28f",
               letterSpacing: "0.16em",
               textTransform: "uppercase",
               fontSize: 12,
@@ -775,7 +775,7 @@ export default function HomePage() {
               <span
                 style={{
                   fontSize: 12,
-                  color: "#93c5fd",
+                  color: "#b4d4a7",
                   letterSpacing: "0.12em",
                   textTransform: "uppercase",
                   fontFamily: "var(--font-display)",
@@ -836,9 +836,9 @@ export default function HomePage() {
                     borderRadius: 999,
                     display: "grid",
                     placeItems: "center",
-                    backgroundColor: "rgba(18, 37, 63, 0.72)",
-                    color: "#dbeafe",
-                    border: "1px solid rgba(96, 165, 250, 0.2)",
+                    backgroundColor: "rgba(24, 34, 22, 0.72)",
+                    color: "#e2f1dd",
+                    border: "1px solid rgba(132, 177, 116, 0.2)",
                     fontFamily: "var(--font-display)",
                     fontSize: "1.1rem",
                   }}
@@ -1166,7 +1166,7 @@ export default function HomePage() {
                   <p
                     style={{
                       margin: 0,
-                      color: "#7dd3fc",
+                      color: "#9fd28f",
                       fontSize: 10,
                       letterSpacing: "0.14em",
                       textTransform: "uppercase",
@@ -1230,7 +1230,7 @@ export default function HomePage() {
                 style={{
                   maxWidth: 840,
                   borderRadius: 16,
-                  border: "1px solid rgba(86, 122, 168, 0.26)",
+                  border: "1px solid rgba(118, 148, 106, 0.26)",
                   background:
                     "linear-gradient(180deg, rgba(8, 16, 28, 0.98) 0%, rgba(4, 10, 18, 0.995) 100%)",
                   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 36px rgba(2, 6, 23, 0.3)",
@@ -1244,14 +1244,14 @@ export default function HomePage() {
                     justifyContent: "space-between",
                     gap: 12,
                     padding: "0.55rem 0.85rem",
-                    borderBottom: "1px solid rgba(86, 122, 168, 0.2)",
+                    borderBottom: "1px solid rgba(118, 148, 106, 0.2)",
                     background:
-                      "linear-gradient(180deg, rgba(17, 28, 43, 0.98) 0%, rgba(11, 19, 31, 0.98) 100%)",
+                      "linear-gradient(180deg, rgba(20, 29, 18, 0.98) 0%, rgba(12, 18, 12, 0.98) 100%)",
                   }}
                 >
                   <span
                     style={{
-                      color: "#9cc2ee",
+                      color: "#b6d1ad",
                       fontSize: 10,
                       letterSpacing: "0.14em",
                       textTransform: "uppercase",
@@ -1262,7 +1262,7 @@ export default function HomePage() {
                   </span>
                   <span
                     style={{
-                      color: "#7dd3fc",
+                      color: "#9fd28f",
                       fontSize: 10,
                       letterSpacing: "0.14em",
                       textTransform: "uppercase",
@@ -1293,7 +1293,7 @@ export default function HomePage() {
                           alignItems: "center",
                           gap: 10,
                           minHeight: 20,
-                          color: lineComplete ? "#9df6b3" : "#d7e6f8",
+                          color: lineComplete ? "#9df6b3" : "#d9e6d3",
                           fontSize: 12,
                           lineHeight: 1.4,
                           fontFamily: "var(--font-mono)",
@@ -1313,7 +1313,7 @@ export default function HomePage() {
                                 width: 8,
                                 height: 14,
                                 marginLeft: 4,
-                                backgroundColor: "#7dd3fc",
+                                backgroundColor: "#9fd28f",
                                 verticalAlign: "text-bottom",
                                 animation: "auth-status-pulse 1s ease-in-out infinite",
                               }}

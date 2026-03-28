@@ -372,7 +372,7 @@ export default function AdminAccountsPage() {
                           placeItems: "center",
                           backgroundColor: "rgba(18, 37, 63, 0.72)",
                           color: "#dbeafe",
-                          border: "1px solid rgba(96, 165, 250, 0.2)",
+                          border: "1px solid rgba(132, 177, 116, 0.2)",
                           fontFamily: "var(--font-display)",
                           fontSize: "1.3rem",
                         }}
