@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v227",
+    title: "Flexible Recurring Event Scheduling",
+    summary: "Expanded the Events creator so recurring schedules stay separate from one-time date blocks and now support selecting multiple weekdays plus every-week or every-other-week cadence for patterns like every Tuesday and Thursday or every other Wednesday.",
+  },
+  {
     commit: "v226",
     title: "Photo Crop Aspect Fix",
     summary: "Updated the shared photo cropper so non-square uploads keep their natural proportions inside the crop window, with the extra width or height hanging off the viewport and remaining available through panning instead of appearing squeezed into a square.",

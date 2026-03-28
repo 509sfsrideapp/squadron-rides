@@ -9,7 +9,17 @@ import AppLoadingState from "../../components/AppLoadingState";
 import HomeIconLink from "../../components/HomeIconLink";
 import ImageCropField from "../../components/ImageCropField";
 import { auth, db } from "../../../lib/firebase";
-import { createEmptyEventDateEntry, EVENT_TYPE_OPTIONS, formatEventTypeLabel, RECURRING_WEEKDAY_OPTIONS, type EventDateEntry, type EventRecurringRule, type EventType } from "../../../lib/events";
+import {
+  createEmptyEventDateEntry,
+  EVENT_TYPE_OPTIONS,
+  formatEventTypeLabel,
+  formatRecurringRule,
+  RECURRING_INTERVAL_OPTIONS,
+  RECURRING_WEEKDAY_OPTIONS,
+  type EventDateEntry,
+  type EventRecurringRule,
+  type EventType,
+} from "../../../lib/events";
 
 const sectionStyle: React.CSSProperties = {
   borderRadius: 18,
@@ -52,7 +62,8 @@ export default function NewEventPage() {
   const [scheduleMode, setScheduleMode] = useState<"specific_dates" | "recurring">("specific_dates");
   const [scheduleEntries, setScheduleEntries] = useState<EventDateEntry[]>([createEmptyEventDateEntry()]);
   const [recurrence, setRecurrence] = useState<EventRecurringRule>({
-    weekday: "Friday",
+    weekdays: ["Friday"],
+    intervalWeeks: 1,
     startDate: "",
     endDate: "",
     timeText: "",
@@ -69,8 +80,8 @@ export default function NewEventPage() {
 
   const schedulePreview = useMemo(() => {
     if (scheduleMode === "recurring") {
-      return recurrence.weekday && recurrence.timeText.trim()
-        ? `Every ${recurrence.weekday} • ${recurrence.timeText.trim()}`
+      return recurrence.startDate.trim() && recurrence.weekdays?.length
+        ? formatRecurringRule(recurrence)
         : "Recurring schedule preview will appear here.";
     }
 
@@ -86,6 +97,20 @@ export default function NewEventPage() {
 
   const removeScheduleEntry = (entryId: string) => {
     setScheduleEntries((current) => (current.length > 1 ? current.filter((entry) => entry.id !== entryId) : current));
+  };
+
+  const toggleRecurringWeekday = (weekday: string) => {
+    setRecurrence((current) => {
+      const currentWeekdays = current.weekdays || [];
+      const nextWeekdays = currentWeekdays.includes(weekday)
+        ? currentWeekdays.filter((value) => value !== weekday)
+        : [...currentWeekdays, weekday];
+
+      return {
+        ...current,
+        weekdays: nextWeekdays,
+      };
+    });
   };
 
   const submitEvent = async () => {
@@ -134,6 +159,11 @@ export default function NewEventPage() {
         return;
       }
 
+      if (!recurrence.weekdays?.length) {
+        setStatusMessage("Choose at least one recurring weekday.");
+        return;
+      }
+
       if (!recurrence.timeText.trim()) {
         setStatusMessage("Recurring events need a time or time range.");
         return;
@@ -156,7 +186,8 @@ export default function NewEventPage() {
         recurrence:
           scheduleMode === "recurring"
             ? {
-                weekday: recurrence.weekday,
+                weekdays: recurrence.weekdays || [],
+                intervalWeeks: recurrence.intervalWeeks === 2 ? 2 : 1,
                 startDate: recurrence.startDate.trim(),
                 endDate: recurrence.endDate?.trim() || null,
                 timeText: recurrence.timeText.trim(),
@@ -271,7 +302,7 @@ export default function NewEventPage() {
             <div>
               <strong style={{ display: "block", marginBottom: 4 }}>Schedule Setup</strong>
               <p style={{ margin: 0, color: "#94a3b8" }}>
-                Use specific dates for one-off or multi-day events, or choose recurring for repeated weekly events.
+                Keep one-time dates and recurring schedules separate so each event can be set up the clean way.
               </p>
             </div>
 
@@ -279,7 +310,7 @@ export default function NewEventPage() {
               <span>Schedule Type</span>
               <select value={scheduleMode} onChange={(event) => setScheduleMode(event.target.value as "specific_dates" | "recurring")}>
                 <option value="specific_dates">Specific Dates</option>
-                <option value="recurring">Recurring Weekly</option>
+                <option value="recurring">Recurring Schedule</option>
               </select>
             </label>
           </div>
@@ -333,30 +364,94 @@ export default function NewEventPage() {
               </div>
             </div>
           ) : (
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
-              <label style={{ display: "grid", gap: 6 }}>
-                <span>Recurring Day</span>
-                <select value={recurrence.weekday} onChange={(event) => setRecurrence((current) => ({ ...current, weekday: event.target.value }))}>
-                  {RECURRING_WEEKDAY_OPTIONS.map((weekday) => (
-                    <option key={weekday} value={weekday}>{weekday}</option>
+            <div
+              style={{
+                display: "grid",
+                gap: 14,
+                borderRadius: 14,
+                border: "1px solid rgba(126, 142, 160, 0.16)",
+                background: "linear-gradient(180deg, rgba(13, 18, 24, 0.96) 0%, rgba(7, 10, 14, 0.98) 100%)",
+                padding: 14,
+              }}
+            >
+              <div style={{ display: "grid", gap: 4 }}>
+                <strong>Recurring Pattern</strong>
+                <p style={{ margin: 0, color: "#94a3b8" }}>
+                  Choose one or more weekdays, then decide whether the event repeats every week or every other week.
+                </p>
+              </div>
+
+              <label style={{ display: "grid", gap: 6, maxWidth: 260 }}>
+                <span>Repeat Cadence</span>
+                <select
+                  value={String(recurrence.intervalWeeks === 2 ? 2 : 1)}
+                  onChange={(event) =>
+                    setRecurrence((current) => ({
+                      ...current,
+                      intervalWeeks: Number(event.target.value) === 2 ? 2 : 1,
+                    }))
+                  }
+                >
+                  {RECURRING_INTERVAL_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
                   ))}
                 </select>
               </label>
 
-              <label style={{ display: "grid", gap: 6 }}>
-                <span>Start Date</span>
-                <input type="date" value={recurrence.startDate} onChange={(event) => setRecurrence((current) => ({ ...current, startDate: event.target.value }))} />
-              </label>
+              <div style={{ display: "grid", gap: 8 }}>
+                <span>Recurring Weekdays</span>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  {RECURRING_WEEKDAY_OPTIONS.map((weekday) => {
+                    const selected = Boolean(recurrence.weekdays?.includes(weekday));
 
-              <label style={{ display: "grid", gap: 6 }}>
-                <span>End Date (Optional)</span>
-                <input type="date" value={recurrence.endDate || ""} onChange={(event) => setRecurrence((current) => ({ ...current, endDate: event.target.value }))} />
-              </label>
+                    return (
+                      <button
+                        key={weekday}
+                        type="button"
+                        onClick={() => toggleRecurringWeekday(weekday)}
+                        style={{
+                          minHeight: 38,
+                          padding: "8px 12px",
+                          borderRadius: 999,
+                          background: selected
+                            ? "linear-gradient(180deg, rgba(71, 104, 145, 0.96) 0%, rgba(34, 54, 84, 0.98) 100%)"
+                            : "linear-gradient(180deg, rgba(29, 36, 45, 0.98) 0%, rgba(13, 18, 24, 0.99) 100%)",
+                          border: selected
+                            ? "1px solid rgba(147, 197, 253, 0.42)"
+                            : "1px solid rgba(118, 132, 149, 0.26)",
+                          boxShadow: selected
+                            ? "inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 24px rgba(17, 24, 39, 0.24)"
+                            : "inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 18px rgba(0,0,0,0.22)",
+                        }}
+                      >
+                        {weekday}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>
+                  Examples: every Tuesday and Thursday, or every other Wednesday.
+                </p>
+              </div>
 
-              <label style={{ display: "grid", gap: 6 }}>
-                <span>Time / Range</span>
-                <input value={recurrence.timeText} onChange={(event) => setRecurrence((current) => ({ ...current, timeText: event.target.value }))} placeholder="1700 or 1700-1900" />
-              </label>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}>
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span>Start Date</span>
+                  <input type="date" value={recurrence.startDate} onChange={(event) => setRecurrence((current) => ({ ...current, startDate: event.target.value }))} />
+                </label>
+
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span>End Date (Optional)</span>
+                  <input type="date" value={recurrence.endDate || ""} onChange={(event) => setRecurrence((current) => ({ ...current, endDate: event.target.value }))} />
+                </label>
+
+                <label style={{ display: "grid", gap: 6 }}>
+                  <span>Time / Range</span>
+                  <input value={recurrence.timeText} onChange={(event) => setRecurrence((current) => ({ ...current, timeText: event.target.value }))} placeholder="1700 or 1700-1900" />
+                </label>
+              </div>
             </div>
           )}
 

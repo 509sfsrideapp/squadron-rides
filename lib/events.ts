@@ -10,7 +10,9 @@ export type EventDateEntry = {
 };
 
 export type EventRecurringRule = {
-  weekday: string;
+  weekday?: string;
+  weekdays?: string[];
+  intervalWeeks?: number | null;
   startDate: string;
   endDate?: string | null;
   timeText: string;
@@ -56,8 +58,32 @@ export const RECURRING_WEEKDAY_OPTIONS = [
   "Saturday",
 ] as const;
 
+export const RECURRING_INTERVAL_OPTIONS = [
+  { value: 1, label: "Every Week" },
+  { value: 2, label: "Every Other Week" },
+] as const;
+
+type NormalizedRecurringRule = {
+  weekdays: string[];
+  intervalWeeks: 1 | 2;
+  startDate: string;
+  endDate: string;
+  timeText: string;
+};
+
 function asLocalDate(dateText: string) {
   return new Date(`${dateText}T12:00:00`);
+}
+
+function getDateText(value: Date) {
+  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+}
+
+function getStartOfWeek(value: Date) {
+  const next = new Date(value);
+  next.setHours(12, 0, 0, 0);
+  next.setDate(next.getDate() - next.getDay());
+  return next;
 }
 
 function formatDateText(dateText: string) {
@@ -76,6 +102,50 @@ function normalizeEndDate(endDate?: string | null, fallback?: string) {
   return endDate?.trim() || fallback || "";
 }
 
+function isRecurringWeekday(value: string): value is (typeof RECURRING_WEEKDAY_OPTIONS)[number] {
+  return RECURRING_WEEKDAY_OPTIONS.includes(value as (typeof RECURRING_WEEKDAY_OPTIONS)[number]);
+}
+
+function normalizeWeekdays(weekdays?: string[] | null, weekday?: string | null) {
+  const rawValues = Array.isArray(weekdays) ? weekdays : weekday ? [weekday] : [];
+  const normalizedValues = rawValues.filter(isRecurringWeekday);
+  return Array.from(new Set(normalizedValues));
+}
+
+function normalizeIntervalWeeks(intervalWeeks?: number | null): 1 | 2 {
+  return intervalWeeks === 2 ? 2 : 1;
+}
+
+export function normalizeRecurringRule(rule?: EventRecurringRule | null): NormalizedRecurringRule | null {
+  if (!rule) {
+    return null;
+  }
+
+  return {
+    weekdays: normalizeWeekdays(rule.weekdays, rule.weekday),
+    intervalWeeks: normalizeIntervalWeeks(rule.intervalWeeks),
+    startDate: rule.startDate?.trim() || "",
+    endDate: rule.endDate?.trim() || "",
+    timeText: rule.timeText?.trim() || "",
+  };
+}
+
+function formatWeekdayList(weekdays: string[]) {
+  if (weekdays.length === 0) {
+    return "day";
+  }
+
+  if (weekdays.length === 1) {
+    return weekdays[0];
+  }
+
+  if (weekdays.length === 2) {
+    return `${weekdays[0]} and ${weekdays[1]}`;
+  }
+
+  return `${weekdays.slice(0, -1).join(", ")}, and ${weekdays[weekdays.length - 1]}`;
+}
+
 export function createEmptyEventDateEntry(): EventDateEntry {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -92,23 +162,26 @@ export function formatEventTypeLabel(type: EventType) {
 export function formatEventDateEntry(entry: EventDateEntry) {
   const start = formatDateText(entry.startDate);
   const end = normalizeEndDate(entry.endDate, entry.startDate);
-  const rangeLabel =
-    end && end !== entry.startDate ? `${start} - ${formatDateText(end)}` : start;
+  const rangeLabel = end && end !== entry.startDate ? `${start} - ${formatDateText(end)}` : start;
 
   return entry.timeText.trim() ? `${rangeLabel} • ${entry.timeText.trim()}` : rangeLabel;
 }
 
 export function formatRecurringRule(rule?: EventRecurringRule | null) {
-  if (!rule) {
+  const normalizedRule = normalizeRecurringRule(rule);
+
+  if (!normalizedRule) {
     return "Recurring schedule";
   }
 
-  const recurrenceWindow = rule.endDate?.trim()
-    ? `${formatDateText(rule.startDate)} - ${formatDateText(rule.endDate)}`
-    : `Starting ${formatDateText(rule.startDate)}`;
-  const timeLabel = rule.timeText.trim() ? ` • ${rule.timeText.trim()}` : "";
+  const cadenceLabel = normalizedRule.intervalWeeks === 2 ? "Every other" : "Every";
+  const dayLabel = formatWeekdayList(normalizedRule.weekdays);
+  const recurrenceWindow = normalizedRule.endDate
+    ? `${formatDateText(normalizedRule.startDate)} - ${formatDateText(normalizedRule.endDate)}`
+    : `Starting ${formatDateText(normalizedRule.startDate)}`;
+  const timeLabel = normalizedRule.timeText ? ` • ${normalizedRule.timeText}` : "";
 
-  return `Every ${rule.weekday}${timeLabel} • ${recurrenceWindow}`;
+  return `${cadenceLabel} ${dayLabel}${timeLabel} • ${recurrenceWindow}`;
 }
 
 export function formatEventScheduleSummary(event: EventDocument) {
@@ -126,33 +199,58 @@ export function formatEventScheduleSummary(event: EventDocument) {
   return validEntries.length === 1 ? firstEntry : `${firstEntry} +${validEntries.length - 1} more`;
 }
 
-function getWeekdayIndex(weekday: string) {
-  return RECURRING_WEEKDAY_OPTIONS.findIndex((value) => value === weekday);
+function matchesRecurringDate(rule: NormalizedRecurringRule, candidateDate: Date) {
+  if (!rule.startDate || rule.weekdays.length === 0) {
+    return false;
+  }
+
+  const candidateDateText = getDateText(candidateDate);
+
+  if (candidateDateText < rule.startDate) {
+    return false;
+  }
+
+  if (rule.endDate && candidateDateText > rule.endDate) {
+    return false;
+  }
+
+  const weekdayLabel = RECURRING_WEEKDAY_OPTIONS[candidateDate.getDay()];
+  if (!rule.weekdays.includes(weekdayLabel)) {
+    return false;
+  }
+
+  const startWeek = getStartOfWeek(asLocalDate(rule.startDate));
+  const candidateWeek = getStartOfWeek(candidateDate);
+  const weeksSinceStart = Math.floor((candidateWeek.getTime() - startWeek.getTime()) / (7 * 24 * 60 * 60 * 1000));
+
+  return weeksSinceStart >= 0 && weeksSinceStart % rule.intervalWeeks === 0;
 }
 
 function getNextRecurringDate(rule: EventRecurringRule, referenceDateText: string) {
-  const weekdayIndex = getWeekdayIndex(rule.weekday);
+  const normalizedRule = normalizeRecurringRule(rule);
 
-  if (weekdayIndex === -1 || !rule.startDate.trim()) {
+  if (!normalizedRule || !normalizedRule.startDate || normalizedRule.weekdays.length === 0) {
     return null;
   }
 
-  const recurrenceStart = asLocalDate(rule.startDate);
+  const recurrenceStart = asLocalDate(normalizedRule.startDate);
   const rangeStart = asLocalDate(referenceDateText);
   const searchStart = rangeStart > recurrenceStart ? rangeStart : recurrenceStart;
-  const next = new Date(searchStart);
-  const dayOffset = (weekdayIndex - next.getDay() + 7) % 7;
-  next.setDate(next.getDate() + dayOffset);
 
-  if (rule.endDate?.trim() && next > asLocalDate(rule.endDate)) {
-    return null;
+  for (let dayOffset = 0; dayOffset <= 730; dayOffset += 1) {
+    const next = new Date(searchStart);
+    next.setDate(next.getDate() + dayOffset);
+
+    if (normalizedRule.endDate && getDateText(next) > normalizedRule.endDate) {
+      return null;
+    }
+
+    if (matchesRecurringDate(normalizedRule, next)) {
+      return next;
+    }
   }
 
-  return next;
-}
-
-function getDateText(value: Date) {
-  return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+  return null;
 }
 
 export function getEventNextOccurrenceDateText(event: EventDocument, referenceDateText = getTodayDateText()) {
