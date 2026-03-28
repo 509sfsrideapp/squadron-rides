@@ -42,12 +42,6 @@ const inboxNavButtonStyle: React.CSSProperties = {
   fontSize: 12,
 };
 
-const inboxHomeButtonStyle: React.CSSProperties = {
-  background: "linear-gradient(180deg, rgba(24, 38, 29, 0.98) 0%, rgba(9, 17, 12, 0.99) 100%)",
-  border: "1px solid rgba(134, 239, 172, 0.22)",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 26px rgba(0, 0, 0, 0.28)",
-};
-
 function ThreadIcon({ iconKey }: { iconKey: MessageThreadIconKey }) {
   if (iconKey === "bell") {
     return <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M15 17H9c-1.6 0-2.7-1.4-2.4-3l.5-2.5a9.2 9.2 0 0 0 .2-1.9V9a4.7 4.7 0 1 1 9.4 0v.6c0 .6.1 1.3.2 1.9l.5 2.5c.3 1.6-.8 3-2.4 3Z" /><path d="M10 20a2.2 2.2 0 0 0 4 0" /></svg>;
@@ -194,7 +188,7 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
     return (
       <main style={{ padding: 20 }}>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
-          <HomeIconLink style={inboxHomeButtonStyle} />
+          <HomeIconLink />
           <Link href="/messages" style={inboxNavButtonStyle}>Return to Inbox</Link>
         </div>
         <h1>Thread Unavailable</h1>
@@ -206,7 +200,7 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
   return (
     <main style={{ padding: 20 }}>
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>
-        <HomeIconLink style={inboxHomeButtonStyle} />
+        <HomeIconLink />
         <Link href="/messages" style={inboxNavButtonStyle}>Return to Inbox</Link>
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>

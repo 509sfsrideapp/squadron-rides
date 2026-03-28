@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v218",
+    title: "Home Button Style Match",
+    summary: "Matched the top-left home button across the app to the same darker round style used by the persistent bottom-left home button and removed the inbox-only green override so both home controls now look identical.",
+  },
+  {
     commit: "v217",
     title: "Driver Active Ride Redirect Fix",
     summary: "Changed the driver active-ride screen so if the ride is no longer valid for that driver after a release or status change, the page now redirects straight back to the driver dashboard instead of leaving the driver on an empty unavailable screen.",

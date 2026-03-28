@@ -7,12 +7,6 @@ import HomeIconLink from "../../components/HomeIconLink";
 import { auth } from "../../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 
-const inboxHomeButtonStyle: React.CSSProperties = {
-  background: "linear-gradient(180deg, rgba(24, 38, 29, 0.98) 0%, rgba(9, 17, 12, 0.99) 100%)",
-  border: "1px solid rgba(134, 239, 172, 0.22)",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 26px rgba(0, 0, 0, 0.28)",
-};
-
 const inboxNavButtonStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
@@ -51,7 +45,7 @@ export default function DirectMessagesPage() {
   if (!user) {
     return (
       <main style={{ padding: 20 }}>
-        <HomeIconLink style={inboxHomeButtonStyle} />
+        <HomeIconLink />
         <h1>Direct Messages</h1>
         <p>You need to log in first.</p>
       </main>
@@ -60,7 +54,7 @@ export default function DirectMessagesPage() {
 
   return (
     <main style={{ padding: 20 }}>
-      <HomeIconLink style={inboxHomeButtonStyle} />
+      <HomeIconLink />
       <h1>Direct Messages</h1>
       <p style={{ maxWidth: 700 }}>
         This is the future home for one-to-one user messaging. We can wire inbox threads, unread counts, and user search
