@@ -415,7 +415,16 @@ export default function NewEventPage() {
 
                     <label style={{ display: "grid", gap: 6 }}>
                       <span>End Date (Optional)</span>
-                      <input type="date" value={entry.endDate || ""} onChange={(event) => updateScheduleEntry(entry.id, { endDate: event.target.value })} />
+                      <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 8, alignItems: "end" }}>
+                        <input type="date" value={entry.endDate || ""} onChange={(event) => updateScheduleEntry(entry.id, { endDate: event.target.value })} />
+                        <button
+                          type="button"
+                          onClick={() => updateScheduleEntry(entry.id, { endDate: "" })}
+                          style={{ minHeight: 42, padding: "10px 12px" }}
+                        >
+                          Clear
+                        </button>
+                      </div>
                     </label>
 
                     <label style={{ display: "grid", gap: 6 }}>
@@ -527,7 +536,16 @@ export default function NewEventPage() {
 
                 <label style={{ display: "grid", gap: 6 }}>
                   <span>End Date (Optional)</span>
-                  <input type="date" value={recurrence.endDate || ""} onChange={(event) => setRecurrence((current) => ({ ...current, endDate: event.target.value }))} />
+                  <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto", gap: 8, alignItems: "end" }}>
+                    <input type="date" value={recurrence.endDate || ""} onChange={(event) => setRecurrence((current) => ({ ...current, endDate: event.target.value }))} />
+                    <button
+                      type="button"
+                      onClick={() => setRecurrence((current) => ({ ...current, endDate: "" }))}
+                      style={{ minHeight: 42, padding: "10px 12px" }}
+                    >
+                      Clear
+                    </button>
+                  </div>
                 </label>
 
                 <label style={{ display: "grid", gap: 6 }}>

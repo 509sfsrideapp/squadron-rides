@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v234",
+    title: "Event End Date Clear Fix",
+    summary: "Added explicit Clear controls beside the optional event end-date fields so Safari and iPhone users can reliably remove end dates even when the native date-picker reset action does not clear the controlled input.",
+  },
+  {
     commit: "v233",
     title: "Monthly Event Recurrence",
     summary: "Expanded recurring event creation with a monthly cadence that supports first-through-fifth weekday patterns, so events can now be scheduled in formats like every third Monday while keeping one-time dates separate from recurring setup.",
