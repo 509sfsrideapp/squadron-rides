@@ -235,7 +235,7 @@ export default function SignupPage() {
         />
 
         <p style={{ marginTop: 0, marginBottom: 12, color: "#94a3b8" }}>
-          The information below is not required for account creation but will be required to request and accept rides.
+          A profile photo is required for account creation. Address and vehicle details below can still be added later for ride and driver readiness.
         </p>
         <div
           style={{
@@ -300,7 +300,7 @@ export default function SignupPage() {
               outputSize={480}
               maxEncodedLength={180000}
               disabled={uploadingPhoto}
-              helperText="Use a clear photo that shows what you look like so riders and drivers know who to look for."
+              helperText="Use a clear photo that shows what you look like. This is required before your account can be created."
               statusMessage={uploadingPhoto ? "Preparing profile photo..." : ""}
               onStatusMessageChange={(message) => {
                 setUploadingPhoto(message.includes("Preparing") || message.includes("Saving"));

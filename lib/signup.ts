@@ -121,6 +121,10 @@ export async function validateSignupDraft(draft: SignupDraft) {
     return { ok: false as const, message: "Enter a valid 10-digit phone number." };
   }
 
+  if (!draft.profilePhotoUrl.trim()) {
+    return { ok: false as const, message: "Add a clear profile photo before creating your account." };
+  }
+
   const normalizedUsername = normalizeUsername(draft.username);
 
   if (!isValidUsername(normalizedUsername)) {

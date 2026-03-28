@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v212",
+    title: "Signup Profile Photo Requirement",
+    summary: "Made the profile photo mandatory during account creation by blocking signup until a photo is uploaded and updating the signup form copy so that requirement is clear before the account is submitted.",
+  },
+  {
     commit: "v211",
     title: "Inbox Unread Message Badges",
     summary: "Added per-message unread badges inside inbox threads based on what was new before the thread was opened, and restyled the inbox navigation actions so the Return to Inbox and top-left Home controls match the app’s themed button treatment.",
