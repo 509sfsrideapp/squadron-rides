@@ -336,6 +336,53 @@ function getNextRecurringDate(rule: EventRecurringRule, referenceDateText: strin
   return null;
 }
 
+export function getRecurringOccurrenceDateTexts(
+  rule?: EventRecurringRule | null,
+  count = 1,
+  referenceDateText = getTodayDateText()
+) {
+  if (!rule || count <= 0) {
+    return [];
+  }
+
+  const results: string[] = [];
+  let searchDateText = referenceDateText;
+
+  while (results.length < count) {
+    const nextDate = getNextRecurringDate(rule, searchDateText);
+
+    if (!nextDate) {
+      break;
+    }
+
+    const nextDateText = getDateText(nextDate);
+
+    if (results.includes(nextDateText)) {
+      break;
+    }
+
+    results.push(nextDateText);
+
+    const nextSearchDate = new Date(nextDate);
+    nextSearchDate.setDate(nextSearchDate.getDate() + 1);
+    searchDateText = getDateText(nextSearchDate);
+  }
+
+  return results;
+}
+
+export function formatRecurringOccurrenceLabel(rule?: EventRecurringRule | null, referenceDateText = getTodayDateText()) {
+  const nextDateText = getRecurringOccurrenceDateTexts(rule, 1, referenceDateText)[0];
+  const normalizedRule = normalizeRecurringRule(rule);
+
+  if (!nextDateText) {
+    return "No upcoming dates";
+  }
+
+  const timeLabel = normalizedRule?.timeText ? ` | ${normalizedRule.timeText}` : "";
+  return `${formatDateText(nextDateText)}${timeLabel}`;
+}
+
 export function getEventNextOccurrenceDateText(event: EventDocument, referenceDateText = getTodayDateText()) {
   if (event.scheduleMode === "recurring") {
     const nextRecurringDate = event.recurrence ? getNextRecurringDate(event.recurrence, referenceDateText) : null;
@@ -396,7 +443,7 @@ export function eventMatchesDateRange(event: EventDocument, dateFrom: string, da
 
 export function getEventCardDateLabel(event: EventDocument) {
   if (event.scheduleMode === "recurring") {
-    return formatRecurringRule(event.recurrence);
+    return formatRecurringOccurrenceLabel(event.recurrence);
   }
 
   const nextDateText = getEventNextOccurrenceDateText(event);

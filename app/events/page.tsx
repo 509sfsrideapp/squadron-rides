@@ -74,13 +74,15 @@ export default function EventsPage() {
   }, [user]);
 
   const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
-      return (
-        isUpcomingEvent(event) &&
-        eventMatchesType(event, selectedType) &&
-        eventMatchesDateRange(event, dateFrom, dateTo)
-      );
-    });
+    return sortEventsByUpcomingDate(
+      events.filter((event) => {
+        return (
+          isUpcomingEvent(event) &&
+          eventMatchesType(event, selectedType) &&
+          eventMatchesDateRange(event, dateFrom, dateTo)
+        );
+      })
+    );
   }, [dateFrom, dateTo, events, selectedType]);
 
   if (loading) {

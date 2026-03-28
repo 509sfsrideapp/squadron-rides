@@ -9,7 +9,7 @@ import AppLoadingState from "../../components/AppLoadingState";
 import FullscreenImageViewer from "../../components/FullscreenImageViewer";
 import HomeIconLink from "../../components/HomeIconLink";
 import { auth, db } from "../../../lib/firebase";
-import { formatEventDateEntry, formatEventTypeLabel, formatRecurringRule, type EventRecord } from "../../../lib/events";
+import { formatEventDateEntry, formatEventTypeLabel, formatRecurringRule, getRecurringOccurrenceDateTexts, type EventRecord } from "../../../lib/events";
 
 const sectionStyle: React.CSSProperties = {
   borderRadius: 18,
@@ -81,6 +81,20 @@ export default function EventDetailPage() {
       : eventRecord.scheduleEntries
           .filter((entry) => entry.startDate.trim())
           .map((entry) => formatEventDateEntry(entry));
+  }, [eventRecord]);
+
+  const recurringUpcomingLines = useMemo(() => {
+    if (!eventRecord || eventRecord.scheduleMode !== "recurring") {
+      return [];
+    }
+
+    return getRecurringOccurrenceDateTexts(eventRecord.recurrence, 3).map((dateText) =>
+      new Date(`${dateText}T12:00:00`).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    );
   }, [eventRecord]);
 
   if (loading) {
@@ -194,6 +208,14 @@ export default function EventDetailPage() {
                 )) : (
                   <p style={{ margin: 0, color: "#94a3b8" }}>Schedule pending.</p>
                 )}
+                {eventRecord.scheduleMode === "recurring" && recurringUpcomingLines.length > 0 ? (
+                  <>
+                    <p style={{ margin: "6px 0 0", color: "#94a3b8" }}>Next 3 upcoming dates</p>
+                    {recurringUpcomingLines.map((line) => (
+                      <p key={line} style={{ margin: 0, color: "#cbd5e1" }}>{line}</p>
+                    ))}
+                  </>
+                ) : null}
               </div>
             </div>
 
