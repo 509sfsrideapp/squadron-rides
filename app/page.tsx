@@ -800,69 +800,103 @@ export default function HomePage() {
         </div>
         {user ? (
           <div ref={profileMenuRef} style={{ position: "relative", display: "grid", justifyItems: "end" }}>
-            <button
-              type="button"
-              aria-label="Open account menu"
-              aria-expanded={profileMenuOpen}
-              onClick={() => setProfileMenuOpen((current) => !current)}
+            <div
               style={{
-                padding: 0,
-                background: "transparent",
-                border: "none",
-                boxShadow: "none",
                 position: "relative",
-              }}
-            >
-              {profile?.driverPhotoUrl || profile?.riderPhotoUrl ? (
-                <Image
-                  src={profile.driverPhotoUrl || profile.riderPhotoUrl || ""}
-                  alt="Account menu"
-                  width={52}
-                  height={52}
-                  unoptimized
-                  style={{
-                    width: 52,
-                    height: 52,
-                    objectFit: "cover",
-                    borderRadius: 999,
-                    border: "1px solid rgba(148, 163, 184, 0.22)",
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 999,
-                    display: "grid",
-                    placeItems: "center",
-                    backgroundColor: "rgba(18, 37, 63, 0.72)",
-                    color: "#dbeafe",
-                    border: "1px solid rgba(96, 165, 250, 0.2)",
-                    fontFamily: "var(--font-display)",
-                    fontSize: "1.1rem",
-                  }}
-                >
-                  {(profile?.firstName || profile?.name || user.email || "?").charAt(0).toUpperCase()}
-                </div>
-              )}
-              <NotificationBadge count={inboxUnreadCount} style={{ position: "absolute", top: -4, right: -4 }} />
-            </button>
-            <span
-              style={{
-                marginTop: 6,
-                color: "#94a3b8",
-                fontSize: 10,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                fontFamily: "var(--font-display)",
                 display: "grid",
-                gap: 1,
+                justifyItems: "center",
+                gap: 8,
+                minWidth: 116,
+                padding: "0.8rem 0.85rem 0.72rem",
+                borderRadius: 18,
+                border: "1px solid rgba(112, 130, 109, 0.22)",
+                background:
+                  "linear-gradient(180deg, rgba(17, 21, 18, 0.96) 0%, rgba(8, 10, 9, 0.99) 100%)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 36px rgba(0, 0, 0, 0.28)",
+                overflow: "hidden",
               }}
             >
-              <span>ASSET_LOADED:</span>
-              <span>PFP//0-1</span>
-            </span>
+              <span
+                aria-hidden="true"
+                style={{
+                  position: "absolute",
+                  inset: 7,
+                  borderRadius: 13,
+                  border: "1px solid rgba(167, 184, 158, 0.1)",
+                  pointerEvents: "none",
+                }}
+              />
+              <button
+                type="button"
+                aria-label="Open account menu"
+                aria-expanded={profileMenuOpen}
+                onClick={() => setProfileMenuOpen((current) => !current)}
+                style={{
+                  width: 68,
+                  height: 68,
+                  padding: 6,
+                  display: "grid",
+                  placeItems: "center",
+                  borderRadius: 999,
+                  background: "linear-gradient(180deg, rgba(26, 34, 29, 0.98) 0%, rgba(11, 16, 13, 0.98) 100%)",
+                  border: "1px solid rgba(126, 145, 119, 0.22)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 10px 24px rgba(0, 0, 0, 0.26)",
+                  position: "relative",
+                  zIndex: 1,
+                }}
+              >
+                {profile?.driverPhotoUrl || profile?.riderPhotoUrl ? (
+                  <Image
+                    src={profile.driverPhotoUrl || profile.riderPhotoUrl || ""}
+                    alt="Account menu"
+                    width={52}
+                    height={52}
+                    unoptimized
+                    style={{
+                      width: 52,
+                      height: 52,
+                      objectFit: "cover",
+                      borderRadius: 999,
+                      border: "1px solid rgba(185, 201, 178, 0.24)",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 999,
+                      display: "grid",
+                      placeItems: "center",
+                      backgroundColor: "rgba(32, 51, 35, 0.78)",
+                      color: "#e4efe4",
+                      border: "1px solid rgba(136, 167, 130, 0.24)",
+                      fontFamily: "var(--font-display)",
+                      fontSize: "1.1rem",
+                    }}
+                  >
+                    {(profile?.firstName || profile?.name || user.email || "?").charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <NotificationBadge count={inboxUnreadCount} style={{ position: "absolute", top: -4, right: -4 }} />
+              </button>
+              <span
+                style={{
+                  color: "#94a3b8",
+                  fontSize: 10,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  fontFamily: "var(--font-display)",
+                  display: "grid",
+                  gap: 1,
+                  textAlign: "center",
+                  zIndex: 1,
+                }}
+              >
+                <span>ASSET_LOADED:</span>
+                <span style={{ color: "#c8d0c7" }}>PFP//0-1</span>
+              </span>
+            </div>
 
             <div
               className={`profile-menu-panel${profileMenuOpen ? " profile-menu-panel-open" : ""}`}
