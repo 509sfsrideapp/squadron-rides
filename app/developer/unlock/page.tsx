@@ -141,93 +141,112 @@ export default function DeveloperUnlockPage() {
         </div>
 
         <div className="vault-panel">
-          <div className="vault-hardware-strip vault-hardware-strip-top" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-          <div className="vault-hardware-strip vault-hardware-strip-bottom" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-          </div>
-          <div className="vault-side-rail vault-side-rail-left" aria-hidden="true" />
-          <div className="vault-side-rail vault-side-rail-right" aria-hidden="true" />
-          <div className="vault-cable-bundle" aria-hidden="true">
-            <span className="vault-cable vault-cable-amber" />
-            <span className="vault-cable vault-cable-red" />
-            <span className="vault-cable vault-cable-blue" />
-            <span className="vault-cable vault-cable-green" />
-          </div>
-          <div className="vault-warning-tab" aria-hidden="true">Field Device</div>
-          <div className="vault-arming-module" aria-hidden="true">
-            <span className="vault-arming-label">Trigger Matrix</span>
-            <span className="vault-arming-light vault-arming-light-red" />
-            <span className="vault-arming-light vault-arming-light-amber" />
-            <span className="vault-arming-light vault-arming-light-green" />
+          <div className="vault-frame-accent" aria-hidden="true">
+            <div className="vault-hardware-strip">
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className="vault-cable-bundle">
+              <span className="vault-cable vault-cable-amber" />
+              <span className="vault-cable vault-cable-red" />
+              <span className="vault-cable vault-cable-blue" />
+              <span className="vault-cable vault-cable-green" />
+            </div>
           </div>
 
-          <p className="vault-kicker">Developer Vault</p>
-          <h1>Access Terminal</h1>
-          <p className="vault-subcopy">
-            Improvised secure access node. Enter the authorization sequence before the anti-tamper routine escalates.
-          </p>
+          <div className="vault-header">
+            <div className="vault-header-copy">
+              <p className="vault-kicker">Developer Vault</p>
+              <h1>Access Terminal</h1>
+              <p className="vault-subcopy">
+                Improvised secure access node. Enter the authorization sequence before the anti-tamper routine escalates.
+              </p>
+            </div>
 
-          <div className={`vault-digital-screen vault-digital-screen-${screenState}`} aria-live="polite">
-            {digitalScreenLines.map((line, index) => (
-              <span
-                key={`${line}-${index}`}
-                className={`vault-digital-screen-line${index > 0 ? " vault-digital-screen-line-secondary" : ""}`}
-              >
-                {line}
-              </span>
-            ))}
-          </div>
-
-          <div className="vault-display" aria-label="PIN entry">
-            {Array.from({ length: PIN_LENGTH }).map((_, index) => (
-              <span
-                key={index}
-                className={`vault-dot ${index < code.length ? "vault-dot-filled" : ""}`}
-              />
-            ))}
+            <div className="vault-header-side">
+              <span className="vault-warning-tab">Field Device</span>
+              <div className="vault-arming-module" aria-hidden="true">
+                <span className="vault-arming-label">Trigger Matrix</span>
+                <span className="vault-arming-light vault-arming-light-red" />
+                <span className="vault-arming-light vault-arming-light-amber" />
+                <span className="vault-arming-light vault-arming-light-green" />
+              </div>
+            </div>
           </div>
 
           <div className="vault-status-row" aria-hidden="true">
-            <span className="vault-status-chip">ANTI-TAMPER</span>
-            <span className="vault-status-chip">FIELD-WIRED</span>
-            <span className="vault-status-chip">LIVE CIRCUIT</span>
+            <span className="vault-status-chip">Anti-Tamper</span>
+            <span className="vault-status-chip">Field-Wired</span>
+            <span className="vault-status-chip">Live Circuit</span>
           </div>
 
-          <div className="vault-keypad">
-            {keypadDigits.map((digit) => (
-              <button
-                key={digit}
-                type="button"
-                className="vault-key"
-                onClick={() => appendDigit(digit)}
-                disabled={submitting || code.length >= PIN_LENGTH || countdown !== null}
-              >
-                {digit}
+          <section className="vault-module vault-module-console">
+            <p className="vault-module-label">Access Instructions</p>
+            <div className={`vault-digital-screen vault-digital-screen-${screenState}`} aria-live="polite">
+              {digitalScreenLines.map((line, index) => (
+                <span
+                  key={`${line}-${index}`}
+                  className={`vault-digital-screen-line${index > 0 ? " vault-digital-screen-line-secondary" : ""}`}
+                >
+                  {line}
+                </span>
+              ))}
+            </div>
+          </section>
+
+          <section className="vault-module vault-pin-module">
+            <div className="vault-pin-heading">
+              <div>
+                <p className="vault-module-label">Secure Code Module</p>
+                <p className="vault-pin-caption">Four-digit manual override required.</p>
+              </div>
+              <span className="vault-pin-id">PIN-4</span>
+            </div>
+
+            <div className="vault-display" aria-label="PIN entry">
+              {Array.from({ length: PIN_LENGTH }).map((_, index) => (
+                <span
+                  key={index}
+                  className={`vault-dot ${index < code.length ? "vault-dot-filled" : ""}`}
+                />
+              ))}
+            </div>
+          </section>
+
+          <section className="vault-module vault-keypad-module">
+            <p className="vault-module-label">Keypad Array</p>
+            <div className="vault-keypad">
+              {keypadDigits.map((digit) => (
+                <button
+                  key={digit}
+                  type="button"
+                  className="vault-key"
+                  onClick={() => appendDigit(digit)}
+                  disabled={submitting || code.length >= PIN_LENGTH || countdown !== null}
+                >
+                  {digit}
+                </button>
+              ))}
+
+              <button type="button" className="vault-key vault-key-muted" onClick={clearCode} disabled={submitting || countdown !== null}>
+                CLR
               </button>
-            ))}
+              <button type="button" className="vault-key" onClick={() => appendDigit("0")} disabled={submitting || code.length >= PIN_LENGTH || countdown !== null}>
+                0
+              </button>
+              <button type="button" className="vault-key vault-key-muted" onClick={removeDigit} disabled={submitting || code.length === 0 || countdown !== null}>
+                DEL
+              </button>
+            </div>
+          </section>
 
-            <button type="button" className="vault-key vault-key-muted" onClick={clearCode} disabled={submitting || countdown !== null}>
-              CLR
-            </button>
-            <button type="button" className="vault-key" onClick={() => appendDigit("0")} disabled={submitting || code.length >= PIN_LENGTH || countdown !== null}>
-              0
-            </button>
-            <button type="button" className="vault-key vault-key-muted" onClick={removeDigit} disabled={submitting || code.length === 0 || countdown !== null}>
-              DEL
+          <div className="vault-action-row">
+            <button type="button" className="vault-submit" onClick={submitCode} disabled={submitting || countdown !== null}>
+              {submitting ? "Authorizing..." : "Unlock"}
             </button>
           </div>
-
-          <button type="button" className="vault-submit" onClick={submitCode} disabled={submitting || countdown !== null}>
-            {submitting ? "Authorizing..." : "Unlock"}
-          </button>
         </div>
       </div>
     </main>
