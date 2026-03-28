@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v211",
+    title: "Inbox Unread Message Badges",
+    summary: "Added per-message unread badges inside inbox threads based on what was new before the thread was opened, and restyled the inbox navigation actions so the Return to Inbox and top-left Home controls match the app’s themed button treatment.",
+  },
+  {
     commit: "v210",
     title: "Homepage Null Status Messaging",
     summary: "Replaced the homepage ride-request and unavailable driver-dashboard warning copy with compact NULL status strings based on the exact missing profile requirements, and removed the extra helper and red instruction text beneath those unavailable states.",

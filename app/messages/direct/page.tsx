@@ -7,6 +7,30 @@ import HomeIconLink from "../../components/HomeIconLink";
 import { auth } from "../../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 
+const inboxHomeButtonStyle: React.CSSProperties = {
+  background: "linear-gradient(180deg, rgba(24, 38, 29, 0.98) 0%, rgba(9, 17, 12, 0.99) 100%)",
+  border: "1px solid rgba(134, 239, 172, 0.22)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 26px rgba(0, 0, 0, 0.28)",
+};
+
+const inboxNavButtonStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: 42,
+  padding: "10px 16px",
+  borderRadius: 12,
+  textDecoration: "none",
+  background: "linear-gradient(180deg, rgba(34, 197, 94, 0.94) 0%, rgba(21, 128, 61, 0.98) 100%)",
+  color: "#f8fafc",
+  border: "1px solid rgba(134, 239, 172, 0.28)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 28px rgba(6, 78, 59, 0.24)",
+  fontFamily: "var(--font-display)",
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  fontSize: 12,
+};
+
 export default function DirectMessagesPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +51,7 @@ export default function DirectMessagesPage() {
   if (!user) {
     return (
       <main style={{ padding: 20 }}>
-        <HomeIconLink />
+        <HomeIconLink style={inboxHomeButtonStyle} />
         <h1>Direct Messages</h1>
         <p>You need to log in first.</p>
       </main>
@@ -36,7 +60,7 @@ export default function DirectMessagesPage() {
 
   return (
     <main style={{ padding: 20 }}>
-      <HomeIconLink />
+      <HomeIconLink style={inboxHomeButtonStyle} />
       <h1>Direct Messages</h1>
       <p style={{ maxWidth: 700 }}>
         This is the future home for one-to-one user messaging. We can wire inbox threads, unread counts, and user search
@@ -59,12 +83,7 @@ export default function DirectMessagesPage() {
         </p>
         <Link
           href="/messages"
-          style={{
-            display: "inline-block",
-            marginTop: 16,
-            color: "#93c5fd",
-            textDecoration: "none",
-          }}
+          style={{ ...inboxNavButtonStyle, marginTop: 16 }}
         >
           Open Inbox
         </Link>
