@@ -14,7 +14,6 @@ import {
   normalizeRideDispatchMode,
   type EmergencyRideDispatchMode,
 } from "../../lib/ride-dispatch";
-import { getRideStatusLabel } from "../../lib/ride-lifecycle";
 import { getLatestActiveRideForDriver } from "../../lib/ride-state";
 import { onAuthStateChanged, User } from "firebase/auth";
 import {
@@ -600,89 +599,6 @@ export default function DriverPage() {
           </button>
         </div>
       ) : null}
-
-      <div style={{ marginTop: 30 }}>
-        <h3 style={{ marginBottom: 10 }}>Active Ride Assignments</h3>
-
-        {acceptedRides.length === 0 ? (
-          <div style={{ ...dashboardCardStyle, maxWidth: 720 }}>
-            <p style={{ margin: 0, color: "#94a3b8" }}>No active rides are assigned to you right now.</p>
-          </div>
-        ) : (
-          acceptedRides.map((ride) => (
-            <div
-              key={ride.id}
-              style={{
-                ...dashboardCardStyle,
-                border: "1px solid rgba(45, 212, 191, 0.22)",
-                borderRadius: 16,
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-                {ride.riderPhotoUrl ? (
-                  <Image
-                    src={ride.riderPhotoUrl}
-                    alt={`${renderRiderName(ride)} profile`}
-                    width={68}
-                    height={68}
-                    unoptimized
-                    style={{
-                      width: 68,
-                      height: 68,
-                      objectFit: "cover",
-                      borderRadius: 999,
-                      border: "1px solid rgba(96, 165, 250, 0.22)",
-                    }}
-                  />
-                ) : (
-                  <div
-                    style={{
-                      width: 68,
-                      height: 68,
-                      borderRadius: 999,
-                      display: "grid",
-                      placeItems: "center",
-                      backgroundColor: "rgba(18, 37, 63, 0.72)",
-                      color: "#dbeafe",
-                      border: "1px solid rgba(96, 165, 250, 0.2)",
-                      fontFamily: "var(--font-display)",
-                      fontSize: "1.35rem",
-                    }}
-                  >
-                    {renderRiderName(ride).charAt(0).toUpperCase()}
-                  </div>
-                )}
-
-                <div style={{ display: "grid", gap: 6 }}>
-                  <p style={{ margin: 0, fontSize: "1.05rem" }}>
-                    <strong>{renderRiderName(ride)}</strong>
-                  </p>
-                  <p style={{ margin: 0, color: "#94a3b8" }}>{getRideStatusLabel(ride.status)}</p>
-                  <p style={{ margin: 0 }}>
-                    <strong>Pickup:</strong> {renderPickupSummary(ride)}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => router.push(`/driver/active/${ride.id}`)}
-                style={{
-                  padding: "9px 14px",
-                  marginTop: 14,
-                  backgroundColor: "#0f766e",
-                  color: "#ffffff",
-                  border: "none",
-                  borderRadius: 8,
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
-              >
-                Open Active Ride
-              </button>
-            </div>
-          ))
-        )}
-      </div>
 
       <div style={{ marginTop: 30 }}>
         <h3 style={{ marginBottom: 10 }}>Open Ride Requests</h3>
