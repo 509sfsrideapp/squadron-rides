@@ -379,8 +379,7 @@ export default function DriverPage() {
       await updateDoc(doc(db, "users", user.uid), {
         available: false,
       });
-      alert("Clocked out");
-      window.location.href = "/";
+      setProfile((current) => (current ? { ...current, available: false } : current));
     } catch (error) {
       console.error(error);
       alert(error instanceof Error ? error.message : "Failed to clock out");
