@@ -602,9 +602,6 @@ export default function AccountPage() {
         </div>
 
         <h2 style={{ marginTop: 24 }}>App Permissions</h2>
-        <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
-          Review emergency ride permissions, notifications, and location settings here.
-        </p>
         <Link
           href="/account/permissions"
           style={{

@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v239",
+    title: "Permissions Copy Cleanup",
+    summary: "Removed the extra helper sentence under App Permissions in account settings so that section stays cleaner.",
+  },
+  {
     commit: "v238",
     title: "Security Copy Cleanup",
     summary: "Removed the extra password-update helper sentence from the Security section in account settings to keep that area cleaner.",
