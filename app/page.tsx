@@ -81,14 +81,14 @@ const homepageCardStyle: React.CSSProperties = {
 };
 
 const HOMEPAGE_STATUS_CHECKS = [
-  "AUTH TOKEN VALIDATED",
-  "RIDE STATUS AUTH GOOD",
-  "DISPATCH WINDOW ONLINE",
-  "DRIVER GRID LINKED",
-  "GEO ROUTE AUTH TRUE",
-  "INBOX CHANNEL SYNCED",
-  "MOBILE OPS SHELL READY",
-  "NOTIFICATION STACK GREEN",
+  "[PASS] AUTH TOKEN VALIDATED",
+  "[PASS] RIDE STATUS AUTH GOOD",
+  "[PASS] DISPATCH WINDOW ONLINE",
+  "[PASS] DRIVER GRID LINKED",
+  "[PASS] GEO ROUTE AUTH TRUE",
+  "[PASS] INBOX CHANNEL SYNCED",
+  "[PASS] MOBILE OPS SHELL READY",
+  "[PASS] NOTIFICATION STACK GREEN",
 ];
 
 function NotificationBadge({ count, style }: { count: number; style?: React.CSSProperties }) {
@@ -310,6 +310,7 @@ export default function HomePage() {
   const [inboxReadVersion, setInboxReadVersion] = useState(0);
   const [driverOpenRideBadgeRecords, setDriverOpenRideBadgeRecords] = useState<OpenRideBadgeRecord[]>([]);
   const [appStatusOffset, setAppStatusOffset] = useState(0);
+  const [appStatusCharCount, setAppStatusCharCount] = useState(0);
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
 
   useEffect(() => {
@@ -388,6 +389,16 @@ export default function HomePage() {
 
     return () => window.clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    setAppStatusCharCount(0);
+
+    const intervalId = window.setInterval(() => {
+      setAppStatusCharCount((current) => current + 1);
+    }, 32);
+
+    return () => window.clearInterval(intervalId);
+  }, [appStatusOffset]);
 
   useEffect(() => {
     if (!user) {
@@ -480,6 +491,13 @@ export default function HomePage() {
         : `${(user?.email?.split("@")[0] || "USER").toUpperCase()}${profile?.rank?.trim() ? ` (${profile.rank.trim()})` : ""}`;
   const visibleAppStatusChecks = Array.from({ length: 3 }, (_, index) => {
     return HOMEPAGE_STATUS_CHECKS[(appStatusOffset + index) % HOMEPAGE_STATUS_CHECKS.length];
+  });
+  const typedAppStatusChecks = visibleAppStatusChecks.map((statusLine, index) => {
+    const visibleChars = Math.max(0, appStatusCharCount - index * 12);
+    return statusLine.slice(0, visibleChars);
+  });
+  const activeTypedStatusIndex = typedAppStatusChecks.findIndex((line, index) => {
+    return line.length < visibleAppStatusChecks[index].length;
   });
   const latestInboxPosts = [...globalInboxPosts, ...userInboxPosts]
     .filter((post) => isMessageThreadId(post.threadId))
@@ -1134,6 +1152,7 @@ export default function HomePage() {
                 </div>
                 <div
                   style={{
+                    display: "none",
                     marginTop: 14,
                     maxWidth: 360,
                     padding: "0.8rem 0.9rem",
@@ -1206,6 +1225,105 @@ export default function HomePage() {
                     ) : null}
                   </>
                 ) : null}
+              </section>
+              <section
+                style={{
+                  maxWidth: 840,
+                  borderRadius: 16,
+                  border: "1px solid rgba(86, 122, 168, 0.26)",
+                  background:
+                    "linear-gradient(180deg, rgba(8, 16, 28, 0.98) 0%, rgba(4, 10, 18, 0.995) 100%)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 36px rgba(2, 6, 23, 0.3)",
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    padding: "0.55rem 0.85rem",
+                    borderBottom: "1px solid rgba(86, 122, 168, 0.2)",
+                    background:
+                      "linear-gradient(180deg, rgba(17, 28, 43, 0.98) 0%, rgba(11, 19, 31, 0.98) 100%)",
+                  }}
+                >
+                  <span
+                    style={{
+                      color: "#9cc2ee",
+                      fontSize: 10,
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                      fontFamily: "var(--font-display)",
+                    }}
+                  >
+                    App Status Console
+                  </span>
+                  <span
+                    style={{
+                      color: "#7dd3fc",
+                      fontSize: 10,
+                      letterSpacing: "0.14em",
+                      textTransform: "uppercase",
+                      fontFamily: "var(--font-display)",
+                    }}
+                  >
+                    powershell://ops-monitor.ps1
+                  </span>
+                </div>
+                <div
+                  style={{
+                    padding: "0.95rem 1rem 1rem",
+                    display: "grid",
+                    gap: 10,
+                    background:
+                      "linear-gradient(180deg, rgba(8, 13, 22, 0.98) 0%, rgba(3, 9, 16, 0.995) 100%)",
+                  }}
+                >
+                  {typedAppStatusChecks.map((statusLine, index) => {
+                    const lineComplete = statusLine.length >= visibleAppStatusChecks[index].length;
+                    const isActiveLine = activeTypedStatusIndex === -1 ? index === typedAppStatusChecks.length - 1 : index === activeTypedStatusIndex;
+
+                    return (
+                      <div
+                        key={`${visibleAppStatusChecks[index]}-${index}`}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 10,
+                          minHeight: 20,
+                          color: lineComplete ? "#9df6b3" : "#d7e6f8",
+                          fontSize: 12,
+                          lineHeight: 1.4,
+                          fontFamily: "var(--font-mono)",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        <span aria-hidden="true" style={{ color: "#4ade80", flexShrink: 0 }}>
+                          PS&gt;
+                        </span>
+                        <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                          {statusLine}
+                          {isActiveLine && !lineComplete ? (
+                            <span
+                              aria-hidden="true"
+                              style={{
+                                display: "inline-block",
+                                width: 8,
+                                height: 14,
+                                marginLeft: 4,
+                                backgroundColor: "#7dd3fc",
+                                verticalAlign: "text-bottom",
+                                animation: "auth-status-pulse 1s ease-in-out infinite",
+                              }}
+                            />
+                          ) : null}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </section>
             </div>
           ) : null}

@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v190",
+    title: "Terminal-Style App Status Console",
+    summary: "Moved the homepage status monitor below the full Applications card and redesigned it as a small PowerShell-style console that types out rotating fake operational checks three lines at a time.",
+  },
+  {
     commit: "v189",
     title: "Applications Status Monitor",
     summary: "Added a cosmetic app status monitor under the homepage Applications section that cycles through three fake live operational check lines at a time to make the home screen feel more like an active command platform.",
