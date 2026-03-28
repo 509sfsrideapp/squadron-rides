@@ -4,8 +4,6 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import DeveloperLogoutButton from "../components/DeveloperLogoutButton";
 import HomeIconLink from "../components/HomeIconLink";
-import InboxPostComposer from "../components/InboxPostComposer";
-import InboxPostManager from "../components/InboxPostManager";
 
 const DEVELOPER_COOKIE_NAME = "developer_access";
 
@@ -47,22 +45,6 @@ export default async function DeveloperPage() {
         Temporary home for in-progress features so the main screen stays clean while we keep building.
       </p>
 
-      <div style={{ marginTop: 22 }}>
-        <InboxPostComposer
-          endpoint="/api/developer/inbox-posts"
-          threadId="dev"
-          heading="Post to Dev Inbox"
-          description="Send a developer update or follow-up into the Dev inbox thread. An optional photo will appear on the left side of the post."
-          submitLabel="Send Dev Post"
-        />
-      </div>
-      <InboxPostManager
-        threadId="dev"
-        endpointBase="/api/developer/inbox-posts"
-        heading="Review Dev Inbox Posts"
-        description="Review Dev inbox posts here and edit or delete them without leaving the Developer page."
-      />
-
       <div
         style={{
           marginTop: 22,
@@ -71,6 +53,14 @@ export default async function DeveloperPage() {
           gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
         }}
       >
+        <div style={featureCardStyle}>
+          <h2 style={{ marginTop: 0 }}>Dev Inbox</h2>
+          <p style={{ maxWidth: 320 }}>Open the developer inbox tools to send updates, then review and manage sent posts from there.</p>
+          <Link href="/developer/inbox" style={featureLinkStyle}>
+            Open Dev Inbox
+          </Link>
+        </div>
+
         <div style={featureCardStyle}>
           <h2 style={{ marginTop: 0 }}>Update History</h2>
           <p style={{ maxWidth: 320 }}>Read the full plain-language release log from the start of the project up to the newest shipped build.</p>
