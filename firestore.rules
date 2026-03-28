@@ -66,6 +66,8 @@ service cloud.firestore {
         "firstName",
         "lastName",
         "username",
+        "jobDescription",
+        "bio",
         "phone",
         "homeAddress",
         "homeStreet",

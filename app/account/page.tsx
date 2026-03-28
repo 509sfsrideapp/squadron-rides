@@ -19,6 +19,8 @@ type UserProfile = {
   firstName?: string;
   lastName?: string;
   username?: string;
+  jobDescription?: string;
+  bio?: string;
   phone?: string;
   email?: string;
   homeAddress?: string;
@@ -57,6 +59,7 @@ export default function AccountPage() {
     firstName: "",
     lastName: "",
     username: "",
+    jobDescription: "",
     phone: "",
     email: "",
     homeStreet: "",
@@ -66,6 +69,7 @@ export default function AccountPage() {
     rank: "",
     flight: "",
     profilePhotoUrl: "",
+    bio: "",
     carYear: "",
     carMake: "",
     carModel: "",
@@ -108,6 +112,7 @@ export default function AccountPage() {
           firstName: data?.firstName || fallbackFirstName,
           lastName: data?.lastName || fallbackLastNameParts.join(" "),
           username: data?.username || "",
+          jobDescription: data?.jobDescription || "",
           phone: data?.phone || "",
           email: data?.email || currentUser.email || "",
           homeStreet: parsedAddress.street,
@@ -117,6 +122,7 @@ export default function AccountPage() {
           rank: data?.rank || data?.rankOrRole || "",
           flight: data?.flight || "",
           profilePhotoUrl: data?.driverPhotoUrl || data?.riderPhotoUrl || "",
+          bio: data?.bio || "",
           carYear: data?.carYear || "",
           carMake: data?.carMake || "",
           carModel: data?.carModel || "",
@@ -255,6 +261,7 @@ export default function AccountPage() {
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
           username: normalizedUsername,
+          jobDescription: form.jobDescription.trim(),
           phone: form.phone.trim(),
           homeAddress: normalizedHomeAddress,
           homeStreet: form.homeStreet.trim(),
@@ -265,6 +272,7 @@ export default function AccountPage() {
           flight: form.flight.trim(),
           rankOrRole: form.rank.trim(),
           riderPhotoUrl: profilePhotoUrl,
+          bio: form.bio.trim(),
           carYear: form.carYear.trim(),
           carMake: form.carMake.trim(),
           carModel: form.carModel.trim(),
@@ -409,6 +417,12 @@ export default function AccountPage() {
             </option>
           ))}
         </select>
+        <input
+          value={form.jobDescription}
+          onChange={(e) => handleChange("jobDescription", e.target.value)}
+          placeholder="Job Description"
+          style={{ marginBottom: 10 }}
+        />
 
         <h2 style={{ marginTop: 24 }}>Profile Photo</h2>
         <div style={{ marginBottom: 14 }}>
@@ -435,6 +449,25 @@ export default function AccountPage() {
             }}
           />
         </div>
+
+        <h2 style={{ marginTop: 24 }}>Bio</h2>
+        <textarea
+          value={form.bio}
+          onChange={(e) => handleChange("bio", e.target.value)}
+          placeholder="Add a short bio."
+          rows={3}
+          style={{
+            display: "block",
+            width: "100%",
+            marginBottom: 10,
+            padding: "12px 14px",
+            borderRadius: 12,
+            border: "1px solid rgba(126, 142, 160, 0.18)",
+            background: "linear-gradient(180deg, rgba(21, 28, 36, 0.9) 0%, rgba(11, 15, 21, 0.96) 100%)",
+            color: "#e5edf7",
+            resize: "vertical",
+          }}
+        />
 
         <h2 style={{ marginTop: 24 }}>Home Address</h2>
         <input value={form.homeStreet} onChange={(e) => {

@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v179",
+    title: "Account Profile Detail Fields",
+    summary: "Added a one-line job description field under Flight and a three-line bio section under the profile photo area in Account Settings, and updated the backend profile rules so both fields save normally.",
+  },
+  {
     commit: "v178",
     title: "Ride Recovery Notifications",
     summary: "Added a private Notifications inbox thread for ride notices and required follow-up, created backend rider-cancel and driver-release recovery routes, repushed released rides back to available drivers, and required the canceling party to submit a reason through the new notification prompt.",
