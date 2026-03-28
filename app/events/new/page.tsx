@@ -56,6 +56,7 @@ export default function NewEventPage() {
   const [eventName, setEventName] = useState("");
   const [eventType, setEventType] = useState<EventType>("fun");
   const [location, setLocation] = useState("");
+  const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
   const [photoUrl, setPhotoUrl] = useState("");
   const [neededPeople, setNeededPeople] = useState("");
@@ -178,6 +179,7 @@ export default function NewEventPage() {
         name: eventName.trim(),
         type: eventType,
         location: location.trim(),
+        address: address.trim() || null,
         description: description.trim(),
         photoUrl: photoUrl.trim() || null,
         neededPeople: neededPeople.trim() ? Number(neededPeople) : null,
@@ -257,6 +259,11 @@ export default function NewEventPage() {
             <label style={{ display: "grid", gap: 6, gridColumn: "1 / -1" }}>
               <span>Location</span>
               <input value={location} onChange={(event) => setLocation(event.target.value)} placeholder="Base fitness center, field 2, community park..." />
+            </label>
+
+            <label style={{ display: "grid", gap: 6, gridColumn: "1 / -1" }}>
+              <span>Address (Optional)</span>
+              <input value={address} onChange={(event) => setAddress(event.target.value)} placeholder="123 Main St, Whiteman AFB, MO 65305" />
             </label>
           </div>
 

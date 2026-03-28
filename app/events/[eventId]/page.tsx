@@ -155,6 +155,9 @@ export default function EventDetailPage() {
           <div style={{ display: "grid", gap: 10 }}>
             <h1 style={{ margin: 0 }}>{eventRecord.name}</h1>
             <p style={{ margin: 0, color: "#cbd5e1" }}>{eventRecord.location}</p>
+            {eventRecord.address ? (
+              <p style={{ margin: 0, color: "#94a3b8" }}>{eventRecord.address}</p>
+            ) : null}
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 14 }}>

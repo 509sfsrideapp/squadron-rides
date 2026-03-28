@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v228",
+    title: "Optional Event Address Field",
+    summary: "Added an optional address field under the Location input in the Events creator and carried it through to saved event data so event cards and detail pages can show a more precise address when one is provided.",
+  },
+  {
     commit: "v227",
     title: "Flexible Recurring Event Scheduling",
     summary: "Expanded the Events creator so recurring schedules stay separate from one-time date blocks and now support selecting multiple weekdays plus every-week or every-other-week cadence for patterns like every Tuesday and Thursday or every other Wednesday.",

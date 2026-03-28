@@ -22,6 +22,7 @@ export type EventDocument = {
   name: string;
   type: EventType;
   location: string;
+  address?: string | null;
   description: string;
   photoUrl?: string | null;
   neededPeople?: number | null;
