@@ -621,9 +621,6 @@ export default function AccountPage() {
         </Link>
 
         <h2 style={{ marginTop: 24 }}>Security</h2>
-        <p style={{ marginTop: 0, marginBottom: 10, fontSize: 13, color: "#94a3b8" }}>
-          Update your password from a separate secure page.
-        </p>
         <Link
           href="/account/change-password"
           style={{
