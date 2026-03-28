@@ -31,6 +31,8 @@ export function getSignupErrorMessage(error: unknown) {
   const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
 
   switch (code) {
+    case "auth/app-not-authorized":
+      return "Phone verification is not authorized for this app or domain yet. Add the current site to Firebase Authentication authorized domains.";
     case "auth/invalid-phone-number":
     case "auth/missing-phone-number":
       return "Enter a valid 10-digit phone number.";
@@ -42,6 +44,8 @@ export function getSignupErrorMessage(error: unknown) {
       return "That verification code expired. Request a new code and try again.";
     case "auth/captcha-check-failed":
       return "Phone verification could not confirm the reCAPTCHA check. Try sending the code again.";
+    case "auth/operation-not-allowed":
+      return "Phone verification is not enabled for this Firebase project yet. Turn on Phone as a sign-in provider in Firebase Authentication.";
     case "auth/too-many-requests":
       return "Too many verification attempts were made. Wait a bit and try again.";
     case "auth/credential-already-in-use":

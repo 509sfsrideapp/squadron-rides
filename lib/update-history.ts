@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v208",
+    title: "Signup Draft Persistence and Phone Auth Errors",
+    summary: "Kept account-creation details saved when backing out of the permissions and phone-verification step by reloading the stored signup draft into the form, and replaced vague Firebase phone-auth failures with clearer messages when the app domain is not authorized or phone sign-in is disabled.",
+  },
+  {
     commit: "v207",
     title: "Signup Phone Verification",
     summary: "Inserted SMS phone verification into the signup flow after the app-permissions step so new users must request and enter a texted code before the account is created, while existing accounts remain grandfathered and unaffected.",

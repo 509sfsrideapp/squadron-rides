@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HomeIconLink from "../components/HomeIconLink";
 import ImageCropField from "../components/ImageCropField";
@@ -9,28 +9,103 @@ import { validateSignupDraft, SIGNUP_DRAFT_STORAGE_KEY, type SignupDraft } from 
 const flightOptions = ["Alpha", "Bravo", "Charlie", "Delta", "Foxtrot", "Staff"] as const;
 const rankOptions = ["AB", "Amn", "A1C", "SrA", "SSgt", "TSgt", "MSgt", "SMSgt", "CMSgt", "2d Lt", "1st Lt", "Capt", "Maj", "Lt Col", "Col", "Brig Gen", "Maj Gen", "Lt Gen", "Gen"] as const;
 
+function loadInitialSignupDraft(): SignupDraft | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const rawDraft = window.sessionStorage.getItem(SIGNUP_DRAFT_STORAGE_KEY);
+
+    if (!rawDraft) {
+      return null;
+    }
+
+    return JSON.parse(rawDraft) as SignupDraft;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
 export default function SignupPage() {
   const router = useRouter();
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [rank, setRank] = useState("");
-  const [flight, setFlight] = useState("");
-  const [phone, setPhone] = useState("");
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [homeStreet, setHomeStreet] = useState("");
-  const [homeCity, setHomeCity] = useState("");
-  const [homeState, setHomeState] = useState("");
-  const [homeZip, setHomeZip] = useState("");
-  const [profilePhotoUrl, setProfilePhotoUrl] = useState("");
-  const [carYear, setCarYear] = useState("");
-  const [carMake, setCarMake] = useState("");
-  const [carModel, setCarModel] = useState("");
-  const [carColor, setCarColor] = useState("");
+  const [initialDraft] = useState<SignupDraft | null>(() => loadInitialSignupDraft());
+  const [firstName, setFirstName] = useState(() => initialDraft?.firstName || "");
+  const [lastName, setLastName] = useState(() => initialDraft?.lastName || "");
+  const [rank, setRank] = useState(() => initialDraft?.rank || "");
+  const [flight, setFlight] = useState(() => initialDraft?.flight || "");
+  const [phone, setPhone] = useState(() => initialDraft?.phone || "");
+  const [username, setUsername] = useState(() => initialDraft?.username || "");
+  const [email, setEmail] = useState(() => initialDraft?.email || "");
+  const [password, setPassword] = useState(() => initialDraft?.password || "");
+  const [confirmPassword, setConfirmPassword] = useState(() => initialDraft?.confirmPassword || "");
+  const [homeStreet, setHomeStreet] = useState(() => initialDraft?.homeStreet || "");
+  const [homeCity, setHomeCity] = useState(() => initialDraft?.homeCity || "");
+  const [homeState, setHomeState] = useState(() => initialDraft?.homeState || "");
+  const [homeZip, setHomeZip] = useState(() => initialDraft?.homeZip || "");
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(() => initialDraft?.profilePhotoUrl || "");
+  const [carYear, setCarYear] = useState(() => initialDraft?.carYear || "");
+  const [carMake, setCarMake] = useState(() => initialDraft?.carMake || "");
+  const [carModel, setCarModel] = useState(() => initialDraft?.carModel || "");
+  const [carColor, setCarColor] = useState(() => initialDraft?.carColor || "");
   const [statusMessage, setStatusMessage] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const draft: SignupDraft = {
+      firstName,
+      lastName,
+      rank,
+      flight,
+      phone,
+      username,
+      email,
+      password,
+      confirmPassword,
+      homeStreet,
+      homeCity,
+      homeState,
+      homeZip,
+      profilePhotoUrl,
+      carYear,
+      carMake,
+      carModel,
+      carColor,
+    };
+
+    const hasAnyValue = Object.values(draft).some((value) => value.trim().length > 0);
+
+    if (!hasAnyValue) {
+      window.sessionStorage.removeItem(SIGNUP_DRAFT_STORAGE_KEY);
+      return;
+    }
+
+    window.sessionStorage.setItem(SIGNUP_DRAFT_STORAGE_KEY, JSON.stringify(draft));
+  }, [
+    carColor,
+    carMake,
+    carModel,
+    carYear,
+    confirmPassword,
+    email,
+    firstName,
+    flight,
+    homeCity,
+    homeState,
+    homeStreet,
+    homeZip,
+    lastName,
+    password,
+    phone,
+    profilePhotoUrl,
+    rank,
+    username,
+  ]);
 
   const handleSignup = async () => {
     try {
