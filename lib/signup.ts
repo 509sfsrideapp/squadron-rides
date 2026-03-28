@@ -1,5 +1,5 @@
 import { auth, db } from "./firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, deleteUser, linkWithCredential, PhoneAuthProvider } from "firebase/auth";
 import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { buildHomeAddress } from "./home-address";
 import { isValidUsername, normalizeUsername } from "./username";
@@ -31,6 +31,21 @@ export function getSignupErrorMessage(error: unknown) {
   const code = typeof error === "object" && error && "code" in error ? String(error.code) : "";
 
   switch (code) {
+    case "auth/invalid-phone-number":
+    case "auth/missing-phone-number":
+      return "Enter a valid 10-digit phone number.";
+    case "auth/missing-verification-code":
+      return "Enter the verification code from the text message.";
+    case "auth/invalid-verification-code":
+      return "That verification code is invalid. Double-check the code and try again.";
+    case "auth/session-expired":
+      return "That verification code expired. Request a new code and try again.";
+    case "auth/captcha-check-failed":
+      return "Phone verification could not confirm the reCAPTCHA check. Try sending the code again.";
+    case "auth/too-many-requests":
+      return "Too many verification attempts were made. Wait a bit and try again.";
+    case "auth/credential-already-in-use":
+      return "That phone number is already tied to another account.";
     case "auth/email-already-in-use":
       return "That email is already being used by another account.";
     case "auth/invalid-email":
@@ -49,6 +64,35 @@ export function getSignupErrorMessage(error: unknown) {
 }
 
 const passwordRule = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+
+function normalizeUsPhoneDigits(phone: string) {
+  const digits = phone.replace(/\D/g, "");
+
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return digits.slice(1);
+  }
+
+  if (digits.length === 10) {
+    return digits;
+  }
+
+  return null;
+}
+
+export function getPhoneE164(phone: string) {
+  const digits = normalizeUsPhoneDigits(phone);
+  return digits ? `+1${digits}` : null;
+}
+
+export function formatUsPhoneNumber(phone: string) {
+  const digits = normalizeUsPhoneDigits(phone);
+
+  if (!digits) {
+    return phone.trim();
+  }
+
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+}
 
 function getMissingRequiredFieldMessage(draft: SignupDraft) {
   const requiredFields: Array<[value: string, label: string]> = [
@@ -83,6 +127,10 @@ export async function validateSignupDraft(draft: SignupDraft) {
       message:
         "Password must be at least 8 characters and include 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.",
     };
+  }
+
+  if (!getPhoneE164(draft.phone)) {
+    return { ok: false as const, message: "Enter a valid 10-digit phone number." };
   }
 
   const normalizedUsername = normalizeUsername(draft.username);
@@ -120,6 +168,10 @@ export async function finalizeSignupFromDraft(
   draft: SignupDraft,
   options?: {
     emergencyRideAddressConsent?: boolean;
+    phoneVerification?: {
+      verificationId: string;
+      verificationCode: string;
+    };
   }
 ) {
   const validation = await validateSignupDraft(draft);
@@ -135,45 +187,67 @@ export async function finalizeSignupFromDraft(
     state: draft.homeState,
     zip: draft.homeZip,
   });
+  const formattedPhone = formatUsPhoneNumber(draft.phone);
+  const phoneE164 = getPhoneE164(draft.phone);
+  const verificationId = options?.phoneVerification?.verificationId?.trim();
+  const verificationCode = options?.phoneVerification?.verificationCode?.trim();
+
+  if (!phoneE164) {
+    throw new Error("Enter a valid 10-digit phone number.");
+  }
+
+  if (!verificationId || !verificationCode) {
+    throw new Error("Complete phone verification before creating your account.");
+  }
 
   const userCredential = await createUserWithEmailAndPassword(auth, draft.email.trim(), draft.password);
   const fullName = `${draft.firstName.trim()} ${draft.lastName.trim()}`.trim();
   const trimmedPhoto = draft.profilePhotoUrl.trim();
 
-  const batch = writeBatch(db);
-  batch.set(doc(db, "users", userCredential.user.uid), {
-    name: fullName,
-    firstName: draft.firstName.trim(),
-    lastName: draft.lastName.trim(),
-    rank: draft.rank.trim(),
-    rankOrRole: draft.rank.trim(),
-    flight: draft.flight.trim(),
-    username: normalizedUsername,
-    phone: draft.phone.trim(),
-    email: draft.email.trim(),
-    homeAddress: normalizedHomeAddress,
-    homeStreet: draft.homeStreet.trim(),
-    homeCity: draft.homeCity.trim(),
-    homeState: draft.homeState.trim().toUpperCase(),
-    homeZip: draft.homeZip.trim(),
-    riderPhotoUrl: trimmedPhoto,
-    driverPhotoUrl: trimmedPhoto,
-    carYear: draft.carYear.trim(),
-    carMake: draft.carMake.trim(),
-    carModel: draft.carModel.trim(),
-    carColor: draft.carColor.trim(),
-    carPlate: "",
-    emergencyRideAddressConsent: Boolean(options?.emergencyRideAddressConsent),
-    available: false,
-    createdAt: new Date(),
-  });
+  try {
+    const phoneCredential = PhoneAuthProvider.credential(verificationId, verificationCode);
+    await linkWithCredential(userCredential.user, phoneCredential);
 
-  batch.set(doc(db, "usernames", normalizedUsername), {
-    uid: userCredential.user.uid,
-    username: normalizedUsername,
-    email: userCredential.user.email,
-    createdAt: new Date(),
-  });
+    const batch = writeBatch(db);
+    batch.set(doc(db, "users", userCredential.user.uid), {
+      name: fullName,
+      firstName: draft.firstName.trim(),
+      lastName: draft.lastName.trim(),
+      rank: draft.rank.trim(),
+      rankOrRole: draft.rank.trim(),
+      flight: draft.flight.trim(),
+      username: normalizedUsername,
+      phone: formattedPhone,
+      phoneVerifiedAt: new Date(),
+      phoneVerificationMethod: "sms",
+      email: draft.email.trim(),
+      homeAddress: normalizedHomeAddress,
+      homeStreet: draft.homeStreet.trim(),
+      homeCity: draft.homeCity.trim(),
+      homeState: draft.homeState.trim().toUpperCase(),
+      homeZip: draft.homeZip.trim(),
+      riderPhotoUrl: trimmedPhoto,
+      driverPhotoUrl: trimmedPhoto,
+      carYear: draft.carYear.trim(),
+      carMake: draft.carMake.trim(),
+      carModel: draft.carModel.trim(),
+      carColor: draft.carColor.trim(),
+      carPlate: "",
+      emergencyRideAddressConsent: Boolean(options?.emergencyRideAddressConsent),
+      available: false,
+      createdAt: new Date(),
+    });
 
-  await batch.commit();
+    batch.set(doc(db, "usernames", normalizedUsername), {
+      uid: userCredential.user.uid,
+      username: normalizedUsername,
+      email: userCredential.user.email,
+      createdAt: new Date(),
+    });
+
+    await batch.commit();
+  } catch (error) {
+    await deleteUser(userCredential.user).catch(() => undefined);
+    throw error;
+  }
 }

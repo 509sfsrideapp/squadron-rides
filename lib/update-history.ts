@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v207",
+    title: "Signup Phone Verification",
+    summary: "Inserted SMS phone verification into the signup flow after the app-permissions step so new users must request and enter a texted code before the account is created, while existing accounts remain grandfathered and unaffected.",
+  },
+  {
     commit: "v206",
     title: "Driver Icon Refresh",
     summary: "Replaced the Driver Dashboard tile icon with a cleaner modern steering wheel SVG using a single outer rim, centered hub, and three balanced spokes so it reads more like a standard UI vehicle-control icon.",
