@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v229",
+    title: "Event Photo Fullscreen Viewer",
+    summary: "Made event detail photos open in the same fullscreen image viewer used elsewhere in the app so event images can be tapped and expanded instead of staying fixed to the page.",
+  },
+  {
     commit: "v228",
     title: "Optional Event Address Field",
     summary: "Added an optional address field under the Location input in the Events creator and carried it through to saved event data so event cards and detail pages can show a more precise address when one is provided.",

@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../../components/AppLoadingState";
+import FullscreenImageViewer from "../../components/FullscreenImageViewer";
 import HomeIconLink from "../../components/HomeIconLink";
 import { auth, db } from "../../../lib/firebase";
 import { formatEventDateEntry, formatEventTypeLabel, formatRecurringRule, type EventRecord } from "../../../lib/events";
@@ -41,6 +42,7 @@ export default function EventDetailPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [eventRecord, setEventRecord] = useState<EventRecord | null>(null);
+  const [photoExpanded, setPhotoExpanded] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -140,16 +142,39 @@ export default function EventDetailPage() {
 
         <section style={{ ...sectionStyle, display: "grid", gap: 18 }}>
           {eventRecord.photoUrl ? (
-            <div
-              style={{
-                minHeight: 260,
-                borderRadius: 16,
-                backgroundImage: `url(${eventRecord.photoUrl})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                border: "1px solid rgba(126, 142, 160, 0.16)",
-              }}
-            />
+            <>
+              <button
+                type="button"
+                onClick={() => setPhotoExpanded(true)}
+                style={{
+                  padding: 0,
+                  border: "none",
+                  background: "transparent",
+                  boxShadow: "none",
+                  cursor: "zoom-in",
+                  borderRadius: 16,
+                }}
+                aria-label="Expand event image"
+              >
+                <div
+                  style={{
+                    minHeight: 260,
+                    borderRadius: 16,
+                    backgroundImage: `url(${eventRecord.photoUrl})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    border: "1px solid rgba(126, 142, 160, 0.16)",
+                  }}
+                />
+              </button>
+
+              <FullscreenImageViewer
+                src={eventRecord.photoUrl}
+                alt={eventRecord.name}
+                open={photoExpanded}
+                onClose={() => setPhotoExpanded(false)}
+              />
+            </>
           ) : null}
 
           <div style={{ display: "grid", gap: 10 }}>
