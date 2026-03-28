@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppLoadingState from "../components/AppLoadingState";
+import FullscreenImageViewer from "../components/FullscreenImageViewer";
 import HomeIconLink from "../components/HomeIconLink";
 import LiveRideMap, { type MapPoint } from "../components/LiveRideMap";
 import { formatEtaLabel } from "../../lib/eta";
@@ -139,6 +140,7 @@ export default function RideStatusPage() {
   const [locationRefreshStatus, setLocationRefreshStatus] = useState("");
   const [refreshingLocation, setRefreshingLocation] = useState(false);
   const [timelineExpanded, setTimelineExpanded] = useState(false);
+  const [driverPhotoExpanded, setDriverPhotoExpanded] = useState(false);
   const riderRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
@@ -543,21 +545,34 @@ export default function RideStatusPage() {
               }}
             >
               {activeRide.driverPhotoUrl ? (
-                <Image
-                  src={activeRide.driverPhotoUrl}
-                  alt={`${activeRide.driverName || "Driver"} profile`}
-                  width={88}
-                  height={88}
-                  unoptimized
+                <button
+                  type="button"
+                  onClick={() => setDriverPhotoExpanded(true)}
                   style={{
-                    width: 88,
-                    height: 88,
-                    objectFit: "cover",
+                    padding: 0,
+                    border: "none",
+                    background: "transparent",
+                    boxShadow: "none",
+                    cursor: "zoom-in",
                     borderRadius: 999,
-                    border: "1px solid rgba(96, 165, 250, 0.22)",
-                    background: "linear-gradient(180deg, rgba(24,39,66,0.95) 0%, rgba(12,20,35,0.98) 100%)",
                   }}
-                />
+                >
+                  <Image
+                    src={activeRide.driverPhotoUrl}
+                    alt={`${activeRide.driverName || "Driver"} profile`}
+                    width={88}
+                    height={88}
+                    unoptimized
+                    style={{
+                      width: 88,
+                      height: 88,
+                      objectFit: "cover",
+                      borderRadius: 999,
+                      border: "1px solid rgba(96, 165, 250, 0.22)",
+                      background: "linear-gradient(180deg, rgba(24,39,66,0.95) 0%, rgba(12,20,35,0.98) 100%)",
+                    }}
+                  />
+                </button>
               ) : (
                 <div
                   style={{
@@ -706,6 +721,15 @@ export default function RideStatusPage() {
               </p>
             ) : null}
           </div>
+
+          {activeRide.driverPhotoUrl ? (
+            <FullscreenImageViewer
+              src={activeRide.driverPhotoUrl}
+              alt={`${activeRide.driverName || "Driver"} profile`}
+              open={driverPhotoExpanded}
+              onClose={() => setDriverPhotoExpanded(false)}
+            />
+          ) : null}
 
           <LiveRideMap riderLocation={riderLocation} driverLocation={driverLocation} />
 
