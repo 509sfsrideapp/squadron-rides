@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v215",
+    title: "Inbox Button Theme Correction",
+    summary: "Restored the inbox Return to Inbox and Open Inbox navigation buttons to the same blue gradient action style used across the rest of the app so those controls no longer feel visually off-theme.",
+  },
+  {
     commit: "v214",
     title: "Driver Release Reason Prompt",
     summary: "Made drivers enter a release reason immediately before sending an active ride back to the queue, and stored that reason with the release handling instead of relying on a later follow-up response.",
