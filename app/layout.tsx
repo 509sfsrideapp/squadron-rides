@@ -6,6 +6,7 @@ import DeveloperAccessCleaner from "./components/DeveloperAccessCleaner";
 import InitialAppSplash from "./components/InitialAppSplash";
 import PullToRefresh from "./components/PullToRefresh";
 import SelfDestructOverlay from "./components/SelfDestructOverlay";
+import TacticalBackground from "./components/TacticalBackground";
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import NotificationNavigationBridge from "./components/NotificationNavigationBridge";
@@ -64,28 +65,31 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${bodyFont.variable} ${displayFont.variable} ${monoFont.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">
-        <InitialAppSplash />
-        <SelfDestructOverlay />
-        <PullToRefresh />
-        <ForegroundNotificationBridge />
-        <NotificationNavigationBridge />
-        <DeveloperAccessCleaner />
-        <AccountAccessGate />
-        <ProfileCompletionGate />
-        <div className="flex-1">{children}</div>
-        <BottomHomeButton />
-        <BottomUtilityNav />
-        <footer
-          style={{
-            padding: "10px 16px 14px",
-            fontSize: 12,
-            color: "#94a3b8",
-            textAlign: "center",
-          }}
-        >
-          Version {CURRENT_APP_VERSION}
-        </footer>
+      <body className="min-h-full">
+        <TacticalBackground />
+        <div className="app-shell">
+          <InitialAppSplash />
+          <SelfDestructOverlay />
+          <PullToRefresh />
+          <ForegroundNotificationBridge />
+          <NotificationNavigationBridge />
+          <DeveloperAccessCleaner />
+          <AccountAccessGate />
+          <ProfileCompletionGate />
+          <div className="flex-1">{children}</div>
+          <BottomHomeButton />
+          <BottomUtilityNav />
+          <footer
+            style={{
+              padding: "10px 16px 14px",
+              fontSize: 12,
+              color: "#94a3b8",
+              textAlign: "center",
+            }}
+          >
+            Version {CURRENT_APP_VERSION}
+          </footer>
+        </div>
       </body>
     </html>
   );

@@ -31,16 +31,15 @@
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at 18% 12%, rgba(108, 255, 108, 0.04), transparent 20%),
-    radial-gradient(circle at 84% 14%, rgba(92, 102, 92, 0.06), transparent 24%),
-    linear-gradient(180deg, #1a1a1a 0%, #121212 46%, #0b0b0b 100%);
+  background-color: #0b0b0b;
   color: var(--foreground);
   font-family: var(--font-sans);
   font-weight: 500;
   letter-spacing: 0.005em;
   text-rendering: optimizeLegibility;
   position: relative;
+  isolation: isolate;
+  overflow-x: hidden;
 }
 
 html {
@@ -58,59 +57,106 @@ body {
   overscroll-behavior-y: contain;
 }
 
-body::before,
-body::after {
-  content: "";
+.app-shell {
+  position: relative;
+  z-index: 1;
+  min-height: calc(100svh - env(safe-area-inset-top));
+  display: flex;
+  flex-direction: column;
+}
+
+.tactical-background {
+  --tactical-bg-topo-shift: 0px;
+  --tactical-bg-grain-shift: 0px;
   position: fixed;
   inset: 0;
-  pointer-events: none;
   z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-body::before {
-  background:
+.tactical-background__layer {
+  position: absolute;
+  inset: -4%;
+  background-attachment: fixed;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.tactical-background__layer--base {
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 16% 14%, rgba(127, 154, 117, 0.08), transparent 26%),
+    radial-gradient(circle at 82% 12%, rgba(84, 93, 82, 0.06), transparent 22%),
+    linear-gradient(180deg, #1a1a1a 0%, #131313 46%, #0b0b0b 100%);
+}
+
+.tactical-background__layer--grid {
+  inset: 0;
+  opacity: 0.05;
+  background-image:
     repeating-linear-gradient(
       90deg,
-      rgba(150, 158, 145, 0.055) 0,
-      rgba(150, 158, 145, 0.055) 1px,
+      rgba(196, 205, 191, 0.9) 0,
+      rgba(196, 205, 191, 0.9) 1px,
       transparent 1px,
-      transparent 76px
+      transparent 84px
     ),
     repeating-linear-gradient(
       180deg,
-      rgba(150, 158, 145, 0.05) 0,
-      rgba(150, 158, 145, 0.05) 1px,
+      rgba(196, 205, 191, 0.85) 0,
+      rgba(196, 205, 191, 0.85) 1px,
       transparent 1px,
-      transparent 76px
+      transparent 84px
     );
-  opacity: 0.5;
+  background-size: 84px 84px, 84px 84px;
 }
 
-body::after {
-  background:
-    repeating-linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.015) 0,
-      rgba(255, 255, 255, 0.015) 1px,
-      transparent 1px,
-      transparent 4px
-    ),
+.tactical-background__layer--topography {
+  opacity: 0.1;
+  background-image:
     linear-gradient(
       90deg,
-      transparent 0 8%,
-      rgba(108, 255, 108, 0.02) 8.1% 8.4%,
-      transparent 8.5% 58%,
-      rgba(145, 156, 145, 0.018) 58.1% 58.3%,
+      transparent 0 12%,
+      rgba(176, 188, 170, 0.14) 12.1% 12.35%,
+      transparent 12.45% 58%,
+      rgba(176, 188, 170, 0.1) 58.1% 58.3%,
       transparent 58.4% 100%
     ),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' viewBox='0 0 180 180'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='18' cy='24' r='0.8'/%3E%3Ccircle cx='52' cy='36' r='0.7'/%3E%3Ccircle cx='94' cy='18' r='0.8'/%3E%3Ccircle cx='138' cy='40' r='0.7'/%3E%3Ccircle cx='164' cy='26' r='0.9'/%3E%3Ccircle cx='32' cy='82' r='0.8'/%3E%3Ccircle cx='74' cy='70' r='0.6'/%3E%3Ccircle cx='118' cy='88' r='0.8'/%3E%3Ccircle cx='156' cy='76' r='0.7'/%3E%3Ccircle cx='24' cy='136' r='0.7'/%3E%3Ccircle cx='62' cy='118' r='0.8'/%3E%3Ccircle cx='102' cy='144' r='0.7'/%3E%3Ccircle cx='146' cy='132' r='0.8'/%3E%3Ccircle cx='170' cy='154' r='0.6'/%3E%3C/g%3E%3C/svg%3E"),
-    radial-gradient(circle at center, transparent 52%, rgba(0, 0, 0, 0.12) 74%, rgba(0, 0, 0, 0.42) 100%);
-  opacity: 0.78;
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='800' viewBox='0 0 800 800'%3E%3Cg fill='none' stroke='%23d8dfd2' stroke-opacity='.18' stroke-width='1.2'%3E%3Cpath d='M-20 150c122-66 236-78 362-26s238 58 478-20'/%3E%3Cpath d='M-40 246c110-40 214-36 316 12s220 54 430 2'/%3E%3Cpath d='M-30 352c126-46 236-40 334 16s210 66 416 24'/%3E%3Cpath d='M-18 472c138-54 252-46 356 20s218 76 402 28'/%3E%3Cpath d='M-6 588c152-58 276-52 378 18s212 76 388 18'/%3E%3Cpath d='M18 690c166-52 286-38 376 18s196 62 354 6'/%3E%3C/g%3E%3Cg fill='none' stroke='%23c2cbbd' stroke-opacity='.16' stroke-width='1'%3E%3Ccircle cx='626' cy='168' r='54'/%3E%3Ccircle cx='626' cy='168' r='88'/%3E%3Cpath d='M538 168h176M626 80v176'/%3E%3Cpath d='M104 650h152m-76-76v152'/%3E%3Crect x='326' y='312' width='148' height='94' rx='12'/%3E%3C/g%3E%3C/svg%3E");
+  background-position: center, center;
+  background-size: cover, 920px 920px;
+  transform: translate3d(0, var(--tactical-bg-topo-shift), 0);
+  will-change: transform;
+}
+
+.tactical-background__layer--grain {
+  opacity: 0.08;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='18' cy='26' r='0.8'/%3E%3Ccircle cx='44' cy='78' r='0.7'/%3E%3Ccircle cx='82' cy='34' r='0.75'/%3E%3Ccircle cx='116' cy='58' r='0.8'/%3E%3Ccircle cx='156' cy='22' r='0.7'/%3E%3Ccircle cx='182' cy='74' r='0.85'/%3E%3Ccircle cx='202' cy='44' r='0.7'/%3E%3Ccircle cx='30' cy='138' r='0.8'/%3E%3Ccircle cx='68' cy='116' r='0.65'/%3E%3Ccircle cx='102' cy='150' r='0.85'/%3E%3Ccircle cx='148' cy='124' r='0.7'/%3E%3Ccircle cx='184' cy='162' r='0.78'/%3E%3Ccircle cx='54' cy='192' r='0.72'/%3E%3Ccircle cx='132' cy='198' r='0.8'/%3E%3Ccircle cx='194' cy='196' r='0.7'/%3E%3C/g%3E%3C/svg%3E"),
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.025), transparent 62%);
+  background-position: center, center;
+  background-size: 220px 220px, cover;
+  transform: translate3d(0, var(--tactical-bg-grain-shift), 0);
+  will-change: transform;
+}
+
+.tactical-background__layer--vignette {
+  inset: 0;
+  background-image:
+    radial-gradient(circle at center, transparent 40%, rgba(0, 0, 0, 0.2) 70%, rgba(0, 0, 0, 0.62) 100%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.34) 0%, transparent 18%, transparent 82%, rgba(0, 0, 0, 0.34) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 16%, transparent 84%, rgba(0, 0, 0, 0.4) 100%);
 }
 
 @supports (min-height: 100lvh) {
   body {
     min-height: 100lvh;
+  }
+
+  .app-shell {
+    min-height: calc(100lvh - env(safe-area-inset-top));
   }
 }
 
@@ -1384,6 +1430,16 @@ button:disabled {
 }
 
 @media (max-width: 640px) {
+  .tactical-background__layer {
+    background-attachment: scroll;
+  }
+
+  .tactical-background__layer--topography,
+  .tactical-background__layer--grain {
+    transform: none;
+    will-change: auto;
+  }
+
   .loading-runway {
     grid-template-columns: 1fr;
     gap: 1rem;

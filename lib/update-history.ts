@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v198",
+    title: "Global Tactical Background System",
+    summary: "Added a root-level fixed tactical background stack with a locked dark gradient base, subtle grid, topographic markings, grain, vignette, and a very light desktop-only parallax drift so every page now scrolls cleanly over one shared military-style backdrop.",
+  },
+  {
     commit: "v197",
     title: "Rollback to Pre-Green UI",
     summary: "Rolled the app back to the earlier pre-green interface state from the background simplification build after reviewing the newer green-focused visual passes, while keeping the shipped version number moving forward for release tracking.",
