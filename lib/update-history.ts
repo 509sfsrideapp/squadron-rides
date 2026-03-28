@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v236",
+    title: "Delete Account Copy Trim",
+    summary: "Removed the extra permanent-deletion helper sentence from the Account Settings delete-account section so that area stays cleaner while keeping the same verification flow.",
+  },
+  {
     commit: "v235",
     title: "Upcoming Event Ordering and Recurring Dates",
     summary: "Adjusted the main Events board to sort by the nearest real upcoming occurrence, changed recurring event cards to show only the next upcoming date in the series, and expanded recurring event detail pages to list the recurring schedule plus the next three upcoming dates.",

@@ -683,9 +683,6 @@ export default function AccountPage() {
           <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
             <div>
               <strong style={{ display: "block", marginBottom: 4 }}>Delete Account</strong>
-              <p style={{ margin: 0, color: "#fca5a5" }}>
-                Permanently removes your account profile after vehicle-info verification and password re-authentication.
-              </p>
             </div>
 
             <button
