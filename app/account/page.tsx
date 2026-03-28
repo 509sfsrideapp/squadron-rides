@@ -10,7 +10,7 @@ import { auth, db } from "../../lib/firebase";
 import { isAdminEmail } from "../../lib/admin";
 import { buildHomeAddress, splitHomeAddress } from "../../lib/home-address";
 import { useActiveRides } from "../../lib/use-active-rides";
-import { onAuthStateChanged, User } from "firebase/auth";
+import { EmailAuthProvider, onAuthStateChanged, reauthenticateWithCredential, User } from "firebase/auth";
 import { collection, doc, getDoc, onSnapshot, query, where, writeBatch } from "firebase/firestore";
 import { isValidUsername, normalizeUsername } from "../../lib/username";
 
@@ -49,8 +49,11 @@ export default function AccountPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
+  const [deletePanelOpen, setDeletePanelOpen] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [deleteStatusMessage, setDeleteStatusMessage] = useState("");
   const [originalUsername, setOriginalUsername] = useState("");
   const [hasRideHistory, setHasRideHistory] = useState(false);
   const [hasDriverHistory, setHasDriverHistory] = useState(false);
@@ -75,6 +78,13 @@ export default function AccountPage() {
     carModel: "",
     carColor: "",
     carPlate: "",
+  });
+  const [deleteForm, setDeleteForm] = useState({
+    vehicleYear: "",
+    vehicleMake: "",
+    vehicleModel: "",
+    vehicleColor: "",
+    password: "",
   });
   const isAdminAccount = isAdminEmail(user?.email);
   const infoDisplayStyle: React.CSSProperties = {
@@ -186,6 +196,10 @@ export default function AccountPage() {
 
   const handleChange = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleDeleteFormChange = (field: keyof typeof deleteForm, value: string) => {
+    setDeleteForm((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSave = async () => {
@@ -318,6 +332,71 @@ export default function AccountPage() {
       }
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user || !user.email) {
+      setDeleteStatusMessage("You need to log in again before deleting your account.");
+      return;
+    }
+
+    if (
+      !deleteForm.vehicleYear.trim() ||
+      !deleteForm.vehicleMake.trim() ||
+      !deleteForm.vehicleModel.trim() ||
+      !deleteForm.vehicleColor.trim() ||
+      !deleteForm.password
+    ) {
+      setDeleteStatusMessage("Enter your current vehicle year, make, model, color, and password.");
+      return;
+    }
+
+    const confirmed = window.confirm("Delete this account permanently?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingAccount(true);
+      setDeleteStatusMessage("Authenticating account deletion...");
+
+      const currentUser = auth.currentUser;
+
+      if (!currentUser || !currentUser.email) {
+        throw new Error("You need to log in again before deleting your account.");
+      }
+
+      const credential = EmailAuthProvider.credential(currentUser.email, deleteForm.password);
+      await reauthenticateWithCredential(currentUser, credential);
+
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          vehicleYear: deleteForm.vehicleYear,
+          vehicleMake: deleteForm.vehicleMake,
+          vehicleModel: deleteForm.vehicleModel,
+          vehicleColor: deleteForm.vehicleColor,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Could not verify this account for deletion.");
+      }
+
+      window.location.href = "/";
+    } catch (error) {
+      console.error(error);
+      setDeleteStatusMessage(error instanceof Error ? error.message : "Could not delete this account.");
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -590,6 +669,81 @@ export default function AccountPage() {
           >
             Driver History
           </Link>
+        </div>
+
+        <div
+          style={{
+            marginBottom: 18,
+            padding: 16,
+            borderRadius: 14,
+            border: "1px solid rgba(239, 68, 68, 0.28)",
+            background: "linear-gradient(180deg, rgba(69, 10, 10, 0.32) 0%, rgba(28, 8, 8, 0.52) 100%)",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+            <div>
+              <strong style={{ display: "block", marginBottom: 4 }}>Delete Account</strong>
+              <p style={{ margin: 0, color: "#fca5a5" }}>
+                Permanently removes your account profile after vehicle-info verification and password re-authentication.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setDeletePanelOpen((current) => !current);
+                setDeleteStatusMessage("");
+              }}
+              style={{
+                background: "linear-gradient(180deg, rgba(127, 29, 29, 0.92) 0%, rgba(69, 10, 10, 0.98) 100%)",
+                border: "1px solid rgba(248, 113, 113, 0.32)",
+              }}
+            >
+              {deletePanelOpen ? "Close Delete Form" : "Delete Account"}
+            </button>
+          </div>
+
+          {deletePanelOpen ? (
+            <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
+              <p style={{ margin: 0, color: "#fecaca" }}>
+                Confirm your current vehicle details exactly as saved in your account, then enter your password.
+              </p>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+                <input value={deleteForm.vehicleYear} onChange={(e) => handleDeleteFormChange("vehicleYear", e.target.value)} placeholder="Vehicle Year" />
+                <input value={deleteForm.vehicleMake} onChange={(e) => handleDeleteFormChange("vehicleMake", e.target.value)} placeholder="Vehicle Make" />
+                <input value={deleteForm.vehicleModel} onChange={(e) => handleDeleteFormChange("vehicleModel", e.target.value)} placeholder="Vehicle Model" />
+                <input value={deleteForm.vehicleColor} onChange={(e) => handleDeleteFormChange("vehicleColor", e.target.value)} placeholder="Vehicle Color" />
+              </div>
+
+              <input
+                type="password"
+                value={deleteForm.password}
+                onChange={(e) => handleDeleteFormChange("password", e.target.value)}
+                placeholder="Current Password"
+              />
+
+              <div>
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteAccount()}
+                  disabled={deletingAccount}
+                  style={{
+                    background: "linear-gradient(180deg, rgba(127, 29, 29, 0.92) 0%, rgba(69, 10, 10, 0.98) 100%)",
+                    border: "1px solid rgba(248, 113, 113, 0.32)",
+                  }}
+                >
+                  {deletingAccount ? "Deleting Account..." : "Permanently Delete Account"}
+                </button>
+              </div>
+
+              {deleteStatusMessage ? (
+                <p style={{ margin: 0, color: deleteStatusMessage.includes("Authenticating") ? "#fecaca" : "#fda4af" }}>
+                  {deleteStatusMessage}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <button type="button" onClick={handleSave} disabled={saving || uploadingPhoto}>

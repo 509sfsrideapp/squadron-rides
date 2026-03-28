@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v224",
+    title: "Verified Account Deletion",
+    summary: "Added a red-tinted delete-account action under Account Settings that requires the current vehicle year, make, model, color, and the account password before permanently deleting the member's auth account, profile, and username record.",
+  },
+  {
     commit: "v223",
     title: "Events App First Pass",
     summary: "Replaced the Events placeholder with a real events board that supports browsing upcoming event cards, filtering by type and date, opening event detail pages, and creating new events with multi-date or recurring schedules, photo upload, description, location, and optional headcount fields.",
