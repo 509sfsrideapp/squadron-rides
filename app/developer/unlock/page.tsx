@@ -13,6 +13,7 @@ export default function DeveloperUnlockPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [countdown, setCountdown] = useState<number | null>(null);
   const [detonating, setDetonating] = useState(false);
+  const [screenState, setScreenState] = useState<"idle" | "checking" | "error">("idle");
 
   useEffect(() => {
     if (countdown === null) {
@@ -42,6 +43,7 @@ export default function DeveloperUnlockPage() {
     }
     setCode((current) => (current.length < PIN_LENGTH ? `${current}${digit}` : current));
     setStatusMessage("");
+    setScreenState("idle");
   };
 
   const removeDigit = () => {
@@ -50,6 +52,7 @@ export default function DeveloperUnlockPage() {
     }
     setCode((current) => current.slice(0, -1));
     setStatusMessage("");
+    setScreenState("idle");
   };
 
   const clearCode = () => {
@@ -58,13 +61,15 @@ export default function DeveloperUnlockPage() {
     }
     setCode("");
     setStatusMessage("");
+    setScreenState("idle");
   };
 
   const startSelfDestruct = () => {
     setCode("");
     setSubmitting(false);
     setStatusMessage("Incorrect PIN. Initiating self destruct.");
-    setCountdown(5);
+    setScreenState("error");
+    setCountdown(3);
   };
 
   const submitCode = async () => {
@@ -74,12 +79,14 @@ export default function DeveloperUnlockPage() {
 
     if (code.length !== PIN_LENGTH) {
       setStatusMessage("Enter all four digits.");
+      setScreenState("idle");
       return;
     }
 
     try {
       setSubmitting(true);
       setStatusMessage("Checking developer access...");
+      setScreenState("checking");
 
       const response = await fetch("/api/developer/unlock", {
         method: "POST",
@@ -99,6 +106,7 @@ export default function DeveloperUnlockPage() {
     } catch (error) {
       console.error(error);
       setStatusMessage("Could not verify developer access.");
+      setScreenState("error");
     } finally {
       setSubmitting(false);
     }
@@ -136,7 +144,7 @@ export default function DeveloperUnlockPage() {
           <p className="vault-kicker">Developer Vault</p>
           <h1>Access Terminal</h1>
 
-          <div className="vault-digital-screen" aria-live="polite">
+          <div className={`vault-digital-screen vault-digital-screen-${screenState}`} aria-live="polite">
             {digitalScreenLines.map((line, index) => (
               <span
                 key={`${line}-${index}`}

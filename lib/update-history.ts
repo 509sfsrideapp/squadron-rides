@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v243",
+    title: "Developer PIN Alert Tuning",
+    summary: "Changed the developer unlock display so incorrect PIN feedback turns the screen red, neutral standby stays non-green until validation starts, and the self-destruct countdown now runs for 3 seconds.",
+  },
+  {
     commit: "v242",
     title: "Account Deletion Cleanup Framework",
     summary: "Added shared account-deletion cleanup so self-deletes and admin deletes now remove owned records like events, bug reports, suggestions, inbox posts, and chat messages while intentionally preserving ride history data.",
