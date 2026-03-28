@@ -138,6 +138,7 @@ export default function RideStatusPage() {
   const [liveRideState, setLiveRideState] = useState<RideLiveState | null>(null);
   const [locationRefreshStatus, setLocationRefreshStatus] = useState("");
   const [refreshingLocation, setRefreshingLocation] = useState(false);
+  const [timelineExpanded, setTimelineExpanded] = useState(false);
   const riderRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
@@ -284,6 +285,9 @@ export default function RideStatusPage() {
   const canCancelRide = activeRide?.status === "open" || activeRide?.status === "accepted" || activeRide?.status === "arrived";
   const lifecycleSteps = activeRide ? getRideLifecycleSteps(activeRide) : [];
   const eta = formatEtaLabel(driverLocation, riderLocation);
+  const showDestination =
+    Boolean(activeRide?.destination) &&
+    activeRide?.destination !== "Destination to be confirmed with rider";
 
   const refreshRiderLocation = useCallback(async (manual = false) => {
     if (
@@ -679,42 +683,6 @@ export default function RideStatusPage() {
 
             <div
               style={{
-                marginBottom: 20,
-                padding: 16,
-                borderRadius: 14,
-                backgroundColor: "rgba(18, 37, 63, 0.4)",
-                border: "1px solid rgba(96, 165, 250, 0.12)",
-              }}
-            >
-              <p style={{ margin: 0, fontSize: "0.95rem", color: "#93c5fd", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                Ride Timeline
-              </p>
-              <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
-                {lifecycleSteps
-                  .filter((step) => step.complete || step.current)
-                  .map((step) => (
-                    <div
-                      key={step.key}
-                      style={{
-                        padding: "10px 12px",
-                        borderRadius: 10,
-                        backgroundColor: step.current ? "rgba(15, 118, 110, 0.22)" : "rgba(15, 23, 42, 0.68)",
-                        border: step.current
-                          ? "1px solid rgba(45, 212, 191, 0.3)"
-                          : "1px solid rgba(148, 163, 184, 0.14)",
-                      }}
-                    >
-                      <strong>{step.label}</strong>
-                      <span style={{ marginLeft: 8, color: "#cbd5e1" }}>
-                        {step.at ? formatRideTimestamp(step.at) : "In progress"}
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-
-            <div
-              style={{
                 marginBottom: 18,
                 padding: 16,
                 borderRadius: 14,
@@ -732,12 +700,11 @@ export default function RideStatusPage() {
                 {activeRide.pickupLocationAddress || activeRide.pickup || "Address details will appear here once available."}
               </p>
             </div>
-            <p>
-              <strong>Destination:</strong> {activeRide.destination || "Saved destination not available"}
-            </p>
-            <p>
-              <strong>Driver Phone:</strong> {activeRide.driverPhone || "Available once a driver is assigned"}
-            </p>
+            {showDestination ? (
+              <p>
+                <strong>Destination:</strong> {activeRide.destination}
+              </p>
+            ) : null}
           </div>
 
           <LiveRideMap riderLocation={riderLocation} driverLocation={driverLocation} />
@@ -792,6 +759,83 @@ export default function RideStatusPage() {
               </button>
             </div>
           ) : null}
+
+          <div
+            style={{
+              marginTop: 18,
+              maxWidth: 640,
+              padding: 16,
+              borderRadius: 14,
+              backgroundColor: "rgba(18, 37, 63, 0.4)",
+              border: "1px solid rgba(96, 165, 250, 0.12)",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => setTimelineExpanded((current) => !current)}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+                padding: 0,
+                background: "transparent",
+                border: "none",
+                boxShadow: "none",
+                textAlign: "left",
+                color: "#f8fbff",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "0.95rem",
+                  color: "#93c5fd",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                  fontFamily: "var(--font-display)",
+                }}
+              >
+                Ride Timeline
+              </span>
+              <span
+                style={{
+                  color: "#cbd5e1",
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  fontSize: "0.82rem",
+                }}
+              >
+                {timelineExpanded ? "Hide" : "Show"}
+              </span>
+            </button>
+
+            {timelineExpanded ? (
+              <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+                {lifecycleSteps
+                  .filter((step) => step.complete || step.current)
+                  .map((step) => (
+                    <div
+                      key={step.key}
+                      style={{
+                        padding: "10px 12px",
+                        borderRadius: 10,
+                        backgroundColor: step.current ? "rgba(15, 118, 110, 0.22)" : "rgba(15, 23, 42, 0.68)",
+                        border: step.current
+                          ? "1px solid rgba(45, 212, 191, 0.3)"
+                          : "1px solid rgba(148, 163, 184, 0.14)",
+                      }}
+                    >
+                      <strong>{step.label}</strong>
+                      <span style={{ marginLeft: 8, color: "#cbd5e1" }}>
+                        {step.at ? formatRideTimestamp(step.at) : "In progress"}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+            ) : null}
+          </div>
         </>
       )}
     </main>
