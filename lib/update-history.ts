@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v172",
+    title: "Driver Dashboard Header Cleanup",
+    summary: "Simplified the driver dashboard by removing the extra overview text, putting the driver profile photo beside the name, dropping the offline helper line, and removing the Active Rides stat box so the top section stays cleaner.",
+  },
+  {
     commit: "v171",
     title: "Operations Console Visual Refresh",
     summary: "Shifted the app toward a more military operations-console look with sharper typography, colder steel-and-slate surfaces, cleaner panel styling, and more consistent tactical button, tile, and dashboard treatment across the main user flows.",

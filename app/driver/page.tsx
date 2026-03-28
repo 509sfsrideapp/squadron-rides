@@ -421,14 +421,12 @@ export default function DriverPage() {
   const statusTone = isClockedIn
     ? {
         label: "Clocked In",
-        detail: "You are available to receive ride requests.",
         background: "rgba(15, 118, 110, 0.18)",
         border: "1px solid rgba(45, 212, 191, 0.28)",
         color: "#99f6e4",
       }
     : {
         label: "Clocked Out",
-        detail: "You are currently offline and not receiving ride requests.",
         background: "rgba(30, 41, 59, 0.72)",
         border: "1px solid rgba(148, 163, 184, 0.18)",
         color: "#cbd5e1",
@@ -438,10 +436,6 @@ export default function DriverPage() {
     <main style={{ padding: 20 }}>
       <HomeIconLink style={{ marginRight: 12 }} />
       <h1 style={{ marginTop: 20, marginBottom: 8 }}>Driver Dashboard</h1>
-
-      <p style={{ maxWidth: 720, color: "#cbd5e1", marginTop: 0 }}>
-        Review your availability, active assignments, and open requests from one operational view.
-      </p>
 
       <section
         style={{
@@ -454,7 +448,42 @@ export default function DriverPage() {
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap", alignItems: "start" }}>
-          <div style={{ display: "grid", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            {profile?.driverPhotoUrl ? (
+              <Image
+                src={profile.driverPhotoUrl}
+                alt={`${profile?.name || user.email} profile`}
+                width={58}
+                height={58}
+                unoptimized
+                style={{
+                  width: 58,
+                  height: 58,
+                  objectFit: "cover",
+                  borderRadius: 999,
+                  border: "1px solid rgba(96, 165, 250, 0.22)",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 58,
+                  height: 58,
+                  borderRadius: 999,
+                  display: "grid",
+                  placeItems: "center",
+                  backgroundColor: "rgba(18, 37, 63, 0.72)",
+                  color: "#dbeafe",
+                  border: "1px solid rgba(96, 165, 250, 0.2)",
+                  fontFamily: "var(--font-display)",
+                  fontSize: "1.35rem",
+                }}
+              >
+                {(profile?.name || user.email || "?").charAt(0).toUpperCase()}
+              </div>
+            )}
+
+            <div style={{ display: "grid", gap: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <strong style={{ fontSize: "1.1rem" }}>{profile?.name || user.email}</strong>
               <span
@@ -474,7 +503,7 @@ export default function DriverPage() {
                 {statusTone.label}
               </span>
             </div>
-            <p style={{ margin: 0, color: "#94a3b8" }}>{statusTone.detail}</p>
+            </div>
           </div>
 
           <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -521,9 +550,8 @@ export default function DriverPage() {
             gap: 12,
           }}
         >
-          {[
+          {[ 
             { label: "Open Requests", value: visibleOpenRides.length, note: isClockedIn ? "Visible in your queue" : "Clock in to receive" },
-            { label: "Active Rides", value: acceptedRides.length, note: acceptedRides.length > 0 ? "Ready to continue" : "No current assignment" },
             { label: "Rides Given", value: completedRideCount, note: "Completed driver trips" },
           ].map((stat) => (
             <div
