@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 const SELF_DESTRUCT_STORAGE_KEY = "developer-self-destruct-overlay";
+const SELF_DESTRUCT_OVERLAY_DURATION_MS = 3200;
 
 export default function SelfDestructOverlay() {
   const [active, setActive] = useState(() => {
@@ -22,7 +23,7 @@ export default function SelfDestructOverlay() {
 
     const timer = window.setTimeout(() => {
       setActive(false);
-    }, 2500);
+    }, SELF_DESTRUCT_OVERLAY_DURATION_MS);
 
     return () => window.clearTimeout(timer);
   }, [active]);
@@ -32,7 +33,7 @@ export default function SelfDestructOverlay() {
   }
 
   return (
-    <div className="self-destruct-overlay" aria-hidden="true">
+    <div className="self-destruct-overlay self-destruct-overlay-active" aria-hidden="true">
       <div className="self-destruct-backdrop" />
       <div className="self-destruct-flash" />
       <div className="self-destruct-shockwave" />

@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v246",
+    title: "Explosion Fade Smoothing",
+    summary: "Smoothed the end of the developer self-destruct explosion so the home screen no longer fades and then abruptly snaps back when the overlay finishes.",
+  },
+  {
     commit: "v245",
     title: "Signup Photo Placement Cleanup",
     summary: "Moved the required profile-photo upload to sit directly under Verify Password so the optional address and vehicle fields stay grouped together below it.",

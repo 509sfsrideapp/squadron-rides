@@ -982,6 +982,10 @@ button:disabled {
   background: radial-gradient(circle at center, rgba(255, 241, 214, 0.14), rgba(17, 24, 39, 0.04) 36%, rgba(2, 6, 23, 0.78) 100%);
 }
 
+.self-destruct-overlay-active {
+  animation: self-destruct-overlay-fade 3200ms ease-out forwards;
+}
+
 .self-destruct-backdrop,
 .self-destruct-flash,
 .self-destruct-shockwave,
@@ -1301,6 +1305,18 @@ button:disabled {
   100% {
     opacity: 0;
     transform: scale(1.85) translateY(-22%);
+  }
+}
+
+@keyframes self-destruct-overlay-fade {
+  0% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
   }
 }
 
