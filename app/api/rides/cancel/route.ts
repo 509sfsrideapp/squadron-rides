@@ -76,6 +76,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as {
       rideId?: string;
       actor?: "rider" | "driver";
+      reason?: string;
     };
 
     if (!body.rideId || !body.actor) {
@@ -162,6 +163,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "This ride can no longer be released back to the queue." }, { status: 409 });
     }
 
+    const releaseReason = body.reason?.trim();
+
+    if (!releaseReason) {
+      return NextResponse.json({ error: "A release reason is required before sending this ride back to the queue." }, { status: 400 });
+    }
+
     await patchFirestoreDocument(`rides/${ride.id}`, {
       status: "open",
       acceptedBy: null,
@@ -222,10 +229,8 @@ export async function POST(request: Request) {
     await createUserNotificationPost({
       userId: decoded.sub,
       rideId: ride.id,
-      title: buildNotificationTitle("driver"),
-      body: buildNotificationBody("driver"),
-      requiresResponse: true,
-      responsePrompt: buildNotificationPrompt("driver"),
+      title: "Ride Release Logged",
+      body: `You released this ride back to the queue.\n\nReason: ${releaseReason}`,
     });
 
     await writeAuditLog({
@@ -237,6 +242,7 @@ export async function POST(request: Request) {
       message: "Driver released a ride back to the queue and notifications were queued.",
       details: {
         riderId: ride.riderId || null,
+        releaseReason,
       },
     });
 

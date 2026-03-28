@@ -622,6 +622,13 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     const confirmed = window.confirm("Release this ride back to the driver queue?");
     if (!confirmed) return;
 
+    const releaseReason = window.prompt("Why are you releasing this ride back to the queue?")?.trim() || "";
+
+    if (!releaseReason) {
+      alert("A release reason is required before this ride can be returned to the queue.");
+      return;
+    }
+
     try {
       setReleasingRide(true);
       const idToken = await auth.currentUser?.getIdToken();
@@ -639,6 +646,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
         body: JSON.stringify({
           rideId: ride.id,
           actor: "driver",
+          reason: releaseReason,
         }),
       });
 

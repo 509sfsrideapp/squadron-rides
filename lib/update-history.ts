@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v214",
+    title: "Driver Release Reason Prompt",
+    summary: "Made drivers enter a release reason immediately before sending an active ride back to the queue, and stored that reason with the release handling instead of relying on a later follow-up response.",
+  },
+  {
     commit: "v213",
     title: "Emergency Ride Button Pulse",
     summary: "Added a very slight pulse animation to the homepage emergency ride request button while it is idle so the primary action draws attention without feeling flashy or distracting.",
