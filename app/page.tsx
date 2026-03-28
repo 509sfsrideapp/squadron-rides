@@ -693,27 +693,30 @@ export default function HomePage() {
               style={{
                 margin: "0.32rem 0 0",
                 color: "#cbd5e1",
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                letterSpacing: "0.12em",
+                display: "grid",
+                gap: 2,
+                justifyItems: "start",
+                letterSpacing: "0.1em",
                 textTransform: "uppercase",
                 fontSize: 11,
                 fontFamily: "var(--font-display)",
               }}
             >
-              <span>{`AUTH TOKEN VALIDATED//USER: ${authTokenUserLabel}`}</span>
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 10,
-                  height: 10,
-                  borderRadius: 999,
-                  backgroundColor: "#22c55e",
-                  boxShadow: "0 0 0 2px rgba(34, 197, 94, 0.16), 0 0 16px rgba(34, 197, 94, 0.38)",
-                  flexShrink: 0,
-                }}
-              />
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: 10,
+                    height: 10,
+                    borderRadius: 999,
+                    backgroundColor: "#22c55e",
+                    boxShadow: "0 0 0 2px rgba(34, 197, 94, 0.16), 0 0 16px rgba(34, 197, 94, 0.38)",
+                    flexShrink: 0,
+                  }}
+                />
+                <span>AUTH TOKEN VALIDATED//USER:</span>
+              </span>
+              <span style={{ paddingLeft: 18 }}>{authTokenUserLabel}</span>
             </p>
           ) : null}
           <h1 style={{ margin: "0.4rem 0 0" }}>Defender One</h1>
