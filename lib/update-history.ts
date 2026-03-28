@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v182",
+    title: "Profile Asset Status Tag",
+    summary: "Added an ASSET_LOADED:PFP//0-1 status label directly under the top-right profile photo on the homepage so the corner account block reads more like a loaded system asset panel.",
+  },
+  {
     commit: "v181",
     title: "Validated User Status Light",
     summary: "Added a small green status light to the end of the homepage AUTH TOKEN VALIDATED user line so the header reads more like an active verified-status strip.",

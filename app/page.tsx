@@ -768,6 +768,18 @@ export default function HomePage() {
               )}
               <NotificationBadge count={inboxUnreadCount} style={{ position: "absolute", top: -4, right: -4 }} />
             </button>
+            <span
+              style={{
+                marginTop: 6,
+                color: "#94a3b8",
+                fontSize: 10,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                fontFamily: "var(--font-display)",
+              }}
+            >
+              ASSET_LOADED:PFP//0-1
+            </span>
 
             <div
               className={`profile-menu-panel${profileMenuOpen ? " profile-menu-panel-open" : ""}`}
