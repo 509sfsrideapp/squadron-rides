@@ -7,7 +7,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
-import { eventMatchesDateRange, eventMatchesType, formatEventTypeLabel, getEventCardDateLabel, isUpcomingEvent, sortEventsByUpcomingDate, type EventRecord } from "../../lib/events";
+import { EVENT_TYPE_OPTIONS, eventMatchesDateRange, eventMatchesType, formatEventTypeLabel, getEventCardDateLabel, isUpcomingEvent, sortEventsByUpcomingDate, type EventRecord } from "../../lib/events";
 
 const pageShellStyle: React.CSSProperties = {
   maxWidth: 1040,
@@ -141,11 +141,11 @@ export default function EventsPage() {
               <span style={{ fontSize: 12, color: "#94a3b8" }}>Event Type</span>
               <select value={selectedType} onChange={(event) => setSelectedType(event.target.value)}>
                 <option value="all">All types</option>
-                <option value="fun">Fun</option>
-                <option value="sports">Sports</option>
-                <option value="fitness">Fitness</option>
-                <option value="community_service">Community Service</option>
-                <option value="other">Other</option>
+                {EVENT_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </label>
 

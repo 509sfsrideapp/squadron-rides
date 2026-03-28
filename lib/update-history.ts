@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v230",
+    title: "Organizational Event Type",
+    summary: "Added Organizational as a first-class event type so it now appears in the event creator, filtering controls, and shared event labeling across the Events pages.",
+  },
+  {
     commit: "v229",
     title: "Event Photo Fullscreen Viewer",
     summary: "Made event detail photos open in the same fullscreen image viewer used elsewhere in the app so event images can be tapped and expanded instead of staying fixed to the page.",

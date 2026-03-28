@@ -1,4 +1,4 @@
-export type EventType = "fun" | "sports" | "fitness" | "community_service" | "other";
+export type EventType = "fun" | "sports" | "fitness" | "community_service" | "organizational" | "other";
 
 export type EventScheduleMode = "specific_dates" | "recurring";
 
@@ -46,6 +46,7 @@ export const EVENT_TYPE_OPTIONS: Array<{ value: EventType; label: string }> = [
   { value: "sports", label: "Sports" },
   { value: "fitness", label: "Fitness" },
   { value: "community_service", label: "Community Service" },
+  { value: "organizational", label: "Organizational" },
   { value: "other", label: "Other" },
 ];
 
