@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 const developerSafePrefixes = [
   "/developer",
   "/chat",
-  "/loading-preview",
 ] as const;
 
 export default function DeveloperAccessCleaner() {

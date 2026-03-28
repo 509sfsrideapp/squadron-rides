@@ -88,22 +88,6 @@ export default async function DeveloperPage() {
         </div>
 
         <div style={featureCardStyle}>
-          <h2 style={{ marginTop: 0 }}>Full Loader</h2>
-          <p style={{ maxWidth: 320 }}>Preview the full-screen mission loading page for as long as you want.</p>
-          <Link href="/loading-preview/full" style={featureLinkStyle}>
-            Preview Full Loader
-          </Link>
-        </div>
-
-        <div style={featureCardStyle}>
-          <h2 style={{ marginTop: 0 }}>Inline Loader</h2>
-          <p style={{ maxWidth: 320 }}>Preview the smaller in-page mission loading state.</p>
-          <Link href="/loading-preview/inline" style={featureLinkStyle}>
-            Preview Inline Loader
-          </Link>
-        </div>
-
-        <div style={featureCardStyle}>
           <h2 style={{ marginTop: 0 }}>Bug Reports</h2>
           <p style={{ maxWidth: 320 }}>Review bug reports submitted from the live report-bug page.</p>
           <Link href="/developer/bugs" style={featureLinkStyle}>
@@ -119,13 +103,6 @@ export default async function DeveloperPage() {
           </Link>
         </div>
 
-        <div style={featureCardStyle}>
-          <h2 style={{ marginTop: 0 }}>Driving Simulator</h2>
-          <p style={{ maxWidth: 320 }}>Open the polished impairment-driving simulator prototype while it stays hidden from the main app.</p>
-          <Link href="/developer/driving-sim" style={featureLinkStyle}>
-            Launch Simulator
-          </Link>
-        </div>
       </div>
     </main>
   );
