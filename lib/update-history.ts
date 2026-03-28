@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v222",
+    title: "Emergency Pulse Smoothing",
+    summary: "Smoothed the homepage emergency ride pulse so it now eases through a soft red brightness and glow shift instead of abruptly flipping between red shades.",
+  },
+  {
     commit: "v221",
     title: "Inbox Button Height Tightening",
     summary: "Further reduced the vertical height and padding of the Return to Inbox and Open Inbox buttons so the single-line label fits more comfortably without the extra empty space above and below it.",
