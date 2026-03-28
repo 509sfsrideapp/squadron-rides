@@ -240,18 +240,15 @@ function SteeringWheelIcon() {
       height="36"
       fill="none"
       stroke="currentColor"
-      strokeWidth="3.25"
+      strokeWidth="3.2"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <circle cx="32" cy="32" r="24" />
-      <circle cx="32" cy="32" r="20" />
-      <circle cx="32" cy="24" r="3.8" />
-      <path d="M13.5 26.5 24.5 28.5c3.1.6 6.4-.1 8.9-1.9" />
-      <path d="M50.5 26.5 39.5 28.5c-3.1.6-6.4-.1-8.9-1.9" />
-      <path d="M32 28.2v20.8" />
-      <path d="M24.3 28.7 18.8 44.2" />
-      <path d="M39.7 28.7 45.2 44.2" />
+      <circle cx="32" cy="32" r="22" />
+      <circle cx="32" cy="32" r="6.5" />
+      <path d="M27.2 28.7 18.3 20.6" />
+      <path d="M36.8 28.7 45.7 20.6" />
+      <path d="M32 38.5v8.7" />
     </svg>
   );
 }

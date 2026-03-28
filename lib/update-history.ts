@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v206",
+    title: "Driver Icon Refresh",
+    summary: "Replaced the Driver Dashboard tile icon with a cleaner modern steering wheel SVG using a single outer rim, centered hub, and three balanced spokes so it reads more like a standard UI vehicle-control icon.",
+  },
+  {
     commit: "v205",
     title: "Events App Placeholder",
     summary: "Added a new EVENTS app tile to the homepage with a custom calendar-and-people icon and wired it to a live placeholder page so the events section now has a real entry point for future scheduling features.",
