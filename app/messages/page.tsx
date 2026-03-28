@@ -39,7 +39,7 @@ export default function MessagesPage() {
       <HomeIconLink />
       <h1>Inbox</h1>
 
-      <InboxPageClient />
+      <InboxPageClient userId={user.uid} />
     </main>
   );
 }

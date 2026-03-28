@@ -56,6 +56,8 @@ type InboxPost = {
   id: string;
   threadId: MessageThreadId;
   createdAt?: { seconds?: number; nanoseconds?: number } | null;
+  requiresResponse?: boolean;
+  responseSubmittedAt?: { seconds?: number; nanoseconds?: number } | null;
 };
 
 type OpenRideBadgeRecord = {
@@ -292,7 +294,8 @@ export default function HomePage() {
   const [authWarning, setAuthWarning] = useState("");
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [submittingEmergencyRide, setSubmittingEmergencyRide] = useState(false);
-  const [latestInboxPosts, setLatestInboxPosts] = useState<InboxPost[]>([]);
+  const [globalInboxPosts, setGlobalInboxPosts] = useState<InboxPost[]>([]);
+  const [userInboxPosts, setUserInboxPosts] = useState<InboxPost[]>([]);
   const [inboxReadVersion, setInboxReadVersion] = useState(0);
   const [driverOpenRideBadgeRecords, setDriverOpenRideBadgeRecords] = useState<OpenRideBadgeRecord[]>([]);
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
@@ -368,13 +371,34 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!user) {
-      setLatestInboxPosts([]);
+      setGlobalInboxPosts([]);
       return;
     }
 
     const inboxPostsQuery = query(collection(db, "inboxPosts"), orderBy("createdAt", "desc"));
     const unsubscribe = onSnapshot(inboxPostsQuery, (snapshot) => {
-      setLatestInboxPosts(
+      setGlobalInboxPosts(
+        snapshot.docs
+          .map((docSnap) => ({
+            id: docSnap.id,
+            ...(docSnap.data() as Omit<InboxPost, "id">),
+          }))
+          .filter((post) => isMessageThreadId(post.threadId))
+      );
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      setUserInboxPosts([]);
+      return;
+    }
+
+    const inboxPostsQuery = query(collection(db, "userInboxPosts"), where("userId", "==", user.uid));
+    const unsubscribe = onSnapshot(inboxPostsQuery, (snapshot) => {
+      setUserInboxPosts(
         snapshot.docs
           .map((docSnap) => ({
             id: docSnap.id,
@@ -428,6 +452,16 @@ export default function HomePage() {
   const displayName = firstName || user?.email?.split("@")[0] || "Operator";
   const userRoleLabel = profile?.flight ? `${profile.rank || "Member"} • ${profile.flight}` : profile?.rank || "Member";
   const showDevTile = Boolean(user);
+  const latestInboxPosts = [...globalInboxPosts, ...userInboxPosts]
+    .filter((post) => isMessageThreadId(post.threadId))
+    .sort((a, b) => {
+      const bSeconds = b.createdAt?.seconds ?? 0;
+      const aSeconds = a.createdAt?.seconds ?? 0;
+      if (bSeconds !== aSeconds) {
+        return bSeconds - aSeconds;
+      }
+      return (b.createdAt?.nanoseconds ?? 0) - (a.createdAt?.nanoseconds ?? 0);
+    });
   const inboxUnreadCount = getInboxUnreadCount(latestInboxPosts, loadInboxReadState());
   void inboxReadVersion;
   const visibleDriverRequestCount =

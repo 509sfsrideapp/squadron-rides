@@ -37,5 +37,5 @@ export default function MessageThreadPage() {
     );
   }
 
-  return <InboxThreadClient threadId={params.threadId} />;
+  return <InboxThreadClient threadId={params.threadId} userId={user.uid} />;
 }

@@ -20,6 +20,8 @@ export type InboxTimestampLike =
 export type InboxUnreadPost = {
   threadId: MessageThreadId;
   createdAt?: InboxTimestampLike;
+  requiresResponse?: boolean;
+  responseSubmittedAt?: InboxTimestampLike;
 };
 
 export function loadInboxReadState(): InboxReadState {
@@ -97,6 +99,11 @@ export function markInboxThreadRead(threadId: MessageThreadId, timestampMs: numb
 export function getInboxUnreadCount(posts: InboxUnreadPost[], readState = loadInboxReadState()) {
   return posts.reduce((count, post) => {
     const createdAtMs = toTimestampMs(post.createdAt);
+    const responseSubmittedAtMs = toTimestampMs(post.responseSubmittedAt);
+
+    if (post.requiresResponse && !responseSubmittedAtMs) {
+      return count + 1;
+    }
 
     if (!createdAtMs) {
       return count;
@@ -110,6 +117,12 @@ export function getInboxUnreadCount(posts: InboxUnreadPost[], readState = loadIn
 export function getInboxUnreadCountsByThread(posts: InboxUnreadPost[], readState = loadInboxReadState()) {
   return posts.reduce((counts, post) => {
     const createdAtMs = toTimestampMs(post.createdAt);
+    const responseSubmittedAtMs = toTimestampMs(post.responseSubmittedAt);
+
+    if (post.requiresResponse && !responseSubmittedAtMs) {
+      counts[post.threadId] = (counts[post.threadId] || 0) + 1;
+      return counts;
+    }
 
     if (!createdAtMs) {
       return counts;

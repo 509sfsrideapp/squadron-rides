@@ -186,6 +186,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
   const [liveRideState, setLiveRideState] = useState<RideLiveState | null>(null);
   const [locationRefreshStatus, setLocationRefreshStatus] = useState("");
   const [refreshingDriverLocation, setRefreshingDriverLocation] = useState(false);
+  const [releasingRide, setReleasingRide] = useState(false);
   const [timelineExpanded, setTimelineExpanded] = useState(false);
   const [riderPhotoExpanded, setRiderPhotoExpanded] = useState(false);
   const launchedNavigationKeyRef = useRef<string | null>(null);
@@ -615,6 +616,47 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     }
   };
 
+  const releaseRide = async () => {
+    if (!ride || !user) return;
+
+    const confirmed = window.confirm("Release this ride back to the driver queue?");
+    if (!confirmed) return;
+
+    try {
+      setReleasingRide(true);
+      const idToken = await auth.currentUser?.getIdToken();
+
+      if (!idToken) {
+        throw new Error("You need to log in again before releasing this ride.");
+      }
+
+      const response = await fetch("/api/rides/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          rideId: ride.id,
+          actor: "driver",
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "We could not release this ride back to the queue.");
+      }
+
+      router.replace("/driver");
+    } catch (error) {
+      console.error(error);
+      alert(error instanceof Error ? error.message : "We could not release this ride back to the queue.");
+    } finally {
+      setReleasingRide(false);
+    }
+  };
+
   const relaunchMaps = () => {
     if (!mapsUrl) {
       alert("No rider location is available for maps.");
@@ -928,6 +970,28 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
           Complete Ride
         </button>
       </div>
+
+      {ride.status !== "picked_up" ? (
+        <div style={{ marginTop: 14, maxWidth: 640, marginInline: "auto" }}>
+          <button
+            type="button"
+            onClick={releaseRide}
+            disabled={releasingRide}
+            style={{
+              width: "100%",
+              padding: "14px 16px",
+              backgroundColor: "rgba(127, 29, 29, 0.9)",
+              color: "#ffffff",
+              border: "1px solid rgba(248, 113, 113, 0.24)",
+              borderRadius: 10,
+              cursor: releasingRide ? "wait" : "pointer",
+              fontWeight: 700,
+            }}
+          >
+            {releasingRide ? "Releasing Ride..." : "Release Ride Back to Queue"}
+          </button>
+        </div>
+      ) : null}
 
       <LiveRideMap
         riderLocation={riderLocation}

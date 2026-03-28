@@ -13,7 +13,7 @@ import { auth, db } from "../../lib/firebase";
 import { DEFAULT_RIDE_DISPATCH_MODE, isRideDispatchExpanded, type EmergencyRideDispatchMode, rideDispatchWindowEndsAt } from "../../lib/ride-dispatch";
 import { formatRideTimestamp, getRideLifecycleSteps, getRideStatusLabel } from "../../lib/ride-lifecycle";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, doc, getDoc, onSnapshot, query, runTransaction, setDoc, where } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query, setDoc, where } from "firebase/firestore";
 
 type Ride = {
   id: string;
@@ -273,7 +273,9 @@ export default function RideStatusPage() {
         }
       : null;
   const driverLocation: MapPoint | null =
-    liveRideState?.driverLocation?.latitude != null && liveRideState.driverLocation?.longitude != null
+    activeRide?.status === "open"
+      ? null
+      : liveRideState?.driverLocation?.latitude != null && liveRideState.driverLocation?.longitude != null
       ? {
           latitude: liveRideState.driverLocation.latitude,
           longitude: liveRideState.driverLocation.longitude,
@@ -449,30 +451,30 @@ export default function RideStatusPage() {
 
     try {
       setCancelingRide(true);
-      await runTransaction(db, async (transaction) => {
-        const rideRef = doc(db, "rides", activeRide.id);
-        const rideSnap = await transaction.get(rideRef);
+      const idToken = await auth.currentUser?.getIdToken();
 
-        if (!rideSnap.exists()) {
-          throw new Error("This ride is no longer available.");
-        }
+      if (!idToken) {
+        throw new Error("You need to log in again before canceling this ride.");
+      }
 
-        const currentRide = rideSnap.data() as Ride;
-
-        if (currentRide.riderId !== user.uid) {
-          throw new Error("This ride belongs to another rider.");
-        }
-
-        if (!currentRide.status || !["open", "accepted", "arrived"].includes(currentRide.status)) {
-          throw new Error("This ride can no longer be canceled from the rider screen.");
-        }
-
-        transaction.update(rideRef, {
-          status: "canceled",
-          canceledAt: new Date(),
-          canceledBy: user.uid,
-        });
+      const response = await fetch("/api/rides/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          rideId: activeRide.id,
+          actor: "rider",
+        }),
       });
+
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "We could not cancel your ride.");
+      }
+
       router.replace("/");
     } catch (error) {
       console.error(error);
