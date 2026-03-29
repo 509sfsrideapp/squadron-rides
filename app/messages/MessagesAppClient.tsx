@@ -205,8 +205,12 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
   useEffect(() => {
     let cancelled = false;
 
-    const loadConversations = async () => {
+    const loadConversations = async (showLoadingState: boolean) => {
       try {
+        if (showLoadingState && !cancelled) {
+          setConversationLoading(true);
+        }
+
         const idToken = await auth.currentUser?.getIdToken();
 
         if (!idToken) {
@@ -246,10 +250,9 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
       }
     };
 
-    setConversationLoading(true);
-    void loadConversations();
+    void loadConversations(true);
     const interval = window.setInterval(() => {
-      void loadConversations();
+      void loadConversations(false);
     }, 4000);
 
     return () => {
@@ -306,8 +309,12 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
 
     let cancelled = false;
 
-    const loadMessages = async () => {
+    const loadMessages = async (showLoadingState: boolean) => {
       try {
+        if (showLoadingState && !cancelled) {
+          setMessageLoading(true);
+        }
+
         const idToken = await auth.currentUser?.getIdToken();
 
         if (!idToken) {
@@ -348,10 +355,9 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
       }
     };
 
-    setMessageLoading(true);
-    void loadMessages();
+    void loadMessages(true);
     const interval = window.setInterval(() => {
-      void loadMessages();
+      void loadMessages(false);
     }, 2500);
 
     return () => {
@@ -412,6 +418,21 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) throw new Error(payload.error || "Could not send the message.");
       setMessageDraft("");
+
+      const refreshedResponse = await fetch(
+        `/api/messages/conversations/${activeConversation.id}/messages`,
+        {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        }
+      );
+      const refreshedPayload = (await refreshedResponse.json().catch(() => ({}))) as {
+        messages?: DirectMessageRecord[];
+      };
+      if (refreshedResponse.ok && refreshedPayload.messages) {
+        setMessages(refreshedPayload.messages);
+      }
     } catch (error) {
       setMessageError(error instanceof Error ? error.message : "Could not send the message.");
     } finally {
@@ -595,9 +616,9 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
                   <textarea
                     value={messageDraft}
                     onChange={(event) => setMessageDraft(event.target.value)}
-                    rows={3}
+                    rows={2}
                     placeholder={activeConversation?.type === "direct" ? "Write a direct message..." : activeConversation?.type === "marketplace" ? "Write a listing message..." : "Write an ISO response..."}
-                    style={{ resize: "vertical" }}
+                    style={{ resize: "none", minHeight: 74, maxHeight: 140 }}
                     onKeyDown={(event) => {
                       if (event.key === "Enter" && !event.shiftKey) {
                         event.preventDefault();

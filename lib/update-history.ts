@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v325",
+    title: "Messages Thread Compose and Refresh Fix",
+    summary: "Shrank the direct-message composer to a tighter mobile size and stopped the active thread from flashing loading states on every background refresh, so messages now feel steadier while still updating in the background.",
+  },
+  {
     commit: "v324",
     title: "Marketplace Create Permission Fix",
     summary: "Fixed the Marketplace write-rule mismatch so new listings using the exchange-method dropdown are allowed by Firestore instead of being rejected for missing the old location field.",
