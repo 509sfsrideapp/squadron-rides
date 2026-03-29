@@ -290,7 +290,8 @@ export default function EventsPage() {
               {event.photoUrl ? (
                 <div
                   style={{
-                    minHeight: 126,
+                    width: "100%",
+                    aspectRatio: "1 / 1",
                     borderRadius: 14,
                     backgroundImage: `url(${event.photoUrl})`,
                     backgroundSize: "cover",
