@@ -71,7 +71,7 @@ type OpenRideBadgeRecord = {
   createdAt?: { seconds?: number; nanoseconds?: number } | null;
 };
 
-const appTilePlaceholderCount = 6;
+const appTilePlaceholderCount = 5;
 const homepageCardStyle: React.CSSProperties = {
   borderRadius: 18,
   border: "1px solid rgba(126, 142, 160, 0.18)",
@@ -351,6 +351,25 @@ function MarketplaceIcon() {
   );
 }
 
+function QuestionMarkIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 64 64"
+      width="34"
+      height="34"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M23.5 24.5c0-5.1 4.2-9.2 9.7-9.2 5.3 0 9.3 3.5 9.3 8.3 0 3.7-1.8 5.9-5.5 8.4-3.1 2.1-4.8 3.8-4.8 7.1" />
+      <path d="M32 46.8v.4" />
+    </svg>
+  );
+}
+
 function DevIcon() {
   return (
     <svg
@@ -606,8 +625,8 @@ export default function HomePage() {
   const displayName = firstName || user?.email?.split("@")[0] || "Operator";
   const userRoleLabel = profile?.flight ? `${profile.rank || "Member"} • ${profile.flight}` : profile?.rank || "Member";
   const showDevTile = Boolean(user);
-  const totalOperationalApps = (driverReady ? 1 : 0) + 2 + (showDevTile ? 1 : 0);
-  const totalVisibleApps = 3 + (showDevTile ? 1 : 0);
+  const totalOperationalApps = (driverReady ? 1 : 0) + 3 + (showDevTile ? 1 : 0);
+  const totalVisibleApps = 4 + (showDevTile ? 1 : 0);
   const authTokenUserLabel =
     profile?.lastName?.trim() && profile?.firstName?.trim()
       ? `${profile.lastName.trim().toUpperCase()}, ${profile.firstName.trim().toUpperCase()}${profile.rank?.trim() ? ` (${profile.rank.trim()})` : ""}`
@@ -1383,6 +1402,7 @@ export default function HomePage() {
                   />
                   <AppTile href="/events" icon={<EventsIcon />} label="EVENTS" />
                   <AppTile href="/marketplace" icon={<MarketplaceIcon />} label="MARKETPLACE" />
+                  <AppTile href="/q-and-a" icon={<QuestionMarkIcon />} label="Q&A" />
                   {showDevTile ? <AppTile href="/developer" icon={<DevIcon />} label="Dev" /> : <PlaceholderTile />}
                   {Array.from({ length: showDevTile ? appTilePlaceholderCount : appTilePlaceholderCount + 1 }).map((_, index) => (
                     <PlaceholderTile key={index} />
