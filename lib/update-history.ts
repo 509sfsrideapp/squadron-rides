@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v289",
+    title: "Q&A Post Edit and Delete",
+    summary: "Added author-only edit and delete controls for Q&A posts, including inline title and body editing on the post page plus a delete flow that removes the post from the feed while preserving the comment thread data behind it.",
+  },
+  {
     commit: "v288",
     title: "Homepage Console Message Expansion",
     summary: "Greatly expanded the homepage app-status console with a much larger tactical message pool, added security forces and aviation flavored lines, and introduced weighted rarity so common chatter stays frequent while the weirder and high-impact events appear more sparingly.",

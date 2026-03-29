@@ -47,6 +47,55 @@ export async function createQAPost(input: {
   return created.name?.split("/").pop() || "";
 }
 
+type QAPostEditableRecord = {
+  authorId: string;
+  deleted?: boolean;
+};
+
+export async function updateQAPost(input: {
+  postId: string;
+  authorId: string;
+  title: string;
+  body: string;
+}) {
+  const postRecord = await getFirestoreDocument<QAPostEditableRecord>(`qaPosts/${input.postId}`);
+
+  if (!postRecord || postRecord.deleted) {
+    throw new Error("That post is unavailable.");
+  }
+
+  if (postRecord.authorId !== input.authorId) {
+    throw new Error("You can only edit your own posts.");
+  }
+
+  await patchFirestoreDocument(`qaPosts/${input.postId}`, {
+    title: input.title.trim(),
+    body: input.body.trim() || "",
+    snippet: buildQAPostSnippet(input.body),
+    updatedAt: new Date(),
+  });
+}
+
+export async function deleteQAPost(input: { postId: string; authorId: string }) {
+  const postRecord = await getFirestoreDocument<QAPostEditableRecord>(`qaPosts/${input.postId}`);
+
+  if (!postRecord || postRecord.deleted) {
+    throw new Error("That post is unavailable.");
+  }
+
+  if (postRecord.authorId !== input.authorId) {
+    throw new Error("You can only delete your own posts.");
+  }
+
+  await patchFirestoreDocument(`qaPosts/${input.postId}`, {
+    title: "",
+    body: "",
+    snippet: "",
+    deleted: true,
+    updatedAt: new Date(),
+  });
+}
+
 export async function recountQAPostComments(postId: string) {
   const comments = await listFirestoreDocumentsByField("qaComments", "postId", postId);
   const nextCount = comments.length;
