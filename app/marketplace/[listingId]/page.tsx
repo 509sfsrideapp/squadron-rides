@@ -1,0 +1,328 @@
+"use client";
+
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { deleteDoc, doc, onSnapshot } from "firebase/firestore";
+import { onAuthStateChanged, User } from "firebase/auth";
+import AppLoadingState from "../../components/AppLoadingState";
+import FullscreenImageViewer from "../../components/FullscreenImageViewer";
+import HomeIconLink from "../../components/HomeIconLink";
+import { isAdminEmail } from "../../../lib/admin";
+import { auth, db } from "../../../lib/firebase";
+import {
+  formatMarketplaceCategoryLabel,
+  formatMarketplaceConditionLabel,
+  formatMarketplaceLocationLabel,
+  formatMarketplaceStatusLabel,
+  type MarketplaceListingRecord,
+} from "../../../lib/marketplace";
+
+type MarketplaceCreatorProfile = {
+  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  rank?: string | null;
+};
+
+const sectionStyle: React.CSSProperties = {
+  borderRadius: 18,
+  border: "1px solid rgba(126, 142, 160, 0.18)",
+  background: "linear-gradient(180deg, rgba(18, 23, 29, 0.96) 0%, rgba(9, 12, 17, 0.985) 100%)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 22px 44px rgba(0, 0, 0, 0.3)",
+  padding: "1rem 1rem 1.1rem",
+};
+
+const primaryButtonStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minHeight: 38,
+  padding: "8px 13px",
+  borderRadius: 10,
+  textDecoration: "none",
+  background: "linear-gradient(180deg, rgba(71, 104, 145, 0.96) 0%, rgba(34, 54, 84, 0.98) 100%)",
+  color: "#ffffff",
+  border: "1px solid rgba(126, 142, 160, 0.24)",
+  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 28px rgba(17, 24, 39, 0.26)",
+  fontFamily: "var(--font-display)",
+  letterSpacing: "0.07em",
+  textTransform: "uppercase",
+  fontSize: 10.5,
+};
+
+const metaPillStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "7px 11px",
+  borderRadius: 999,
+  border: "1px solid rgba(126, 142, 160, 0.16)",
+  background: "rgba(17, 24, 39, 0.62)",
+  color: "#dbe7f5",
+  fontSize: 11,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  fontFamily: "var(--font-display)",
+};
+
+export default function MarketplaceDetailPage() {
+  const params = useParams<{ listingId: string }>();
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [listingRecord, setListingRecord] = useState<MarketplaceListingRecord | null>(null);
+  const [creatorProfile, setCreatorProfile] = useState<MarketplaceCreatorProfile | null>(null);
+  const [photoExpanded, setPhotoExpanded] = useState(false);
+  const [deletingListing, setDeletingListing] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!user || !params.listingId) {
+      return;
+    }
+
+    const unsubscribe = onSnapshot(doc(db, "marketplaceListings", params.listingId), (snapshot) => {
+      if (!snapshot.exists()) {
+        setListingRecord(null);
+        return;
+      }
+
+      setListingRecord({
+        id: snapshot.id,
+        ...(snapshot.data() as Omit<MarketplaceListingRecord, "id">),
+      });
+    });
+
+    return () => unsubscribe();
+  }, [params.listingId, user]);
+
+  useEffect(() => {
+    if (!user || !listingRecord?.createdByUid) {
+      return;
+    }
+
+    const unsubscribe = onSnapshot(doc(db, "users", listingRecord.createdByUid), (snapshot) => {
+      if (!snapshot.exists()) {
+        setCreatorProfile(null);
+        return;
+      }
+
+      setCreatorProfile(snapshot.data() as MarketplaceCreatorProfile);
+    });
+
+    return () => unsubscribe();
+  }, [listingRecord?.createdByUid, user]);
+
+  const isAdminViewer = isAdminEmail(user?.email);
+
+  const sellerLabel = useMemo(() => {
+    const rank = creatorProfile?.rank?.trim() || "";
+    const lastName = creatorProfile?.lastName?.trim() || "";
+    const firstInitial = creatorProfile?.firstName?.trim()?.charAt(0).toUpperCase() || "";
+
+    if (rank && lastName && firstInitial) {
+      return `Seller: ${rank} ${lastName}, ${firstInitial}`;
+    }
+
+    if (rank && lastName) {
+      return `Seller: ${rank} ${lastName}`;
+    }
+
+    if (creatorProfile?.name?.trim()) {
+      return `Seller: ${creatorProfile.name.trim()}`;
+    }
+
+    return "Seller: Not listed";
+  }, [creatorProfile]);
+
+  const handleDeleteListing = async () => {
+    if (!isAdminViewer || !params.listingId || deletingListing) {
+      return;
+    }
+
+    const confirmed = window.confirm("Delete this listing from the marketplace?");
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingListing(true);
+      setStatusMessage("");
+      await deleteDoc(doc(db, "marketplaceListings", params.listingId));
+      router.replace("/marketplace");
+    } catch (error) {
+      console.error(error);
+      setStatusMessage(error instanceof Error ? error.message : "Could not delete listing.");
+      setDeletingListing(false);
+    }
+  };
+
+  if (loading) {
+    return <main style={{ padding: 20 }}><AppLoadingState title="Loading Listing" caption="Opening marketplace listing details." /></main>;
+  }
+
+  if (!user) {
+    return (
+      <main style={{ padding: 20 }}>
+        <HomeIconLink />
+        <h1>Marketplace Listing</h1>
+        <p>You need to log in first.</p>
+      </main>
+    );
+  }
+
+  if (!listingRecord) {
+    return (
+      <main style={{ padding: 20 }}>
+        <div style={{ maxWidth: 940, margin: "0 auto", display: "grid", gap: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <HomeIconLink style={{ marginBottom: 0 }} />
+            <Link href="/marketplace" style={primaryButtonStyle}>Back to Marketplace</Link>
+          </div>
+          <section style={sectionStyle}>
+            <h1 style={{ marginTop: 0 }}>Listing Unavailable</h1>
+            <p style={{ marginBottom: 0, color: "#94a3b8" }}>That listing could not be found.</p>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main style={{ padding: 20 }}>
+      <div style={{ maxWidth: 940, margin: "0 auto", display: "grid", gap: 18 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <HomeIconLink style={{ marginBottom: 0 }} />
+            <Link href="/marketplace" style={primaryButtonStyle}>Back to Marketplace</Link>
+            {isAdminViewer ? (
+              <button
+                type="button"
+                onClick={() => void handleDeleteListing()}
+                disabled={deletingListing}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  minHeight: 38,
+                  padding: "8px 13px",
+                  borderRadius: 10,
+                  border: "1px solid rgba(248, 113, 113, 0.34)",
+                  background: "linear-gradient(180deg, rgba(95, 28, 38, 0.9) 0%, rgba(59, 17, 25, 0.96) 100%)",
+                  color: "#fecaca",
+                  fontFamily: "var(--font-display)",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  fontSize: 10.5,
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.05), 0 14px 28px rgba(41, 10, 16, 0.3)",
+                  cursor: deletingListing ? "wait" : "pointer",
+                  opacity: deletingListing ? 0.7 : 1,
+                }}
+              >
+                {deletingListing ? "Deleting..." : "Admin Delete"}
+              </button>
+            ) : null}
+          </div>
+
+          <span style={metaPillStyle}>{formatMarketplaceCategoryLabel(listingRecord.category)}</span>
+        </div>
+
+        <section style={{ ...sectionStyle, display: "grid", gap: 18 }}>
+          {listingRecord.photoUrl ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setPhotoExpanded(true)}
+                style={{ padding: 0, border: "none", background: "transparent", boxShadow: "none", cursor: "zoom-in", borderRadius: 16 }}
+                aria-label="Expand listing image"
+              >
+                <div
+                  style={{
+                    width: "100%",
+                    aspectRatio: "2 / 1",
+                    borderRadius: 16,
+                    backgroundImage: `url(${listingRecord.photoUrl})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    border: "1px solid rgba(126, 142, 160, 0.16)",
+                  }}
+                />
+              </button>
+
+              <FullscreenImageViewer
+                src={listingRecord.photoUrl}
+                alt={listingRecord.title}
+                open={photoExpanded}
+                onClose={() => setPhotoExpanded(false)}
+              />
+            </>
+          ) : null}
+
+          <div style={{ display: "grid", gap: 10 }}>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <span style={metaPillStyle}>{formatMarketplaceStatusLabel(listingRecord.status)}</span>
+              <span style={metaPillStyle}>{formatMarketplaceConditionLabel(listingRecord.condition)}</span>
+              {listingRecord.priceText?.trim() ? <span style={metaPillStyle}>{listingRecord.priceText.trim()}</span> : null}
+            </div>
+            <h1 style={{ margin: 0 }}>{listingRecord.title}</h1>
+            <p
+              style={{
+                margin: 0,
+                color: "#dbe7f5",
+                fontFamily: "var(--font-display)",
+                fontSize: 12,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+              }}
+            >
+              {sellerLabel}
+            </p>
+            <p style={{ margin: 0, color: "#cbd5e1", lineHeight: 1.55 }}>{formatMarketplaceLocationLabel(listingRecord.location)}</p>
+            {listingRecord.address ? <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.55 }}>{listingRecord.address}</p> : null}
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(126, 142, 160, 0.14)",
+              background: "linear-gradient(180deg, rgba(13, 18, 24, 0.96) 0%, rgba(7, 10, 14, 0.98) 100%)",
+              padding: 14,
+              display: "grid",
+              gap: 8,
+            }}
+          >
+            <strong style={{ display: "block", marginBottom: 6 }}>Listing Details</strong>
+            <p style={{ margin: 0, color: "#cbd5e1" }}>Status: {formatMarketplaceStatusLabel(listingRecord.status)}</p>
+            <p style={{ margin: 0, color: "#cbd5e1" }}>Condition: {formatMarketplaceConditionLabel(listingRecord.condition)}</p>
+            {listingRecord.priceText?.trim() ? <p style={{ margin: 0, color: "#cbd5e1" }}>Price / Terms: {listingRecord.priceText.trim()}</p> : null}
+          </div>
+
+          <div
+            style={{
+              borderRadius: 14,
+              border: "1px solid rgba(126, 142, 160, 0.14)",
+              background: "linear-gradient(180deg, rgba(13, 18, 24, 0.96) 0%, rgba(7, 10, 14, 0.98) 100%)",
+              padding: 14,
+            }}
+          >
+            <strong style={{ display: "block", marginBottom: 8 }}>Description</strong>
+            <p style={{ margin: 0, color: "#cbd5e1", whiteSpace: "pre-wrap", lineHeight: 1.65 }}>
+              {listingRecord.description}
+            </p>
+          </div>
+
+          {statusMessage ? <p style={{ margin: 0, color: "#fca5a5" }}>{statusMessage}</p> : null}
+        </section>
+      </div>
+    </main>
+  );
+}

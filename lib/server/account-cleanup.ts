@@ -13,6 +13,8 @@ export type AccountCleanupResult = {
 
 const ACCOUNT_CLEANUP_TARGETS: AccountCleanupTarget[] = [
   { collection: "events", ownerField: "createdByUid", label: "events" },
+  { collection: "marketplaceListings", ownerField: "createdByUid", label: "marketplace listings" },
+  { collection: "isoRequests", ownerField: "createdByUid", label: "iso requests" },
   { collection: "bugReports", ownerField: "reporterUid", label: "bug reports" },
   { collection: "suggestions", ownerField: "reporterUid", label: "suggestions" },
   { collection: "userInboxPosts", ownerField: "userId", label: "user inbox posts" },
