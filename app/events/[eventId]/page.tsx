@@ -194,7 +194,8 @@ export default function EventDetailPage() {
               >
                 <div
                   style={{
-                    minHeight: 280,
+                    width: "100%",
+                    aspectRatio: "2 / 1",
                     borderRadius: 16,
                     backgroundImage: `url(${eventRecord.photoUrl})`,
                     backgroundSize: "cover",

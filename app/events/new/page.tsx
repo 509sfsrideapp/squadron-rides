@@ -373,10 +373,11 @@ export default function NewEventPage() {
               value={photoUrl}
               onChange={setPhotoUrl}
               cropShape="square"
+              cropAspectRatio={2}
               previewSize={120}
               outputSize={960}
               maxEncodedLength={220000}
-              helperText="Optional event image for the card and detail page."
+              helperText="Optional event image for the card and detail page. Crop uses a 2:1 landscape frame so the banner stays consistent."
               statusMessage=""
               onStatusMessageChange={(message) => setStatusMessage(message)}
             />

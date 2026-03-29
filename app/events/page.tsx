@@ -279,19 +279,17 @@ export default function EventsPage() {
               style={{
                 ...cardStyle,
                 display: "grid",
-                gridTemplateColumns: event.photoUrl ? "126px minmax(0, 1fr)" : "minmax(0, 1fr)",
                 gap: 14,
                 padding: 16,
                 textDecoration: "none",
                 color: "#e5edf7",
-                alignItems: "start",
               }}
             >
               {event.photoUrl ? (
                 <div
                   style={{
                     width: "100%",
-                    aspectRatio: "1 / 1",
+                    aspectRatio: "2 / 1",
                     borderRadius: 14,
                     backgroundImage: `url(${event.photoUrl})`,
                     backgroundSize: "cover",

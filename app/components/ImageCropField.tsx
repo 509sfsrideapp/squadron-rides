@@ -10,6 +10,7 @@ type ImageCropFieldProps = {
   onChange: (value: string) => void;
   previewSize?: number;
   cropShape?: CropShape;
+  cropAspectRatio?: number;
   outputSize?: number;
   maxEncodedLength?: number;
   accept?: string;
@@ -29,7 +30,7 @@ type CropSession = {
   offsetY: number;
 };
 
-const VIEWPORT_SIZE = 280;
+const VIEWPORT_MAX_SIZE = 280;
 
 function cropErrorMessage() {
   return "Could not process the selected image.";
@@ -66,32 +67,62 @@ async function loadImageDimensions(src: string) {
   };
 }
 
-function getMinimumScale(width: number, height: number) {
-  return Math.max(VIEWPORT_SIZE / width, VIEWPORT_SIZE / height);
+function getViewportDimensions(cropAspectRatio: number) {
+  if (cropAspectRatio >= 1) {
+    return {
+      width: VIEWPORT_MAX_SIZE,
+      height: VIEWPORT_MAX_SIZE / cropAspectRatio,
+    };
+  }
+
+  return {
+    width: VIEWPORT_MAX_SIZE * cropAspectRatio,
+    height: VIEWPORT_MAX_SIZE,
+  };
 }
 
-function clampOffset(offset: number, displayedSize: number) {
-  const limit = Math.max(0, (displayedSize - VIEWPORT_SIZE) / 2);
+function getPreviewDimensions(previewSize: number, cropAspectRatio: number) {
+  if (cropAspectRatio >= 1) {
+    return {
+      width: previewSize * cropAspectRatio,
+      height: previewSize,
+    };
+  }
+
+  return {
+    width: previewSize,
+    height: previewSize / cropAspectRatio,
+  };
+}
+
+function getMinimumScale(width: number, height: number, viewportWidth: number, viewportHeight: number) {
+  return Math.max(viewportWidth / width, viewportHeight / height);
+}
+
+function clampOffset(offset: number, displayedSize: number, viewportSize: number) {
+  const limit = Math.max(0, (displayedSize - viewportSize) / 2);
   return Math.min(limit, Math.max(-limit, offset));
 }
 
-function clampSession(session: CropSession) {
+function clampSession(session: CropSession, viewportWidth: number, viewportHeight: number) {
   const displayedWidth = session.naturalWidth * session.scale;
   const displayedHeight = session.naturalHeight * session.scale;
 
   return {
     ...session,
-    offsetX: clampOffset(session.offsetX, displayedWidth),
-    offsetY: clampOffset(session.offsetY, displayedHeight),
+    offsetX: clampOffset(session.offsetX, displayedWidth, viewportWidth),
+    offsetY: clampOffset(session.offsetY, displayedHeight, viewportHeight),
   };
 }
 
 async function renderCroppedDataUrl({
   session,
+  cropAspectRatio,
   outputSize,
   maxEncodedLength,
 }: {
   session: CropSession;
+  cropAspectRatio: number;
   outputSize: number;
   maxEncodedLength: number;
 }) {
@@ -104,24 +135,27 @@ async function renderCroppedDataUrl({
   });
 
   const canvas = document.createElement("canvas");
-  canvas.width = outputSize;
-  canvas.height = outputSize;
+  const outputWidth = cropAspectRatio >= 1 ? outputSize : Math.round(outputSize * cropAspectRatio);
+  const outputHeight = cropAspectRatio >= 1 ? Math.round(outputSize / cropAspectRatio) : outputSize;
+  canvas.width = outputWidth;
+  canvas.height = outputHeight;
   const context = canvas.getContext("2d");
 
   if (!context) {
     throw new Error(cropErrorMessage());
   }
 
-  const ratio = outputSize / VIEWPORT_SIZE;
+  const viewport = getViewportDimensions(cropAspectRatio);
+  const ratio = outputWidth / viewport.width;
   const displayedWidth = session.naturalWidth * session.scale * ratio;
   const displayedHeight = session.naturalHeight * session.scale * ratio;
 
   context.fillStyle = "#0f172a";
-  context.fillRect(0, 0, outputSize, outputSize);
+  context.fillRect(0, 0, outputWidth, outputHeight);
   context.drawImage(
     image,
-    outputSize / 2 - displayedWidth / 2 + session.offsetX * ratio,
-    outputSize / 2 - displayedHeight / 2 + session.offsetY * ratio,
+    outputWidth / 2 - displayedWidth / 2 + session.offsetX * ratio,
+    outputHeight / 2 - displayedHeight / 2 + session.offsetY * ratio,
     displayedWidth,
     displayedHeight
   );
@@ -146,6 +180,7 @@ export default function ImageCropField({
   onChange,
   previewSize = 104,
   cropShape = "square",
+  cropAspectRatio = 1,
   outputSize = 720,
   maxEncodedLength = 350000,
   accept = "image/*",
@@ -166,6 +201,9 @@ export default function ImageCropField({
     centerX: number;
     centerY: number;
   } | null>(null);
+
+  const viewport = useMemo(() => getViewportDimensions(cropAspectRatio), [cropAspectRatio]);
+  const previewDimensions = useMemo(() => getPreviewDimensions(previewSize, cropAspectRatio), [cropAspectRatio, previewSize]);
 
   useEffect(() => {
     if (!session) {
@@ -199,7 +237,7 @@ export default function ImageCropField({
       onStatusMessageChange?.("Preparing image...");
       const src = await readFileAsDataUrl(file);
       const { naturalWidth, naturalHeight } = await loadImageDimensions(src);
-      const minScale = getMinimumScale(naturalWidth, naturalHeight);
+      const minScale = getMinimumScale(naturalWidth, naturalHeight, viewport.width, viewport.height);
 
       setSession({
         src,
@@ -259,7 +297,7 @@ export default function ImageCropField({
         ...current,
         offsetX: start.offsetX + (clientX - start.x),
         offsetY: start.offsetY + (clientY - start.y),
-      });
+      }, viewport.width, viewport.height);
     });
   };
 
@@ -306,7 +344,7 @@ export default function ImageCropField({
         scale: nextScale,
         offsetX: pinchStartRef.current.offsetX + (currentCenterX - pinchStartRef.current.centerX),
         offsetY: pinchStartRef.current.offsetY + (currentCenterY - pinchStartRef.current.centerY),
-      });
+      }, viewport.width, viewport.height);
     });
   };
 
@@ -320,6 +358,7 @@ export default function ImageCropField({
       onStatusMessageChange?.("Saving cropped image...");
       const cropped = await renderCroppedDataUrl({
         session,
+        cropAspectRatio,
         outputSize,
         maxEncodedLength,
       });
@@ -342,8 +381,8 @@ export default function ImageCropField({
       height={previewSize}
       unoptimized
       style={{
-        width: previewSize,
-        height: previewSize,
+        width: previewDimensions.width,
+        height: previewDimensions.height,
         objectFit: "cover",
         borderRadius: previewBorderRadius,
         border: "1px solid rgba(148, 163, 184, 0.22)",
@@ -353,8 +392,8 @@ export default function ImageCropField({
   ) : (
     <div
       style={{
-        width: previewSize,
-        height: previewSize,
+        width: previewDimensions.width,
+        height: previewDimensions.height,
         borderRadius: previewBorderRadius,
         display: "grid",
         placeItems: "center",
@@ -419,8 +458,8 @@ export default function ImageCropField({
             <div
               style={{
                 position: "relative",
-                width: VIEWPORT_SIZE,
-                height: VIEWPORT_SIZE,
+                width: viewport.width,
+                height: viewport.height,
                 margin: "0 auto 16px",
                 overflow: "hidden",
                 borderRadius: 28,
@@ -537,7 +576,7 @@ export default function ImageCropField({
                   return clampSession({
                     ...current,
                     scale: nextScale,
-                  });
+                  }, viewport.width, viewport.height);
                 });
               }}
               style={{ width: "100%", marginBottom: 18 }}
