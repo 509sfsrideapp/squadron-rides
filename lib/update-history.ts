@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v287",
+    title: "Q&A Discussion Foundation",
+    summary: "Replaced the Q&A placeholder with a real discussion system including a post feed, create-post flow, dedicated post pages, nested threaded comments, inline replies, and collapsible comment branches without any subreddit or community layer.",
+  },
+  {
     commit: "v286",
     title: "Event Attendance Rank Sorting",
     summary: "Changed the event detail attendance roster to sort by Air Force rank precedence first, so higher-ranking attendees appear above lower-ranking attendees.",

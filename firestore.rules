@@ -299,6 +299,16 @@ service cloud.firestore {
       );
     }
 
+    match /qaPosts/{postId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /qaComments/{commentId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
     match /auditLogs/{entryId} {
       allow read: if isAdmin();
       allow write: if false;
