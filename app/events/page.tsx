@@ -9,6 +9,13 @@ import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
 import { EVENT_TYPE_OPTIONS, eventMatchesDateRange, eventMatchesType, formatEventTypeLabel, getEventCardDateLabel, isUpcomingEvent, sortEventsByUpcomingDate, type EventRecord } from "../../lib/events";
 
+type EventCreatorProfile = {
+  name?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  rank?: string | null;
+};
+
 const pageShellStyle: React.CSSProperties = {
   maxWidth: 1040,
   margin: "0 auto",
@@ -77,6 +84,7 @@ export default function EventsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<EventRecord[]>([]);
+  const [creatorDirectory, setCreatorDirectory] = useState<Record<string, EventCreatorProfile>>({});
   const [selectedType, setSelectedType] = useState("all");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -105,6 +113,22 @@ export default function EventsPage() {
     return () => unsubscribe();
   }, [user]);
 
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
+      const nextDirectory: Record<string, EventCreatorProfile> = {};
+
+      snapshot.docs.forEach((docSnap) => {
+        nextDirectory[docSnap.id] = docSnap.data() as EventCreatorProfile;
+      });
+
+      setCreatorDirectory(nextDirectory);
+    });
+
+    return () => unsubscribe();
+  }, [user]);
+
   const filteredEvents = useMemo(() => {
     return sortEventsByUpcomingDate(
       events.filter((event) => {
@@ -119,6 +143,31 @@ export default function EventsPage() {
 
   const hasActiveFilters = selectedType !== "all" || Boolean(dateFrom) || Boolean(dateTo);
   const nextEvent = filteredEvents[0] || null;
+
+  const getOrganizerLabel = (event: EventRecord) => {
+    const creator = event.createdByUid ? creatorDirectory[event.createdByUid] : null;
+    const rank = creator?.rank?.trim() || "";
+    const lastName = creator?.lastName?.trim() || "";
+    const firstInitial = creator?.firstName?.trim()?.charAt(0).toUpperCase() || "";
+
+    if (rank && lastName && firstInitial) {
+      return `POC: ${rank} ${lastName}, ${firstInitial}`;
+    }
+
+    if (rank && lastName) {
+      return `POC: ${rank} ${lastName}`;
+    }
+
+    if (creator?.name?.trim()) {
+      return `POC: ${creator.name.trim()}`;
+    }
+
+    if (event.createdByEmail?.trim()) {
+      return `POC: ${event.createdByEmail.trim()}`;
+    }
+
+    return "POC: Not listed";
+  };
 
   if (loading) {
     return <main style={{ padding: 20 }}><AppLoadingState title="Loading Events" caption="Opening the upcoming events board." /></main>;
@@ -230,16 +279,18 @@ export default function EventsPage() {
               style={{
                 ...cardStyle,
                 display: "grid",
+                gridTemplateColumns: event.photoUrl ? "126px minmax(0, 1fr)" : "minmax(0, 1fr)",
                 gap: 14,
                 padding: 16,
                 textDecoration: "none",
                 color: "#e5edf7",
+                alignItems: "start",
               }}
             >
               {event.photoUrl ? (
                 <div
                   style={{
-                    minHeight: 180,
+                    minHeight: 126,
                     borderRadius: 14,
                     backgroundImage: `url(${event.photoUrl})`,
                     backgroundSize: "cover",
@@ -269,6 +320,9 @@ export default function EventsPage() {
                       {formatEventTypeLabel(event.type)}
                     </span>
                     <h2 style={{ margin: 0, fontSize: "1.3rem" }}>{event.name}</h2>
+                    <p style={{ margin: 0, color: "#9fb1c7", fontSize: 13, letterSpacing: "0.03em" }}>
+                      {getOrganizerLabel(event)}
+                    </p>
                   </div>
 
                   <span style={{ color: "#9cc2ee", fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "var(--font-display)" }}>
@@ -290,13 +344,20 @@ export default function EventsPage() {
                   {event.address ? (
                     <p style={{ margin: 0 }}><strong>Address:</strong> {event.address}</p>
                   ) : null}
-                  {typeof event.neededPeople === "number" && event.neededPeople > 0 ? (
-                    <p style={{ margin: 0 }}><strong>People Needed:</strong> {event.neededPeople}</p>
-                  ) : null}
                 </div>
 
-                <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.55 }}>
-                  {event.description.length > 220 ? `${event.description.slice(0, 220).trim()}...` : event.description}
+                <p
+                  style={{
+                    margin: 0,
+                    color: "#94a3b8",
+                    lineHeight: 1.55,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
+                  {event.description}
                 </p>
               </div>
             </Link>

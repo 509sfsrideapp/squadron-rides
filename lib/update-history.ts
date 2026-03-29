@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v253",
+    title: "Event Card Info Refresh",
+    summary: "Updated the main Events board cards so they keep the type tag at the top, use a smaller left-side photo, show the organizer as a POC line, keep when/where visible, and clamp the description to a shorter two-line preview.",
+  },
+  {
     commit: "v252",
     title: "Messages Moved To Dev",
     summary: "Removed the Messages app from the main homepage dashboard for now and added a temporary Messages entry on the developer tools page so the feature stays accessible while we work on it later.",
