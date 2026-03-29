@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v269",
+    title: "Event Attendance Copy Trim",
+    summary: "Removed the extra helper sentence from the event detail attendance roster card to keep that section tighter and less repetitive.",
+  },
+  {
     commit: "v268",
     title: "Shared Panel Motion Pass",
     summary: "Applied the smoother dropdown-style open and close motion to the app’s main expandable panels, including the Events filter, account delete form, rider and driver timelines, admin account detail expansion, and inbox message expansion.",

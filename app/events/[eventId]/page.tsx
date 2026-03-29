@@ -442,11 +442,8 @@ export default function EventDetailPage() {
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 14, flexWrap: "wrap" }}>
-              <div style={{ display: "grid", gap: 4 }}>
+              <div>
                 <strong style={{ display: "block" }}>Attendance Roster</strong>
-                <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.55 }}>
-                  Let people know you are going, then see who else is already on the list.
-                </p>
               </div>
 
               <button
