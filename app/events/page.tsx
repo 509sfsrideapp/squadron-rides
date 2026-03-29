@@ -218,13 +218,10 @@ export default function EventsPage() {
 
         <section style={{ ...cardStyle, padding: "1rem 1rem 1.05rem", display: "grid", gap: 14 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 16, flexWrap: "wrap" }}>
-            <div style={{ display: "grid", gap: 4, minWidth: 0 }}>
+            <div style={{ display: "grid", minWidth: 0 }}>
               <strong style={{ fontSize: 13, letterSpacing: "0.08em", textTransform: "uppercase", fontFamily: "var(--font-display)" }}>
                 Upcoming Events
               </strong>
-              <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.55 }}>
-                The board is already sorted from the closest upcoming event to the farthest one. Filters only narrow what is shown.
-              </p>
             </div>
 
             {hasActiveFilters ? (
