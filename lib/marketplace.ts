@@ -35,7 +35,7 @@ export type MarketplaceListingDocument = {
   createdAt?: {
     seconds?: number;
     nanoseconds?: number;
-  } | Date | null;
+  } | Date | string | null;
 };
 
 export type MarketplaceListingRecord = MarketplaceListingDocument & {
@@ -84,6 +84,11 @@ function getCreatedAtMs(
 
   if (createdAt instanceof Date) {
     return createdAt.getTime();
+  }
+
+  if (typeof createdAt === "string") {
+    const parsed = Date.parse(createdAt);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   return (createdAt.seconds || 0) * 1000;

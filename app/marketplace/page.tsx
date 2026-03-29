@@ -2,12 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import { ReportableTarget } from "../components/MisconductReporting";
-import { auth, db } from "../../lib/firebase";
+import { auth } from "../../lib/firebase";
 import { buildMisconductPreviewText } from "../../lib/misconduct";
 import {
   formatMarketplaceCategoryLabel,
@@ -98,6 +97,7 @@ const infoPillStyle: React.CSSProperties = {
 export default function MarketplacePage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [boardLoading, setBoardLoading] = useState(false);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -105,6 +105,7 @@ export default function MarketplacePage() {
   const [maxPrice, setMaxPrice] = useState("");
   const [listings, setListings] = useState<MarketplaceListingRecord[]>([]);
   const [creatorDirectory, setCreatorDirectory] = useState<Record<string, MarketplaceCreatorProfile>>({});
+  const [statusMessage, setStatusMessage] = useState("");
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -117,37 +118,59 @@ export default function MarketplacePage() {
 
   useEffect(() => {
     if (!user) {
+      setListings([]);
+      setCreatorDirectory({});
       return;
     }
 
-    const unsubscribe = onSnapshot(collection(db, "marketplaceListings"), (snapshot) => {
-      const nextListings = snapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...(docSnap.data() as Omit<MarketplaceListingRecord, "id">),
-      }));
+    let cancelled = false;
 
-      setListings(sortMarketplaceListings(nextListings));
-    });
+    (async () => {
+      try {
+        setBoardLoading(true);
+        setStatusMessage("");
+        const idToken = await user.getIdToken();
+        const response = await fetch("/api/marketplace", {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+          cache: "no-store",
+        });
 
-    return () => unsubscribe();
-  }, [user]);
+        const payload = (await response.json().catch(() => ({}))) as {
+          listings?: MarketplaceListingRecord[];
+          creatorDirectory?: Record<string, MarketplaceCreatorProfile>;
+          error?: string;
+        };
 
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
+        if (!response.ok) {
+          throw new Error(payload.error || "Could not load marketplace listings.");
+        }
 
-    const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
-      const nextDirectory: Record<string, MarketplaceCreatorProfile> = {};
+        if (cancelled) {
+          return;
+        }
 
-      snapshot.docs.forEach((docSnap) => {
-        nextDirectory[docSnap.id] = docSnap.data() as MarketplaceCreatorProfile;
-      });
+        setListings(sortMarketplaceListings(payload.listings || []));
+        setCreatorDirectory(payload.creatorDirectory || {});
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
 
-      setCreatorDirectory(nextDirectory);
-    });
+        setListings([]);
+        setCreatorDirectory({});
+        setStatusMessage(error instanceof Error ? error.message : "Could not load marketplace listings.");
+      } finally {
+        if (!cancelled) {
+          setBoardLoading(false);
+        }
+      }
+    })();
 
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const filteredListings = useMemo(() => {
@@ -189,7 +212,7 @@ export default function MarketplacePage() {
     Boolean(minPrice.trim()) ||
     Boolean(maxPrice.trim());
 
-  if (loading) {
+  if (loading || (user && boardLoading)) {
     return <main style={{ padding: 20 }}><AppLoadingState title="Loading Marketplace" caption="Opening the live listings board." /></main>;
   }
 
@@ -336,6 +359,12 @@ export default function MarketplacePage() {
             </div>
           </div>
         </section>
+
+        {statusMessage ? (
+          <section style={{ ...cardStyle, padding: "0.95rem 1rem" }}>
+            <p style={{ margin: 0, color: "#fca5a5", lineHeight: 1.55 }}>{statusMessage}</p>
+          </section>
+        ) : null}
 
         <section style={{ display: "grid", gap: 14 }}>
           {filteredListings.length > 0 ? filteredListings.map((listing) => (

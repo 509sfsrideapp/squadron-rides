@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { verifyFirebaseIdToken } from "../../../lib/server/firebase-auth";
 import { writeAuditLog } from "../../../lib/server/audit-log";
 import { createFirestoreDocument } from "../../../lib/server/firestore-admin";
+import { listMarketplaceListingsWithCreators } from "../../../lib/server/marketplace";
 import {
   MARKETPLACE_CATEGORY_OPTIONS,
   MARKETPLACE_CONDITION_OPTIONS,
@@ -135,6 +136,27 @@ export async function POST(request: NextRequest) {
     console.error(error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : "Could not create the listing." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get("authorization");
+    const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
+    if (!idToken) {
+      return NextResponse.json({ error: "Missing user token." }, { status: 401 });
+    }
+
+    await verifyFirebaseIdToken(idToken);
+    const payload = await listMarketplaceListingsWithCreators();
+    return NextResponse.json({ ok: true, ...payload });
+  } catch (error) {
+    console.error(error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Could not load marketplace listings." },
       { status: 500 }
     );
   }

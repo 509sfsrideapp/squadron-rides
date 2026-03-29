@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v330",
+    title: "Marketplace Server Readback Fix",
+    summary: "Moved Marketplace board and detail reads onto secure app APIs, bundled seller summaries into those responses, and switched Marketplace delete onto the same server path so newly created listings now load back reliably even while the client Firestore rules for that collection are still out of sync.",
+  },
+  {
     commit: "v329",
     title: "Messages Thread Stability and Bubble Sizing",
     summary: "Stopped active DM threads from re-triggering their loading state every time the conversation list refreshed, and fixed single-message bubbles so they size to content instead of stretching tall inside the thread pane.",

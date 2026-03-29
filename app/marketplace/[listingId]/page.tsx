@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { deleteDoc, doc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../../components/AppLoadingState";
 import FullscreenImageViewer from "../../components/FullscreenImageViewer";
@@ -11,7 +10,7 @@ import HomeIconLink from "../../components/HomeIconLink";
 import { ReportableTarget } from "../../components/MisconductReporting";
 import UserPreviewTrigger from "../../components/UserPreviewTrigger";
 import { isAdminEmail } from "../../../lib/admin";
-import { auth, db } from "../../../lib/firebase";
+import { auth } from "../../../lib/firebase";
 import { openMarketplaceConversation } from "../../../lib/direct-message-launch";
 import { buildMisconductPreviewText } from "../../../lib/misconduct";
 import {
@@ -75,6 +74,7 @@ export default function MarketplaceDetailPage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [listingRecord, setListingRecord] = useState<MarketplaceListingRecord | null>(null);
   const [creatorProfile, setCreatorProfile] = useState<MarketplaceCreatorProfile | null>(null);
   const [photoExpanded, setPhotoExpanded] = useState(false);
@@ -93,40 +93,68 @@ export default function MarketplaceDetailPage() {
 
   useEffect(() => {
     if (!user || !params.listingId) {
+      setListingRecord(null);
+      setCreatorProfile(null);
       return;
     }
 
-    const unsubscribe = onSnapshot(doc(db, "marketplaceListings", params.listingId), (snapshot) => {
-      if (!snapshot.exists()) {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setDetailLoading(true);
+        setStatusMessage("");
+        const idToken = await user.getIdToken();
+        const response = await fetch(`/api/marketplace/${params.listingId}`, {
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+          cache: "no-store",
+        });
+
+        const payload = (await response.json().catch(() => ({}))) as {
+          listing?: MarketplaceListingRecord;
+          creatorProfile?: MarketplaceCreatorProfile | null;
+          error?: string;
+        };
+
+        if (response.status === 404) {
+          if (!cancelled) {
+            setListingRecord(null);
+            setCreatorProfile(null);
+          }
+          return;
+        }
+
+        if (!response.ok || !payload.listing) {
+          throw new Error(payload.error || "Could not load marketplace listing.");
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        setListingRecord(payload.listing);
+        setCreatorProfile(payload.creatorProfile || null);
+      } catch (error) {
+        if (cancelled) {
+          return;
+        }
+
         setListingRecord(null);
-        return;
-      }
-
-      setListingRecord({
-        id: snapshot.id,
-        ...(snapshot.data() as Omit<MarketplaceListingRecord, "id">),
-      });
-    });
-
-    return () => unsubscribe();
-  }, [params.listingId, user]);
-
-  useEffect(() => {
-    if (!user || !listingRecord?.createdByUid) {
-      return;
-    }
-
-    const unsubscribe = onSnapshot(doc(db, "users", listingRecord.createdByUid), (snapshot) => {
-      if (!snapshot.exists()) {
         setCreatorProfile(null);
-        return;
+        setStatusMessage(error instanceof Error ? error.message : "Could not load marketplace listing.");
+      } finally {
+        if (!cancelled) {
+          setDetailLoading(false);
+        }
       }
+    })();
 
-      setCreatorProfile(snapshot.data() as MarketplaceCreatorProfile);
-    });
-
-    return () => unsubscribe();
-  }, [listingRecord?.createdByUid, user]);
+    return () => {
+      cancelled = true;
+    };
+  }, [params.listingId, user]);
 
   const isAdminViewer = isAdminEmail(user?.email);
 
@@ -151,7 +179,7 @@ export default function MarketplaceDetailPage() {
   }, [creatorProfile]);
 
   const handleDeleteListing = async () => {
-    if (!isAdminViewer || !params.listingId || deletingListing) {
+    if (!isAdminViewer || !params.listingId || deletingListing || !user) {
       return;
     }
 
@@ -163,7 +191,19 @@ export default function MarketplaceDetailPage() {
     try {
       setDeletingListing(true);
       setStatusMessage("");
-      await deleteDoc(doc(db, "marketplaceListings", params.listingId));
+      const idToken = await user.getIdToken();
+      const response = await fetch(`/api/marketplace/${params.listingId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Could not delete listing.");
+      }
+
       router.replace("/marketplace");
     } catch (error) {
       console.error(error);
@@ -172,7 +212,7 @@ export default function MarketplaceDetailPage() {
     }
   };
 
-  if (loading) {
+  if (loading || (user && detailLoading && !listingRecord)) {
     return <main style={{ padding: 20 }}><AppLoadingState title="Loading Listing" caption="Opening marketplace listing details." /></main>;
   }
 
@@ -196,7 +236,9 @@ export default function MarketplaceDetailPage() {
           </div>
           <section style={sectionStyle}>
             <h1 style={{ marginTop: 0 }}>Listing Unavailable</h1>
-            <p style={{ marginBottom: 0, color: "#94a3b8" }}>That listing could not be found.</p>
+            <p style={{ marginBottom: 0, color: "#94a3b8" }}>
+              {statusMessage || "That listing could not be found."}
+            </p>
           </section>
         </div>
       </main>
