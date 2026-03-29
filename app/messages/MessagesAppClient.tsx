@@ -98,10 +98,10 @@ function MessageBubble({ message, currentUserId }: { message: DirectMessageRecor
       <div
         style={{
           width: "fit-content",
-          maxWidth: "min(84%, 460px)",
+          maxWidth: "min(92%, 560px)",
           display: "grid",
           gap: 6,
-          padding: "10px 12px",
+          padding: "10px 13px",
           borderRadius: ownMessage ? "16px 16px 6px 16px" : "16px 16px 16px 6px",
           background: ownMessage ? "linear-gradient(180deg, rgba(71, 104, 145, 0.96) 0%, rgba(34, 54, 84, 0.98) 100%)" : "linear-gradient(180deg, rgba(18, 23, 29, 0.98) 0%, rgba(9, 12, 17, 0.995) 100%)",
           border: ownMessage ? "1px solid rgba(126, 142, 160, 0.24)" : "1px solid rgba(148, 163, 184, 0.18)",
@@ -518,7 +518,7 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
                   ) : null}
                 </div>
 
-                <div style={{ padding: "1rem", display: "flex", flexDirection: "column", gap: 12, minHeight: 320, maxHeight: 520, overflowY: "auto", background: "linear-gradient(180deg, rgba(9, 14, 20, 0.98) 0%, rgba(3, 8, 14, 0.995) 100%)" }}>
+                <div style={{ padding: "0.9rem 0.8rem", display: "flex", flexDirection: "column", gap: 12, minHeight: 320, maxHeight: 520, overflowY: "auto", background: "linear-gradient(180deg, rgba(9, 14, 20, 0.98) 0%, rgba(3, 8, 14, 0.995) 100%)" }}>
                   {messageLoading ? (
                     <p style={{ margin: 0, color: "#94a3b8" }}>Loading messages...</p>
                   ) : messages.length > 0 ? (

@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v335",
+    title: "Wider Message Bubble Layout",
+    summary: "Expanded the usable width of direct-message bubbles and trimmed the thread pane side padding so short replies can stretch farther across the conversation instead of wrapping into narrow stacked lines too early.",
+  },
+  {
     commit: "v334",
     title: "Marketplace Detail Square Photo",
     summary: "Changed the Marketplace listing detail image to use the same square format as the uploader and board cards, so listing photos stay consistent instead of expanding into a wide banner on the detail page.",
