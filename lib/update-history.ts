@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v288",
+    title: "Homepage Console Message Expansion",
+    summary: "Greatly expanded the homepage app-status console with a much larger tactical message pool, added security forces and aviation flavored lines, and introduced weighted rarity so common chatter stays frequent while the weirder and high-impact events appear more sparingly.",
+  },
+  {
     commit: "v287",
     title: "Q&A Discussion Foundation",
     summary: "Replaced the Q&A placeholder with a real discussion system including a post feed, create-post flow, dedicated post pages, nested threaded comments, inline replies, and collapsible comment branches without any subreddit or community layer.",

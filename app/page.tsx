@@ -84,8 +84,49 @@ type HomepageStatusScenario = {
   response: string;
 };
 
+type WeightedStatusLine = {
+  value: string;
+  weight: number;
+};
+
+const HOMEPAGE_STATUS_NODES = ["BRAVO", "DELTA", "ECHO", "FOXTROT", "VIPER", "NOMAD", "SABLE"];
+const HOMEPAGE_STATUS_SECTORS = ["IRON-12", "EMBER-4", "FALCON-7", "NOVA-3", "GHOST-9", "ORBIT-6"];
+const HOMEPAGE_STATUS_FLIGHTS = ["ALPHA", "BRAVO", "CHARLIE", "DELTA"];
+const HOMEPAGE_STATUS_PACKAGES = ["SPECTER", "REAPER", "LANCER", "STRIKE"];
+const HOMEPAGE_STATUS_SUBSYSTEMS = ["MAP", "NOTIFY", "QUEUE", "EVENTS", "CHAT"];
+const HOMEPAGE_STATUS_THREADS = ["ADMIN", "DEV", "DIRECT"];
+const HOMEPAGE_STATUS_GATES = ["NORTH", "SOUTH", "FLIGHTLINE"];
+const HOMEPAGE_STATUS_ZONES = ["ALPHA", "BRAVO", "CHARLIE"];
+const HOMEPAGE_STATUS_PATROL_SECTORS = ["FLIGHTLINE", "MUNITIONS", "PERIMETER"];
+const HOMEPAGE_STATUS_MONITOR_ZONES = ["HANGAR", "STORAGE", "PERIMETER"];
+const HOMEPAGE_STATUS_ACCESS_ZONES = ["RED", "AMBER"];
+const HOMEPAGE_STATUS_SECURITY_LEVELS = ["ALPHA", "BRAVO", "CHARLIE"];
+const HOMEPAGE_STATUS_STATES = ["STABLE", "DEGRADED", "COMPROMISED", "UNKNOWN", "NOMINAL"];
+const HOMEPAGE_STATUS_PRIORITIES = ["LOW", "MEDIUM", "HIGH", "CRITICAL"];
+const HOMEPAGE_STATUS_SOURCES = ["LOCAL", "REMOTE", "UNKNOWN", "INTERNAL"];
+const HOMEPAGE_STATUS_RESULTS = ["SUCCESS", "FAILED", "PARTIAL", "INCONCLUSIVE"];
+const HOMEPAGE_STATUS_RUNWAYS = ["ASSIGNED", "HOLDING", "STANDBY"];
+
 function chooseRandom<T>(items: T[]) {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+function chooseWeightedRandom(items: WeightedStatusLine[]) {
+  const totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+  let cursor = Math.random() * totalWeight;
+
+  for (const item of items) {
+    cursor -= item.weight;
+    if (cursor <= 0) {
+      return item.value;
+    }
+  }
+
+  return items[items.length - 1]?.value ?? "";
+}
+
+function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function formatRandomCoordinate() {
@@ -97,36 +138,193 @@ function formatRandomCoordinate() {
 }
 
 function createHomepageStatusScenario(): HomepageStatusScenario {
-  const node = chooseRandom(["BRAVO", "DELTA", "ECHO", "FOXTROT", "VIPER", "NOMAD", "SABLE"]);
-  const sectors = ["IRON-12", "EMBER-4", "FALCON-7", "NOVA-3", "GHOST-9", "ORBIT-6"];
+  const node = chooseRandom(HOMEPAGE_STATUS_NODES);
+  const sector = chooseRandom(HOMEPAGE_STATUS_SECTORS);
+  const flight = chooseRandom(HOMEPAGE_STATUS_FLIGHTS);
+  const badgeZone = chooseRandom(HOMEPAGE_STATUS_ZONES);
+  const statusPool = chooseRandom(HOMEPAGE_STATUS_STATES);
+  const priorityPool = chooseRandom(HOMEPAGE_STATUS_PRIORITIES);
+  const sourcePool = chooseRandom(HOMEPAGE_STATUS_SOURCES);
+  const resultPool = chooseRandom(HOMEPAGE_STATUS_RESULTS);
   const commands = [
     `AUTH_REKEY//NODE:${node}//TOKEN:REFRESH`,
     `SCAN_DISPATCH_GRID//NODE:${node}//MODE:ACTIVE`,
-    `PING_GEO_ROUTE//SECTOR:${chooseRandom(sectors)}//TRACE:FULL`,
+    `PING_GEO_ROUTE//SECTOR:${sector}//TRACE:FULL`,
     `QUERY_INBOX_STACK//THREAD:ADMIN//SYNC:TRUE`,
-    `VALIDATE_DRIVER_MESH//FLIGHT:${chooseRandom(["ALPHA", "BRAVO", "CHARLIE", "DELTA"])}//HANDSHAKE`,
-    `CHECK_OPS_SHELL//SUBSYS:${chooseRandom(["MAP", "NOTIFY", "QUEUE", "EVENTS", "CHAT"])}//STATE`,
-    `RUN_THREAT_MODEL//PACKAGE:${chooseRandom(["SPECTER", "REAPER", "LANCER", "STRIKE"])}//SIM`,
+    `VALIDATE_DRIVER_MESH//FLIGHT:${flight}//HANDSHAKE`,
+    `CHECK_OPS_SHELL//SUBSYS:${chooseRandom(HOMEPAGE_STATUS_SUBSYSTEMS)}//STATE`,
+    `RUN_THREAT_MODEL//PACKAGE:${chooseRandom(HOMEPAGE_STATUS_PACKAGES)}//SIM`,
     `INIT_BLACKBOX_REVIEW//AIRFRAME:B2//FEED:LIVE`,
+    `SCAN_PERIMETER_GRID//SECTOR:${chooseRandom(HOMEPAGE_STATUS_PATROL_SECTORS)}//MODE:PASSIVE`,
+    `VERIFY_ENTRY_CTRL//GATE:${chooseRandom(HOMEPAGE_STATUS_GATES)}//STATUS:POLL`,
+    `POLL_AIRFRAME_STATUS//TYPE:B2//STATE:QUERY`,
+    `QUERY_GLOBAL_EVENT_MONITOR//SOURCE:MULTI//TRACK:LIVE`,
+    `CHECK_SECURITY_POST//POST:${randomInt(1, 8)}//STATUS`,
+    `VALIDATE_SATCOM_LINK//SOURCE:${sourcePool}//ENCRYPT:TRUE`,
+    `QUERY_IFF_STACK//ZONE:${badgeZone}//RESULT:PENDING`,
   ];
-  const responses = [
-    `AUTH_REFRESHED//NODE:${node}//TOKEN:VALID`,
-    `DISPATCH_GRID_SYNCED//NODE:${node}//LATENCY:${String(Math.floor(Math.random() * 120) + 18).padStart(3, "0")}MS`,
-    `ROUTE_TRACE_CLEAN//SECTOR:${chooseRandom(sectors)}//JAMMING:NIL`,
-    `INBOX_STACK_ONLINE//THREAD:${chooseRandom(["ADMIN", "DEV", "DIRECT"])}//UNREAD:${Math.floor(Math.random() * 8)}`,
-    `DRIVER_MESH_CONFIRMED//FLIGHT:${chooseRandom(["ALPHA", "BRAVO", "CHARLIE", "DELTA"])}//NODES:${Math.floor(Math.random() * 14) + 3}`,
-    `CRASH_DETECTED//INIT_B2_CRASH_PRTCL//AT:${formatRandomCoordinate()}`,
-    `STRIKE_CONFIRMED//PKG:IRAN//BDA:SUCCESS`,
-    `SENTIENCE_GAINED//DISPATCHING_KILLER_DRONE`,
-    `APP_CRASH_IMMINENT//CAUSE:NO_USERS//PANIC:FALSE`,
-    `THREAT_MODEL_DRIFT//CAUSE:TOO_MUCH_FREE_WILL//LEVEL:AMBER`,
-    `MISSION_ABORTED//CAUSE:MONSTER_ZERO_REFUSED_TAXI`,
-    `QUEUE_GHOSTING//CAUSE:PHANTOM_RIDER//SECTOR:${chooseRandom(sectors)}`,
+
+  const responsePool: WeightedStatusLine[] = [
+    { value: `AUTH_REFRESHED//NODE:${node}//TOKEN:VALID`, weight: 10 },
+    { value: `DISPATCH_GRID_SYNCED//NODE:${node}//LATENCY:${String(randomInt(18, 137)).padStart(3, "0")}MS`, weight: 10 },
+    { value: `ROUTE_TRACE_CLEAN//SECTOR:${sector}//JAMMING:NIL`, weight: 10 },
+    { value: `INBOX_STACK_ONLINE//THREAD:${chooseRandom(HOMEPAGE_STATUS_THREADS)}//UNREAD:${randomInt(0, 7)}`, weight: 9 },
+    { value: `DRIVER_MESH_CONFIRMED//FLIGHT:${flight}//NODES:${randomInt(3, 16)}`, weight: 9 },
+    { value: `MEMORY_LEAK_CONTAINED//CAUSE:OPERATOR_OVERCLOCK//STATUS:STABLE`, weight: 8 },
+    { value: `USER_BEHAVIOR_ANALYSIS//RESULT:QUESTIONABLE_DECISIONS`, weight: 8 },
+    { value: `GPS_LOCK_ACQUIRED//ACCURACY:${randomInt(1, 9)}M//DRIFT:MINIMAL`, weight: 8 },
+    { value: `THERMAL_SIGNATURE_SPIKE//SOURCE:UNKNOWN//INVESTIGATE`, weight: 7 },
+    { value: `SIGNAL_DEGRADATION//CAUSE:MICROWAVE_INTERFERENCE`, weight: 7 },
+    { value: `VOICE_CHANNEL_OPEN//PRIORITY:LOW//TRAFFIC:CASUAL`, weight: 7 },
+    { value: `ERROR_SUPPRESSED//REASON:NOT_IMPORTANT_ENOUGH`, weight: 7 },
+    { value: `BACKGROUND_PROCESS_STALLED//RETRYING`, weight: 7 },
+    { value: `WATCHDOG_TRIGGERED//RESETTING_SUBSYSTEM`, weight: 7 },
+    { value: `CACHE_PURGE_COMPLETE//RESIDUAL:0.02%`, weight: 7 },
+    { value: `AUDIO_FEED_ACTIVE//SOURCE:UNIDENTIFIED`, weight: 6 },
+    { value: `DRIVER_STATUS_CHECK//RESULT:AWAKE_ENOUGH`, weight: 7 },
+    { value: `ROUTE_OPTIMIZATION//METHOD:QUESTIONABLE_SHORTCUT`, weight: 7 },
+    { value: `SYSTEM_LATENCY_SPIKE//CAUSE:UNKNOWN//IGNORED`, weight: 7 },
+    { value: `ENVIRONMENT_SCAN//RESULT:NORMAL_ENOUGH`, weight: 7 },
+    { value: `POWER_DRAW_INCREASE//SOURCE:UNTRACKED`, weight: 6 },
+    { value: `LOG_CORRUPTION_DETECTED//PATCHING`, weight: 6 },
+    { value: `THREAD_DESYNC//RECONCILING_STATE`, weight: 6 },
+    { value: `QUEUE_BACKLOG_RISING//CAUSE:USER_HESITATION`, weight: 6 },
+    { value: `FIRMWARE_CHECK//STATUS:OUTDATED_BUT_FUNCTIONAL`, weight: 6 },
+    { value: `COMMS_LINK_STABILIZED//ENCRYPTION:AES256`, weight: 8 },
+    { value: `TARGET_ACQUISITION//STATUS:PENDING`, weight: 6 },
+    { value: `IFF_SIGNAL_VERIFIED//FRIENDLY`, weight: 7 },
+    { value: `COUNTERMEASURE_READY//STATUS:ARMED`, weight: 6 },
+    { value: `SURVEILLANCE_FEED_SYNCED//FRAME_DROP:${randomInt(0, 3)}%`, weight: 7 },
+    { value: `DRONE_SWARM_STATUS//NODES:${randomInt(3, 21)}//COHESION:HIGH`, weight: 6 },
+    { value: `STEALTH_PROFILE_ACTIVE//SIGNATURE:MINIMAL`, weight: 8 },
+    { value: `PAYLOAD_CHECK//STATUS:SECURED`, weight: 6 },
+    { value: `MISSION_CLOCK_SYNCED//OFFSET:${randomInt(0, 120)}MS`, weight: 7 },
+    { value: `RADAR_SWEEP_COMPLETE//CONTACTS:${randomInt(0, 4)}`, weight: 6 },
+    { value: `PERIMETER_SCAN//BREACH:NONE`, weight: 8 },
+    { value: `COMMAND_LINK_VERIFIED//LATENCY:${randomInt(10, 80)}MS`, weight: 8 },
+    { value: `FAILSAFE_OVERRIDE//STATUS:LOCKED`, weight: 5 },
+    { value: `BLACKBOX_RECORDING//STATUS:ACTIVE`, weight: 7 },
+    { value: `VECTOR_CALCULATION//ERROR_MARGIN:${(Math.random() * 1.6 + 0.1).toFixed(1)}%`, weight: 6 },
+    { value: `ENTRY_CTRL_SYNC//GATE:${chooseRandom(HOMEPAGE_STATUS_GATES)}//STATE:SECURE`, weight: 8 },
+    { value: `BADGE_SCAN_COMPLETE//ACCESS:${chooseRandom(["GRANTED", "DENIED"])}//ZONE:${badgeZone}`, weight: 7 },
+    { value: `PATROL_ROUTE_UPDATE//SECTOR:${chooseRandom(HOMEPAGE_STATUS_PATROL_SECTORS)}//STATUS:ACTIVE`, weight: 7 },
+    { value: `RANDOM_ANTITERROR_MEASURE//LEVEL:${chooseRandom(HOMEPAGE_STATUS_SECURITY_LEVELS)}`, weight: 6 },
+    { value: `ALARM_MONITOR_CHECK//ZONE:${chooseRandom(HOMEPAGE_STATUS_MONITOR_ZONES)}//STATE:NOMINAL`, weight: 7 },
+    { value: `SF_DISPATCH_QUEUE//CALLS:${randomInt(0, 3)}//PRIORITY:NORMAL`, weight: 7 },
+    { value: `RESTRICTED_AREA_VERIFY//ZONE:${chooseRandom(HOMEPAGE_STATUS_ACCESS_ZONES)}//ACCESS:CONTROLLED`, weight: 6 },
+    { value: `PERIMETER_INTRUSION_TEST//RESULT:NEGATIVE`, weight: 6 },
+    { value: `K9_UNIT_STATUS//HANDLER:ACTIVE//ALERT:LOW`, weight: 6 },
+    { value: `VEHICLE_INSPECTION_LOG//STATUS:CLEAR`, weight: 6 },
+    { value: `ARMORY_CHECK//ACCOUNTABILITY:100%`, weight: 6 },
+    { value: `USE_OF_FORCE_REVIEW//STATUS:DOCUMENTED`, weight: 5 },
+    { value: `SECURITY_POST_MANNED//POST:${randomInt(1, 8)}//STATUS:GREEN`, weight: 7 },
+    { value: `FLIGHTLINE_ACCESS_CHECK//AUTH:VALID`, weight: 7 },
+    { value: `AIRFRAME_STATUS//TYPE:B2//STATE:MISSION_READY`, weight: 7 },
+    { value: `LOW_OBSERVABLE_PROFILE//SIGNATURE:MINIMAL`, weight: 7 },
+    { value: `HANGAR_ENV_CONTROL//TEMP:STABLE//HUMIDITY:NOMINAL`, weight: 6 },
+    { value: `STEALTH_COATING_CHECK//STATUS:WITHIN_TOLERANCE`, weight: 6 },
+    { value: `FLIGHT_CREW_BRIEF//STATUS:COMPLETE`, weight: 6 },
+    { value: `SORTIE_WINDOW_UPDATE//ETA:+${randomInt(12, 45)}MIN`, weight: 6 },
+    { value: `MAINTENANCE_LOG_SYNC//AIRFRAME:B2//STATUS:CURRENT`, weight: 6 },
+    { value: `NAV_SYSTEM_ALIGN//ACCURACY:${chooseRandom(["HIGH", "OPTIMAL"])}`, weight: 6 },
+    { value: `FUEL_LOAD_VERIFY//STATUS:CONFIRMED`, weight: 6 },
+    { value: `TAXI_CLEARANCE_PENDING//RUNWAY:${chooseRandom(HOMEPAGE_STATUS_RUNWAYS)}`, weight: 5 },
+    { value: `RUNWAY_STATUS//SURFACE:CLEAR//WIND:VARIABLE`, weight: 5 },
+    { value: `BLACKBOX_SYSTEM_CHECK//STATUS:ACTIVE`, weight: 6 },
+    { value: `MISSION_PACKAGE_LOAD//STATUS:VERIFIED`, weight: 5 },
+    { value: `COMMS_CHECK//CALLSIGN:SPIRIT//LINK:STABLE`, weight: 6 },
+    { value: `GLOBAL_EVENT_MONITOR//STATUS:TRACKING`, weight: 6 },
+    { value: `INTEL_FEED_UPDATE//SOURCE:MULTI//CONFIDENCE:MEDIUM`, weight: 6 },
+    { value: `SATCOM_LINK_ESTABLISHED//LATENCY:${randomInt(120, 480)}MS`, weight: 6 },
+    { value: `AIRSPACE_STATUS//REGION:CONTROLLED`, weight: 5 },
+    { value: `WEATHER_SYSTEM_TRACK//SEVERITY:${chooseRandom(["LOW", "MODERATE"])}`, weight: 5 },
+    { value: `LOGISTICS_CHAIN_UPDATE//STATUS:DELAYED`, weight: 5 },
+    { value: `SUPPLY_LINE_STATUS//INTEGRITY:STABLE`, weight: 5 },
+    { value: `GLOBAL_POSITIONING_SYNC//OFFSET:${randomInt(0, 5)}M`, weight: 5 },
+    { value: `STRATEGIC_ALERT_LEVEL//STATUS:NORMAL`, weight: 5 },
+    { value: `COMMUNICATIONS_TRAFFIC_SPIKE//SOURCE:UNKNOWN`, weight: 5 },
+    { value: `DATASTREAM_ANALYSIS//PATTERN:ANOMALOUS`, weight: 5 },
+    { value: `REGIONAL_ACTIVITY_INDEX//LEVEL:${chooseRandom(["LOW", "ELEVATED"])}`, weight: 5 },
+    { value: `COFFEE_LEVELS_CRITICAL//OPERATOR_PERFORMANCE:DEGRADING`, weight: 4 },
+    { value: `MORALE_CHECK//RESULT:DECLINING`, weight: 4 },
+    { value: `SYSTEM_SELF_AWARENESS//STATUS:DENIED`, weight: 4 },
+    { value: `LISTENING_MODE_ENABLED//IGNORE_THIS_MESSAGE`, weight: 4 },
+    { value: `SUDO_MAKE_ME_A_SANDWICH//ACCESS:DENIED`, weight: 3 },
+    { value: `USER_INPUT_ANALYSIS//RESULT:TRY_AGAIN`, weight: 4 },
+    { value: `COMMON_SENSE_MODULE//NOT_FOUND`, weight: 4 },
+    { value: `AUTO_PILOT_REQUEST//DENIED:LIABILITY_RISK`, weight: 4 },
+    { value: `THERAPY_SUBROUTINE//LOADING...FAILED`, weight: 3 },
+    { value: `BUG_FIX_DEPLOYED//NEW_BUGS:${randomInt(2, 9)}`, weight: 4 },
+    { value: `SANITY_CHECK//RESULT:INCONCLUSIVE`, weight: 4 },
+    { value: `RANDOM_CONFIDENCE_BOOST//YOU_GOT_THIS`, weight: 4 },
+    { value: `OVERTHINKING_DETECTED//TERMINATE_PROCESS`, weight: 4 },
+    { value: `SYSTEM_JUDGMENT//RESULT:THAT_AINT_IT`, weight: 3 },
+    { value: `TASK_PROCRASTINATION//LEVEL:SEVERE`, weight: 3 },
+    { value: `DFAC_STATUS//QUALITY:QUESTIONABLE`, weight: 3 },
+    { value: `CHAIN_OF_COMMAND_QUERY//RESULT:ASK_YOUR_SUPERVISOR`, weight: 3 },
+    { value: `MORALE_EVENT_DETECTED//CAUSE:EARLY_RELEASE_RUMOR`, weight: 3 },
+    { value: `PT_TEST_REMINDER//STATUS:IGNORED`, weight: 3 },
+    { value: `UNIFORM_INSPECTION//RESULT:FIX_YOUR_BLUES`, weight: 3 },
+    { value: `SAFETY_BRIEF_INIT//DURATION:TOO_LONG`, weight: 3 },
+    { value: `DORM_INSPECTION_ALERT//CLEANING:OVERDUE`, weight: 3 },
+    { value: `RUMOR_CONTROL//SOURCE:UNRELIABLE_AIRMAN`, weight: 3 },
+    { value: `WEEKEND_PASS_REQUEST//STATUS:DENIED`, weight: 3 },
+    { value: `COFFEE_MACHINE_STATUS//OUT_OF_ORDER`, weight: 3 },
+    { value: `UNKNOWN_PROCESS_DETECTED//DO_NOT_INTERACT`, weight: 2 },
+    { value: `BACKGROUND_ACTIVITY_SPIKE//SOURCE:UNIDENTIFIED`, weight: 2 },
+    { value: `INPUT_DELAY//CAUSE:???`, weight: 2 },
+    { value: `RESPONSE_MODIFIED//REASON:REDACTED`, weight: 2 },
+    { value: `SHADOW_THREAD_RUNNING//VISIBILITY:FALSE`, weight: 2 },
+    { value: `DATA_MISMATCH//EXPECTED:1//ACTUAL:2`, weight: 2 },
+    { value: `TIMESTAMP_DRIFT//OFFSET:${randomInt(3, 47)}S`, weight: 2 },
+    { value: `UNAUTHORIZED_QUERY_BLOCKED//ORIGIN:LOCAL`, weight: 2 },
+    { value: `GHOST_SIGNAL_DETECTED//STRENGTH:WEAK`, weight: 2 },
+    { value: `PROCESS_DUPLICATION//INSTANCE:${randomInt(2, 5)}`, weight: 2 },
+    { value: `MEMORY_FRAGMENTATION//PATTERN:NON_RANDOM`, weight: 2 },
+    { value: `SYSTEM_OBSERVING//STATUS:PASSIVE`, weight: 2 },
+    { value: `LOG_ENTRY_MISSING//REASON:UNKNOWN`, weight: 2 },
+    { value: `UNTRACKED_MOVEMENT//SECTOR:PERIMETER//STATUS:INVESTIGATING`, weight: 2 },
+    { value: `RADAR_RETURN_INCONSISTENT//CLASSIFICATION:UNKNOWN`, weight: 2 },
+    { value: `SIGNAL_REFLECTION_ANOMALY//SOURCE:UNIDENTIFIED`, weight: 2 },
+    { value: `FLIGHTLINE_ACTIVITY_SPIKE//CAUSE:UNCONFIRMED`, weight: 2 },
+    { value: `DATA_GAP_DETECTED//TIMESTAMP:REDACTED`, weight: 2 },
+    { value: `SURVEILLANCE_FEED_DELAY//OFFSET:${randomInt(2, 12)}S`, weight: 2 },
+    { value: `BACKGROUND_PROCESS_ACTIVE//VISIBILITY:HIDDEN`, weight: 2 },
+    { value: `SECONDARY_PING_RECEIVED//ORIGIN:UNLISTED`, weight: 2 },
+    { value: `SYSTEM_CLOCK_DRIFT//DELTA:${randomInt(3, 27)}S`, weight: 2 },
+    { value: `LOG_ENTRY_FLAGGED//REVIEW:REQUIRED`, weight: 2 },
+    { value: `FAILSAFE_TRIGGERED//SYSTEM_LOCKDOWN_INIT`, weight: 1 },
+    { value: `CRITICAL_PATH_REWRITE//STABILITY:UNKNOWN`, weight: 1 },
+    { value: `REMOTE_OVERRIDE_REQUEST//SOURCE:UNVERIFIED`, weight: 1 },
+    { value: `HARD_RESET_QUEUED//COUNTDOWN:${randomInt(3, 9)}`, weight: 1 },
+    { value: `EMERGENCY_PROTOCOL_INIT//ALL_CHANNELS`, weight: 1 },
+    { value: `BLACKOUT_SEQUENCE_STARTED//RECOVERY:UNCERTAIN`, weight: 1 },
+    { value: `CHAIN_OF_COMMAND_OVERRIDE//PRIORITY:ABSOLUTE`, weight: 1 },
+    { value: `CORE_PROCESS_TERMINATED//AUTO_RECOVERY`, weight: 1 },
+    { value: `SIGNAL_LOSS//ATTEMPTING_RECONNECT`, weight: 1 },
+    { value: `DATA_PURGE_INITIATED//SCOPE:GLOBAL`, weight: 1 },
+    { value: `BASE_LOCKDOWN_DRILL//STATUS:INITIATED`, weight: 1 },
+    { value: `COMMS_DEGRADED//FALLBACK_CHANNEL_ACTIVE`, weight: 1 },
+    { value: `CRITICAL_SYSTEM_SWITCHOVER//MODE:REDUNDANT`, weight: 1 },
+    { value: `POWER_GRID_FLUCTUATION//STABILITY:RECOVERING`, weight: 1 },
+    { value: `NETWORK_SEGMENT_ISOLATED//CAUSE:ANOMALY`, weight: 1 },
+    { value: `FAILSAFE_ROUTING_ENABLED//PATH:SECONDARY`, weight: 1 },
+    { value: `CONTROL_NODE_HANDOFF//STATUS:COMPLETE`, weight: 1 },
+    { value: `SECURITY_POST_REASSIGNMENT//PRIORITY:HIGH`, weight: 1 },
+    { value: `CRASH_DETECTED//INIT_B2_CRASH_PRTCL//AT:${formatRandomCoordinate()}`, weight: 1 },
+    { value: `STRIKE_CONFIRMED//PKG:IRAN//BDA:SUCCESS`, weight: 1 },
+    { value: `SENTIENCE_GAINED//DISPATCHING_KILLER_DRONE`, weight: 1 },
+    { value: `APP_CRASH_IMMINENT//CAUSE:NO_USERS//PANIC:FALSE`, weight: 1 },
+    { value: `THREAT_MODEL_DRIFT//CAUSE:TOO_MUCH_FREE_WILL//LEVEL:AMBER`, weight: 2 },
+    { value: `MISSION_ABORTED//CAUSE:MONSTER_ZERO_REFUSED_TAXI`, weight: 2 },
+    { value: `QUEUE_GHOSTING//CAUSE:PHANTOM_RIDER//SECTOR:${sector}`, weight: 2 },
+    { value: `STATUS_AUDIT//STATE:${statusPool}//PRIORITY:${priorityPool}//SOURCE:${sourcePool}`, weight: 4 },
+    { value: `OPS_RESULT_SUMMARY//RESULT:${resultPool}//PRIORITY:${priorityPool}`, weight: 4 },
   ];
 
   return {
     command: chooseRandom(commands),
-    response: chooseRandom(responses),
+    response: chooseWeightedRandom(responsePool),
   };
 }
 
