@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import afgscLogo from "../afgsc.png";
+import afgscLogo from "../afgsc-shield.png";
 
 const splashSessionKey = "defender-drivers-initial-splash-seen";
 
