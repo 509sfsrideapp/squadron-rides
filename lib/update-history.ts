@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v283",
+    title: "Event POC Email Fallback Removal",
+    summary: "Removed the email-address fallback from event organizer labels so event cards and detail headers now stay name-based instead of showing creator email addresses.",
+  },
+  {
     commit: "v282",
     title: "Event Detail POC Header Placement",
     summary: "Moved the event detail page POC line into the title block so the organizer label appears directly under the event name in the same rank-name format as the event cards.",

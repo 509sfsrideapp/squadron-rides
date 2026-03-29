@@ -230,10 +230,6 @@ export default function EventDetailPage() {
       return `POC: ${creator.name.trim()}`;
     }
 
-    if (eventRecord.createdByEmail?.trim()) {
-      return `POC: ${eventRecord.createdByEmail.trim()}`;
-    }
-
     return "POC: Not listed";
   }, [creatorDirectory, eventRecord]);
 
