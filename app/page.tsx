@@ -1694,7 +1694,7 @@ export default function HomePage() {
                   />
                   <AppTile href="/events" icon={<EventsIcon />} label="EVENTS" />
                   <AppTile href="/marketplace" icon={<MarketplaceIcon />} label="MARKETPLACE" />
-                  <AppTile href="/q-and-a" icon={<QuestionMarkIcon />} label="Q&A" />
+                  <AppTile href="/q-and-a" icon={<QuestionMarkIcon />} label="FORUMS" />
                   <AppTile href="/iso" icon={<MagnifyingGlassIcon />} label="ISO" />
                   {showDevTile ? <AppTile href="/developer" icon={<DevIcon />} label="Dev" /> : null}
                   {showAdminTile ? <AppTile href="/admin" icon={<AdminIcon />} label="Admin Dashboard" /> : null}

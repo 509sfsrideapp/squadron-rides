@@ -39,11 +39,11 @@ export type MisconductReportRecord = {
 
 export function formatMisconductTargetTypeLabel(targetType: MisconductTargetType) {
   if (targetType === "qa_post") {
-    return "Q&A Post";
+    return "Forum Post";
   }
 
   if (targetType === "qa_comment") {
-    return "Q&A Comment";
+    return "Forum Comment";
   }
 
   if (targetType === "event") {
@@ -70,4 +70,3 @@ export function buildMisconductPreviewText(value?: string | null, maxLength = 22
 
   return `${normalized.slice(0, maxLength).trimEnd()}...`;
 }
-

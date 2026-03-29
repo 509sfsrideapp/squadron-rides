@@ -106,7 +106,7 @@ export default function QAPostComposer({
             fontFamily: "var(--font-display)",
           }}
         >
-          New discussion post
+          New forum post
         </p>
         <h1 style={{ margin: 0 }}>Create Post</h1>
       </div>

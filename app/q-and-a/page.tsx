@@ -118,14 +118,14 @@ export default function QAndAPage() {
   const showAdminIdentity = isAdminEmail(user?.email);
 
   if (loading) {
-    return <main style={{ padding: 20 }}><AppLoadingState title="Loading Q&A" caption="Opening the discussion feed." /></main>;
+    return <main style={{ padding: 20 }}><AppLoadingState title="Loading Forums" caption="Opening the discussion feed." /></main>;
   }
 
   if (!user) {
     return (
       <main style={{ padding: 20 }}>
         <HomeIconLink />
-        <h1>Q&amp;A</h1>
+        <h1>Forums</h1>
         <p>You need to log in first.</p>
       </main>
     );
@@ -148,9 +148,9 @@ export default function QAndAPage() {
                   fontFamily: "var(--font-display)",
                 }}
               >
-                Discussion feed
+                Forums feed
               </p>
-              <h1 style={{ margin: "4px 0 0" }}>Q&amp;A</h1>
+              <h1 style={{ margin: "4px 0 0" }}>FORUMS</h1>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <span style={infoPillStyle}>{visiblePosts.length} posts shown</span>
                 <span style={infoPillStyle}>Threaded discussion enabled</span>

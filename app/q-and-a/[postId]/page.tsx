@@ -186,7 +186,7 @@ export default function QAPostDetailPage() {
     return (
       <main style={{ padding: 20 }}>
         <HomeIconLink />
-        <h1>Q&amp;A Post</h1>
+        <h1>Forum Post</h1>
         <p>You need to log in first.</p>
       </main>
     );

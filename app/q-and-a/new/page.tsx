@@ -30,7 +30,7 @@ export default function NewQAPostPage() {
     return (
       <main style={{ padding: 20 }}>
         <HomeIconLink />
-        <h1>Create Post</h1>
+        <h1>Create Forum Post</h1>
         <p>You need to log in first.</p>
       </main>
     );

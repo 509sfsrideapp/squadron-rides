@@ -215,7 +215,7 @@ export default function QAMyPostsPage() {
               }}
             >
               <p style={{ margin: 0, color: "#cbd5e1" }}>
-                You have not created any Q&amp;A posts yet.
+                You have not created any forum posts yet.
               </p>
               <div>
                 <Link href="/q-and-a/new" style={primaryButtonStyle}>
