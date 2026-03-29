@@ -213,6 +213,11 @@ export function formatEventTypeLabel(type: EventType) {
   return EVENT_TYPE_OPTIONS.find((option) => option.value === type)?.label || "Other";
 }
 
+export function formatEventLocationLabel(location?: string | null) {
+  const trimmedLocation = location?.trim() || "";
+  return trimmedLocation ? `@${trimmedLocation}` : "@Location TBD";
+}
+
 export function formatEventDateEntry(entry: EventDateEntry) {
   const start = formatDateText(entry.startDate);
   const end = normalizeEndDate(entry.endDate, entry.startDate);

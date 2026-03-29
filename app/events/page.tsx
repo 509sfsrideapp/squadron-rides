@@ -7,7 +7,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
-import { EVENT_TYPE_OPTIONS, eventMatchesDateRange, eventMatchesType, formatEventTypeLabel, getEventCardDateLabel, isUpcomingEvent, sortEventsByUpcomingDate, type EventRecord } from "../../lib/events";
+import { EVENT_TYPE_OPTIONS, eventMatchesDateRange, eventMatchesType, formatEventLocationLabel, formatEventTypeLabel, getEventCardDateLabel, isUpcomingEvent, sortEventsByUpcomingDate, type EventRecord } from "../../lib/events";
 
 type EventCreatorProfile = {
   name?: string | null;
@@ -375,7 +375,7 @@ export default function EventsPage() {
 
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                   <span style={infoPillStyle}>{getEventCardDateLabel(event)}</span>
-                  <span style={infoPillStyle}>{event.location}</span>
+                  <span style={infoPillStyle}>{formatEventLocationLabel(event.location)}</span>
                   {typeof event.neededPeople === "number" && event.neededPeople > 0 ? (
                     <span style={infoPillStyle}>{event.neededPeople} needed</span>
                   ) : null}

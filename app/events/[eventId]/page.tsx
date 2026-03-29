@@ -9,7 +9,7 @@ import AppLoadingState from "../../components/AppLoadingState";
 import FullscreenImageViewer from "../../components/FullscreenImageViewer";
 import HomeIconLink from "../../components/HomeIconLink";
 import { auth, db } from "../../../lib/firebase";
-import { formatEventDateEntry, formatEventTypeLabel, formatRecurringRule, getEventCardDateLabel, getRecurringOccurrenceDateTexts, type EventRecord } from "../../../lib/events";
+import { formatEventDateEntry, formatEventLocationLabel, formatEventTypeLabel, formatRecurringRule, getEventCardDateLabel, getRecurringOccurrenceDateTexts, type EventRecord } from "../../../lib/events";
 
 type UserProfile = {
   firstName?: string | null;
@@ -449,7 +449,7 @@ export default function EventDetailPage() {
             >
               {organizerLabel}
             </p>
-            <p style={{ margin: 0, color: "#cbd5e1", lineHeight: 1.55 }}>{eventRecord.location}</p>
+            <p style={{ margin: 0, color: "#cbd5e1", lineHeight: 1.55 }}>{formatEventLocationLabel(eventRecord.location)}</p>
             {eventRecord.address ? (
               <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.55 }}>{eventRecord.address}</p>
             ) : null}

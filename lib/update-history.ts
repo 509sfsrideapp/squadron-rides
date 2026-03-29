@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v295",
+    title: "Event Location Prefix Formatting",
+    summary: "Updated the Events board and event detail pages so location labels consistently render with an @ prefix, matching the intended event-location callout style.",
+  },
+  {
     commit: "v294",
     title: "Clocked-In Driver Tile Pulse",
     summary: "Added a faint green pulse to the homepage Driver Dashboard tile while a driver is actively clocked in, without changing the tile's size or layout.",
