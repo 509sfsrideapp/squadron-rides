@@ -887,8 +887,11 @@ export default function RideStatusPage() {
               </span>
             </button>
 
-            {timelineExpanded ? (
-              <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+            <div
+              className={`app-collapsible-panel${timelineExpanded ? " app-collapsible-panel-open" : ""}`}
+              style={{ marginTop: timelineExpanded ? 12 : 0, display: "grid", gap: 10, maxHeight: timelineExpanded ? 520 : 0 }}
+              aria-hidden={!timelineExpanded}
+            >
                 {lifecycleSteps
                   .filter((step) => step.complete || step.current)
                   .map((step) => (
@@ -910,7 +913,6 @@ export default function RideStatusPage() {
                     </div>
                   ))}
               </div>
-            ) : null}
           </div>
         </>
       )}

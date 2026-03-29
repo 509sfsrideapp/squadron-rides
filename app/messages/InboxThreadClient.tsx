@@ -266,8 +266,11 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
                   </div>
                 </button>
 
-                {expandedPostId === post.id ? (
-                  <div style={{ padding: "0 16px 16px" }}>
+                <div
+                  className={`app-collapsible-panel${expandedPostId === post.id ? " app-collapsible-panel-open" : ""}`}
+                  style={{ padding: expandedPostId === post.id ? "0 16px 16px" : "0 16px 0", maxHeight: expandedPostId === post.id ? 1200 : 0 }}
+                  aria-hidden={expandedPostId !== post.id}
+                >
                     <div style={{ display: "grid", gridTemplateColumns: post.imageUrl ? "120px minmax(0, 1fr)" : "minmax(0, 1fr)", gap: 14, alignItems: "start" }}>
                       {post.imageUrl ? (
                         <button
@@ -362,7 +365,6 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
                       </div>
                     </div>
                   </div>
-                ) : null}
               </div>
             );
           }) : fallbackMessages.map((message) => (

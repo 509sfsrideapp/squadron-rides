@@ -250,17 +250,11 @@ export default function EventsPage() {
           </div>
 
           <div
+            className={`app-collapsible-panel${filtersExpanded ? " app-collapsible-panel-open" : ""}`}
             style={{
               display: "grid",
               gap: 12,
-              overflow: "hidden",
               maxHeight: filtersExpanded ? 320 : 0,
-              opacity: filtersExpanded ? 1 : 0,
-              transform: filtersExpanded ? "translateY(0) scale(1)" : "translateY(-8px) scale(0.98)",
-              transformOrigin: "top center",
-              transition:
-                "max-height 240ms ease, opacity 180ms ease, transform 200ms ease",
-              pointerEvents: filtersExpanded ? "auto" : "none",
             }}
             aria-hidden={!filtersExpanded}
           >

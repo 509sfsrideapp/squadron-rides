@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v268",
+    title: "Shared Panel Motion Pass",
+    summary: "Applied the smoother dropdown-style open and close motion to the app’s main expandable panels, including the Events filter, account delete form, rider and driver timelines, admin account detail expansion, and inbox message expansion.",
+  },
+  {
     commit: "v267",
     title: "Events Filter Motion Polish",
     summary: "Made the main Events Filter label slightly larger and added a smoother open/close transition to the collapsible filter panel so it expands more like the existing profile dropdown behavior.",

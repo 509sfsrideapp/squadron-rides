@@ -694,8 +694,11 @@ export default function AccountPage() {
             </button>
           </div>
 
-          {deletePanelOpen ? (
-            <div style={{ marginTop: 16, display: "grid", gap: 12 }}>
+          <div
+            className={`app-collapsible-panel${deletePanelOpen ? " app-collapsible-panel-open" : ""}`}
+            style={{ marginTop: deletePanelOpen ? 16 : 0, display: "grid", gap: 12, maxHeight: deletePanelOpen ? 560 : 0 }}
+            aria-hidden={!deletePanelOpen}
+          >
               <p style={{ margin: 0, color: "#fecaca" }}>
                 Confirm your current vehicle details exactly as saved in your account, then enter your password.
               </p>
@@ -734,7 +737,6 @@ export default function AccountPage() {
                 </p>
               ) : null}
             </div>
-          ) : null}
         </div>
 
         <button type="button" onClick={handleSave} disabled={saving || uploadingPhoto}>

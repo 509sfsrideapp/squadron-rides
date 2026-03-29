@@ -424,8 +424,11 @@ export default function AdminAccountsPage() {
                   </button>
                 </div>
 
-                {expanded ? (
-                  <div style={{ marginTop: 16 }}>
+                <div
+                  className={`app-collapsible-panel${expanded ? " app-collapsible-panel-open" : ""}`}
+                  style={{ marginTop: expanded ? 16 : 0, maxHeight: expanded ? 760 : 0 }}
+                  aria-hidden={!expanded}
+                >
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
                       <span style={{ padding: "4px 10px", borderRadius: 999, backgroundColor: appUser.accountFrozen ? "rgba(127, 29, 29, 0.92)" : "rgba(10, 51, 44, 0.88)", color: "white", fontSize: 12 }}>
                         {appUser.accountFrozen ? "Frozen" : "Active"}
@@ -486,7 +489,6 @@ export default function AdminAccountsPage() {
                       </button>
                     </div>
                   </div>
-                ) : null}
               </div>
             );
           })
