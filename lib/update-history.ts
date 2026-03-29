@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v320",
+    title: "User Preview Motion Polish",
+    summary: "Smoothed the shared user-preview card so profile detail expansion now fades and slides open and closed cleanly everywhere that new messaging profile preview is used.",
+  },
+  {
     commit: "v319",
     title: "Direct Messages App",
     summary: "Added a full Messages app with separate Direct, Marketplace, ISO, and System buckets, plus secure participant-based direct-message threads, reusable user preview cards with Message actions, and listing/request message launches from Marketplace and ISO detail pages.",

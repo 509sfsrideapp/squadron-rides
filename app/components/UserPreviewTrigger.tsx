@@ -28,6 +28,29 @@ type UserPreviewTriggerProps = {
   triggerStyle?: React.CSSProperties;
 };
 
+const infoLabelStyle: React.CSSProperties = {
+  margin: 0,
+  color: "#94a3b8",
+  fontSize: 10,
+  letterSpacing: "0.14em",
+  textTransform: "uppercase",
+  fontFamily: "var(--font-display)",
+};
+
+const infoPillStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  padding: "7px 10px",
+  borderRadius: 999,
+  border: "1px solid rgba(126, 142, 160, 0.16)",
+  background: "rgba(17, 24, 39, 0.62)",
+  color: "#dbe7f5",
+  fontSize: 11,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  fontFamily: "var(--font-display)",
+};
+
 export default function UserPreviewTrigger({
   userId,
   displayLabel,
@@ -37,12 +60,15 @@ export default function UserPreviewTrigger({
 }: UserPreviewTriggerProps) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [shouldRender, setShouldRender] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [profile, setProfile] = useState<UserPreviewProfile | null>(null);
   const currentUserId = auth.currentUser?.uid || null;
   const canOpen = Boolean(userId && !disabled);
+  const canMessage = Boolean(userId && currentUserId && userId !== currentUserId);
 
   useEffect(() => {
     if (!open || !userId) {
@@ -85,6 +111,18 @@ export default function UserPreviewTrigger({
     };
   }, [open, userId]);
 
+  useEffect(() => {
+    if (open) {
+      setShouldRender(true);
+      const animationFrame = window.requestAnimationFrame(() => setVisible(true));
+      return () => window.cancelAnimationFrame(animationFrame);
+    }
+
+    setVisible(false);
+    const timeout = window.setTimeout(() => setShouldRender(false), 220);
+    return () => window.clearTimeout(timeout);
+  }, [open]);
+
   const displayName = useMemo(() => {
     if (profile) {
       const nextLabel = buildQAAuthorLabel(profile, null);
@@ -97,7 +135,6 @@ export default function UserPreviewTrigger({
   }, [displayLabel, profile]);
 
   const previewPhotoUrl = profile?.riderPhotoUrl?.trim() || profile?.driverPhotoUrl?.trim() || "";
-  const canMessage = Boolean(userId && currentUserId && userId !== currentUserId);
 
   return (
     <>
@@ -107,11 +144,9 @@ export default function UserPreviewTrigger({
         onClick={(event) => {
           event.preventDefault();
           event.stopPropagation();
-          if (!canOpen) {
-            return;
+          if (canOpen) {
+            setOpen(true);
           }
-
-          setOpen(true);
         }}
         style={{
           padding: 0,
@@ -126,7 +161,7 @@ export default function UserPreviewTrigger({
         {children}
       </button>
 
-      {open ? (
+      {shouldRender ? (
         <div
           role="dialog"
           aria-modal="true"
@@ -135,11 +170,12 @@ export default function UserPreviewTrigger({
             position: "fixed",
             inset: 0,
             zIndex: 120,
-            background: "rgba(2, 6, 23, 0.68)",
+            background: visible ? "rgba(2, 6, 23, 0.68)" : "rgba(2, 6, 23, 0)",
             display: "flex",
             alignItems: "flex-end",
             justifyContent: "center",
             padding: "1rem",
+            transition: "background-color 220ms ease",
           }}
         >
           <div
@@ -154,6 +190,9 @@ export default function UserPreviewTrigger({
               padding: "1rem",
               display: "grid",
               gap: 14,
+              opacity: visible ? 1 : 0,
+              transform: visible ? "translateY(0)" : "translateY(22px)",
+              transition: "opacity 220ms ease, transform 220ms ease",
             }}
           >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 12 }}>
@@ -179,18 +218,7 @@ export default function UserPreviewTrigger({
                   {!previewPhotoUrl ? displayName.charAt(0).toUpperCase() : null}
                 </div>
                 <div style={{ minWidth: 0, display: "grid", gap: 4 }}>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: "#94a3b8",
-                      fontSize: 10,
-                      letterSpacing: "0.14em",
-                      textTransform: "uppercase",
-                      fontFamily: "var(--font-display)",
-                    }}
-                  >
-                    User Preview
-                  </p>
+                  <p style={infoLabelStyle}>User Preview</p>
                   <h2 style={{ margin: 0, fontSize: "1.05rem", lineHeight: 1.3 }}>{displayName}</h2>
                   {profile?.username?.trim() ? (
                     <p style={{ margin: 0, color: "#9fb1c7", fontSize: 13 }}>@{profile.username.trim()}</p>
@@ -218,88 +246,30 @@ export default function UserPreviewTrigger({
               </button>
             </div>
 
-            {loading ? (
-              <p style={{ margin: 0, color: "#94a3b8" }}>Loading user details...</p>
-            ) : (
+            {loading ? <p style={{ margin: 0, color: "#94a3b8" }}>Loading user details...</p> : null}
+
+            {!loading ? (
               <>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  {profile?.rank?.trim() ? (
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        padding: "7px 10px",
-                        borderRadius: 999,
-                        border: "1px solid rgba(126, 142, 160, 0.16)",
-                        background: "rgba(17, 24, 39, 0.62)",
-                        color: "#dbe7f5",
-                        fontSize: 11,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        fontFamily: "var(--font-display)",
-                      }}
-                    >
-                      {profile.rank.trim()}
-                    </span>
-                  ) : null}
-                  {profile?.flight?.trim() ? (
-                    <span
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        padding: "7px 10px",
-                        borderRadius: 999,
-                        border: "1px solid rgba(126, 142, 160, 0.16)",
-                        background: "rgba(17, 24, 39, 0.62)",
-                        color: "#dbe7f5",
-                        fontSize: 11,
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        fontFamily: "var(--font-display)",
-                      }}
-                    >
-                      {profile.flight.trim()}
-                    </span>
-                  ) : null}
+                  {profile?.rank?.trim() ? <span style={infoPillStyle}>{profile.rank.trim()}</span> : null}
+                  {profile?.flight?.trim() ? <span style={infoPillStyle}>{profile.flight.trim()}</span> : null}
                 </div>
 
                 {profile?.jobDescription?.trim() ? (
                   <div style={{ display: "grid", gap: 4 }}>
-                    <p
-                      style={{
-                        margin: 0,
-                        color: "#94a3b8",
-                        fontSize: 10,
-                        letterSpacing: "0.14em",
-                        textTransform: "uppercase",
-                        fontFamily: "var(--font-display)",
-                      }}
-                    >
-                      Job Description
-                    </p>
+                    <p style={infoLabelStyle}>Job Description</p>
                     <p style={{ margin: 0, color: "#dbe7f5", lineHeight: 1.55 }}>{profile.jobDescription.trim()}</p>
                   </div>
                 ) : null}
 
                 {profile?.bio?.trim() ? (
                   <div style={{ display: "grid", gap: 4 }}>
-                    <p
-                      style={{
-                        margin: 0,
-                        color: "#94a3b8",
-                        fontSize: 10,
-                        letterSpacing: "0.14em",
-                        textTransform: "uppercase",
-                        fontFamily: "var(--font-display)",
-                      }}
-                    >
-                      Bio
-                    </p>
+                    <p style={infoLabelStyle}>Bio</p>
                     <p style={{ margin: 0, color: "#cbd5e1", lineHeight: 1.6 }}>{profile.bio.trim()}</p>
                   </div>
                 ) : null}
               </>
-            )}
+            ) : null}
 
             {errorMessage ? <p style={{ margin: 0, color: "#fca5a5" }}>{errorMessage}</p> : null}
 
@@ -319,9 +289,7 @@ export default function UserPreviewTrigger({
                       await openDirectMessage(router, userId);
                       setOpen(false);
                     } catch (error) {
-                      setErrorMessage(
-                        error instanceof Error ? error.message : "Could not open the direct thread."
-                      );
+                      setErrorMessage(error instanceof Error ? error.message : "Could not open the direct thread.");
                     } finally {
                       setMessageLoading(false);
                     }
