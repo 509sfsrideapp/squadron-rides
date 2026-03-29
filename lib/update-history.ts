@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v315",
+    title: "Signup Photo Status Cleanup",
+    summary: "Removed the extra bottom-of-page profile photo ready message from account creation so signup only shows the upload progress inline with the photo field instead of surfacing a redundant page-level status.",
+  },
+  {
     commit: "v314",
     title: "Forums Thread Compact Layout",
     summary: "Refactored the forum comment thread into a denser mobile-first layout with tighter comment cards, smaller utility actions, slimmer vote controls, and reduced nesting spacing so more discussion fits on screen without losing the tactical thread structure.",

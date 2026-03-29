@@ -52,6 +52,7 @@ export default function SignupPage() {
   const [carModel, setCarModel] = useState(() => initialDraft?.carModel || "");
   const [carColor, setCarColor] = useState(() => initialDraft?.carColor || "");
   const [statusMessage, setStatusMessage] = useState("");
+  const [photoStatusMessage, setPhotoStatusMessage] = useState("");
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
@@ -261,7 +262,6 @@ export default function SignupPage() {
             value={profilePhotoUrl}
             onChange={(nextValue) => {
               setProfilePhotoUrl(nextValue);
-              setStatusMessage(nextValue ? "Profile photo is ready and will be saved with your account." : "");
             }}
             cropShape="circle"
             previewSize={96}
@@ -269,10 +269,10 @@ export default function SignupPage() {
             maxEncodedLength={180000}
             disabled={uploadingPhoto}
             helperText="Use a clear photo that shows what you look like. This is required before your account can be created."
-            statusMessage={uploadingPhoto ? "Preparing profile photo..." : ""}
+            statusMessage={photoStatusMessage}
             onStatusMessageChange={(message) => {
               setUploadingPhoto(message.includes("Preparing") || message.includes("Saving"));
-              setStatusMessage(message);
+              setPhotoStatusMessage(message === "Image ready." ? "" : message);
             }}
           />
         </div>
