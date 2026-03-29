@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v302",
+    title: "ISO App Placeholder",
+    summary: "Added a new ISO app tile to the homepage with a magnifying-glass icon and connected it to a live placeholder page for future buildout.",
+  },
+  {
     commit: "v301",
     title: "Homepage Admin App Tile",
     summary: "Moved the admin dashboard entry onto the homepage Applications grid as the last app tile, while keeping it visible only to the admin account and removing the old separate button.",

@@ -603,6 +603,25 @@ function QuestionMarkIcon() {
   );
 }
 
+function MagnifyingGlassIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 64 64"
+      width="34"
+      height="34"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="28" cy="28" r="13" />
+      <path d="m38 38 11 11" />
+    </svg>
+  );
+}
+
 function DevIcon() {
   return (
     <svg
@@ -879,10 +898,10 @@ export default function HomePage() {
   const userRoleLabel = profile?.flight ? `${profile.rank || "Member"} • ${profile.flight}` : profile?.rank || "Member";
   const showDevTile = Boolean(user);
   const showAdminTile = Boolean(user && isAdminEmail(user.email));
-  const visibleAppTileCount = 4 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
+  const visibleAppTileCount = 5 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
   const appTilePlaceholderCount = Math.max(0, 9 - visibleAppTileCount);
-  const totalOperationalApps = (driverReady ? 1 : 0) + 3 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
-  const totalVisibleApps = 4 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
+  const totalOperationalApps = (driverReady ? 1 : 0) + 4 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
+  const totalVisibleApps = 5 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
   const authTokenUserLabel =
     profile?.lastName?.trim() && profile?.firstName?.trim()
       ? `${profile.lastName.trim().toUpperCase()}, ${profile.firstName.trim().toUpperCase()}${profile.rank?.trim() ? ` (${profile.rank.trim()})` : ""}`
@@ -1660,6 +1679,7 @@ export default function HomePage() {
                   <AppTile href="/events" icon={<EventsIcon />} label="EVENTS" />
                   <AppTile href="/marketplace" icon={<MarketplaceIcon />} label="MARKETPLACE" />
                   <AppTile href="/q-and-a" icon={<QuestionMarkIcon />} label="Q&A" />
+                  <AppTile href="/iso" icon={<MagnifyingGlassIcon />} label="ISO" />
                   {showDevTile ? <AppTile href="/developer" icon={<DevIcon />} label="Dev" /> : null}
                   {showAdminTile ? <AppTile href="/admin" icon={<AdminIcon />} label="Admin Dashboard" /> : null}
                   {Array.from({ length: appTilePlaceholderCount }).map((_, index) => (
