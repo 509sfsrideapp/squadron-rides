@@ -157,9 +157,6 @@ export default function QAPostComposer({
           <span style={{ fontSize: 13, letterSpacing: "0.06em", textTransform: "uppercase", fontFamily: "var(--font-display)" }}>
             Post Anonymously
           </span>
-          <span style={{ color: "#94a3b8", fontSize: 13, lineHeight: 1.5 }}>
-            Your post will show the author as Anon. Admin can still see who posted it.
-          </span>
         </span>
       </label>
 

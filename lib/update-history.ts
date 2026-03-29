@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v311",
+    title: "Q&A Anonymous Copy Cleanup",
+    summary: "Removed the extra anonymous-post helper sentence in the Q&A post composer so the checkbox no longer calls out admin visibility there.",
+  },
+  {
     commit: "v310",
     title: "Signup Job Description Field",
     summary: "Added an optional job description field to account creation directly under Flight, and wired it through the signup draft and account-creation save flow so it lands on the user profile immediately.",
