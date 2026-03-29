@@ -203,12 +203,8 @@ export default function EventsPage() {
                 Scheduling and group coordination board
               </p>
               <h1 style={{ margin: "4px 0 0" }}>Events</h1>
-              <p style={{ margin: 0, color: "#cbd5e1", maxWidth: 560, lineHeight: 1.55 }}>
-                Track the nearest upcoming events first, narrow the board by type or date, and jump straight into full event details from any card.
-              </p>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 <span style={infoPillStyle}>{filteredEvents.length} upcoming shown</span>
-                <span style={infoPillStyle}>Sorted nearest first</span>
                 {nextEvent ? <span style={infoPillStyle}>Next up: {nextEvent.name}</span> : null}
               </div>
             </div>

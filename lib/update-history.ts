@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v258",
+    title: "Events Header Copy Trim",
+    summary: "Removed the extra helper sentence under the Events title and dropped the sorted-nearest-first status pill so the page header stays cleaner.",
+  },
+  {
     commit: "v257",
     title: "Signup Photo Helper Cleanup",
     summary: "Removed the extra standalone profile-photo-required sentence from the account creation page while leaving the actual required-photo behavior and uploader helper text in place.",
