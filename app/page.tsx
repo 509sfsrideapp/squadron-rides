@@ -364,12 +364,14 @@ function AppTile({
   label,
   disabled = false,
   badgeCount = 0,
+  pulseGreen = false,
 }: {
   href?: string;
   icon: React.ReactNode;
   label?: string;
   disabled?: boolean;
   badgeCount?: number;
+  pulseGreen?: boolean;
 }) {
   const sharedStyle: React.CSSProperties = {
     minHeight: 120,
@@ -445,6 +447,7 @@ function AppTile({
         background: "linear-gradient(180deg, rgba(20, 26, 33, 0.96) 0%, rgba(10, 13, 18, 0.99) 100%)",
         border: "1px solid rgba(126, 142, 160, 0.22)",
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 16px 30px rgba(0, 0, 0, 0.24)",
+        animation: pulseGreen ? "driver-dashboard-pulse 4.2s ease-in-out infinite" : undefined,
       }}
     >
       {iconShell}
@@ -1599,6 +1602,7 @@ export default function HomePage() {
                     icon={driverReady ? <SteeringWheelIcon /> : <NullStatusIcon text={driverUnavailableLabel} />}
                     label={driverReady ? "Driver Dashboard" : undefined}
                     badgeCount={visibleDriverRequestCount}
+                    pulseGreen={Boolean(driverReady && profile?.available)}
                   />
                   <AppTile href="/events" icon={<EventsIcon />} label="EVENTS" />
                   <AppTile href="/marketplace" icon={<MarketplaceIcon />} label="MARKETPLACE" />

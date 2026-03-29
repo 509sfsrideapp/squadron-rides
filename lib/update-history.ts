@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v294",
+    title: "Clocked-In Driver Tile Pulse",
+    summary: "Added a faint green pulse to the homepage Driver Dashboard tile while a driver is actively clocked in, without changing the tile's size or layout.",
+  },
+  {
     commit: "v293",
     title: "Q&A Comment Header Layout Tightening",
     summary: "Moved the non-vote Q&A comment actions up inline with the author line so the comment cards read cleaner and the header controls stay more compact.",

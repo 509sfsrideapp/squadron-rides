@@ -333,6 +333,26 @@ button:disabled {
   }
 }
 
+@keyframes driver-dashboard-pulse {
+  0%,
+  100% {
+    filter: brightness(1) saturate(1);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.04),
+      0 16px 30px rgba(0, 0, 0, 0.24),
+      0 0 0 1px rgba(74, 222, 128, 0.03);
+  }
+
+  50% {
+    filter: brightness(1.03) saturate(1.03);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.05),
+      0 18px 34px rgba(0, 0, 0, 0.26),
+      0 0 16px rgba(34, 197, 94, 0.14),
+      0 0 0 1px rgba(74, 222, 128, 0.14);
+  }
+}
+
 .loading-screen {
   min-height: calc(100svh - env(safe-area-inset-top));
   display: grid;
