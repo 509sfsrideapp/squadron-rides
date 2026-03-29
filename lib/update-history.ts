@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v279",
+    title: "Initial Splash Steam Removal",
+    summary: "Removed the vault-door steam vent effect from the first-open loading screen while keeping the newer crest artwork in place.",
+  },
+  {
     commit: "v278",
     title: "Initial Splash Crest Swap",
     summary: "Replaced the first-open loading screen logo with the new AFGSC shield artwork provided for the vault-door splash.",

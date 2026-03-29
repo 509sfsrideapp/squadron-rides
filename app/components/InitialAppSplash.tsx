@@ -79,11 +79,6 @@ export default function InitialAppSplash({ forceReplay = false }: InitialAppSpla
           </div>
         </div>
       </div>
-      <div className="initial-app-splash-seam" aria-hidden="true">
-        <span className="initial-app-splash-steam initial-app-splash-steam-a" />
-        <span className="initial-app-splash-steam initial-app-splash-steam-b" />
-        <span className="initial-app-splash-steam initial-app-splash-steam-c" />
-      </div>
       <div className="initial-app-splash-core">
         <div className="initial-app-splash-panel">
           <div className="initial-app-splash-grid" aria-hidden="true" />

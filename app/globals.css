@@ -556,60 +556,6 @@ button:disabled {
   animation: splash-door-open-right 2000ms ease-in-out forwards;
 }
 
-.initial-app-splash-seam {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: min(1.75rem, 4vw);
-  transform: translateX(-50%);
-  z-index: 3;
-  pointer-events: none;
-}
-
-.initial-app-splash-seam::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  width: 1px;
-  transform: translateX(-50%);
-  background: linear-gradient(180deg, transparent 0%, rgba(182, 196, 206, 0.16) 20%, rgba(182, 196, 206, 0.26) 50%, rgba(182, 196, 206, 0.16) 80%, transparent 100%);
-  opacity: 0.6;
-}
-
-.initial-app-splash-hidden .initial-app-splash-seam::before {
-  animation: splash-seam-fade 1100ms ease-out forwards;
-}
-
-.initial-app-splash-steam {
-  position: absolute;
-  left: 50%;
-  bottom: 42%;
-  width: clamp(2.1rem, 10vw, 4.2rem);
-  aspect-ratio: 1.25 / 1;
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at 50% 60%, rgba(236, 246, 255, 0.24) 0%, rgba(203, 224, 236, 0.13) 30%, rgba(148, 163, 184, 0.05) 55%, transparent 78%);
-  filter: blur(10px);
-  opacity: 0;
-  transform: translate(-50%, 0) scale(0.3);
-  mix-blend-mode: screen;
-}
-
-.initial-app-splash-hidden .initial-app-splash-steam-a {
-  animation: splash-steam-puff-a 820ms ease-out 170ms forwards;
-}
-
-.initial-app-splash-hidden .initial-app-splash-steam-b {
-  animation: splash-steam-puff-b 860ms ease-out 260ms forwards;
-}
-
-.initial-app-splash-hidden .initial-app-splash-steam-c {
-  animation: splash-steam-puff-c 900ms ease-out 340ms forwards;
-}
-
 .initial-app-splash-core {
   position: relative;
   z-index: 2;
@@ -803,57 +749,6 @@ button:disabled {
   }
   to {
     transform: translateX(105%);
-  }
-}
-
-@keyframes splash-seam-fade {
-  0% {
-    opacity: 0.6;
-  }
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes splash-steam-puff-a {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, 0.25rem) scale(0.24);
-  }
-  25% {
-    opacity: 0.38;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(calc(-50% - 0.7rem), -2.2rem) scale(1);
-  }
-}
-
-@keyframes splash-steam-puff-b {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, 0.4rem) scale(0.2);
-  }
-  24% {
-    opacity: 0.28;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(calc(-50% + 0.05rem), -2.8rem) scale(1.08);
-  }
-}
-
-@keyframes splash-steam-puff-c {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, 0.3rem) scale(0.22);
-  }
-  22% {
-    opacity: 0.32;
-  }
-  100% {
-    opacity: 0;
-    transform: translate(calc(-50% + 0.85rem), -2.35rem) scale(0.96);
   }
 }
 
