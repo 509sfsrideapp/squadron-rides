@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v277",
+    title: "Initial Splash Steam Venting",
+    summary: "Added faint, quick steam puffs along the center seam of the first-open vault-door loading animation so the doors feel more pressurized as they part.",
+  },
+  {
     commit: "v276",
     title: "Admin Messages Tool Consolidation",
     summary: "Moved the admin inbox composer and sent-message manager off the main admin dashboard and behind a dedicated Admin Messages entry with separate send and review pages.",
