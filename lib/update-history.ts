@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v310",
+    title: "Signup Job Description Field",
+    summary: "Added an optional job description field to account creation directly under Flight, and wired it through the signup draft and account-creation save flow so it lands on the user profile immediately.",
+  },
+  {
     commit: "v309",
     title: "Admin In-App Account Editing",
     summary: "Added a full native account edit form inside the admin account viewer so admins can update user profile fields, contact info, rank and flight, address, vehicle data, photo URLs, and key permission states directly in-app instead of going out to Firebase.",

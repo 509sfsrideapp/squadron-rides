@@ -12,6 +12,7 @@ export type SignupDraft = {
   lastName: string;
   rank: string;
   flight: string;
+  jobDescription: string;
   phone: string;
   confirmPhone: string;
   username: string;
@@ -209,6 +210,7 @@ export async function finalizeSignupFromDraft(
       rank: draft.rank.trim(),
       rankOrRole: draft.rank.trim(),
       flight: draft.flight.trim(),
+      jobDescription: draft.jobDescription.trim(),
       username: normalizedUsername,
       phone: formattedPhone,
       email: draft.email.trim(),

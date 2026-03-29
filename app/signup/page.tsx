@@ -35,6 +35,7 @@ export default function SignupPage() {
   const [lastName, setLastName] = useState(() => initialDraft?.lastName || "");
   const [rank, setRank] = useState(() => initialDraft?.rank || "");
   const [flight, setFlight] = useState(() => initialDraft?.flight || "");
+  const [jobDescription, setJobDescription] = useState(() => initialDraft?.jobDescription || "");
   const [phone, setPhone] = useState(() => initialDraft?.phone || "");
   const [confirmPhone, setConfirmPhone] = useState(() => initialDraft?.confirmPhone || "");
   const [username, setUsername] = useState(() => initialDraft?.username || "");
@@ -63,6 +64,7 @@ export default function SignupPage() {
       lastName,
       rank,
       flight,
+      jobDescription,
       phone,
       confirmPhone,
       username,
@@ -98,6 +100,7 @@ export default function SignupPage() {
     email,
     firstName,
     flight,
+    jobDescription,
     homeCity,
     homeState,
     homeStreet,
@@ -117,6 +120,7 @@ export default function SignupPage() {
         lastName,
         rank,
         flight,
+        jobDescription,
         phone,
         confirmPhone,
         username,
@@ -196,6 +200,13 @@ export default function SignupPage() {
             </option>
           ))}
         </select>
+
+        <input
+          value={jobDescription}
+          onChange={(e) => setJobDescription(e.target.value)}
+          placeholder="Job Description (optional)"
+          style={{ display: "block", marginBottom: 10, width: "100%" }}
+        />
 
         <input
           value={username}
