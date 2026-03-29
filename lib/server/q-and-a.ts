@@ -1,10 +1,19 @@
 import {
   createFirestoreDocument,
+  deleteFirestoreDocument,
   getFirestoreDocument,
   listFirestoreDocumentsByField,
   patchFirestoreDocument,
 } from "./firestore-admin";
-import { buildQAAuthorLabel, buildQAPostSnippet, type QAAuthorProfile } from "../q-and-a";
+import {
+  buildQAAuthorLabel,
+  buildQACommentVoteId,
+  buildQAPostSnippet,
+  buildQAPostVoteId,
+  normalizeQAVoteValue,
+  type QAAuthorProfile,
+  type QAVoteValue,
+} from "../q-and-a";
 
 type UserProfileRecord = QAAuthorProfile & {
   email?: string | null;
@@ -94,6 +103,100 @@ export async function deleteQAPost(input: { postId: string; authorId: string }) 
     deleted: true,
     updatedAt: new Date(),
   });
+}
+
+type QAVoteRecord = {
+  value?: number;
+};
+
+export async function recountQAPostScore(postId: string) {
+  const votes = await listFirestoreDocumentsByField("qaPostVotes", "postId", postId) as Array<{
+    id: string;
+    path: string;
+    value?: number;
+  }>;
+  const score = votes.reduce((sum, vote) => sum + normalizeQAVoteValue(Number(vote.value || 0)), 0);
+
+  await patchFirestoreDocument(`qaPosts/${postId}`, {
+    score,
+    updatedAt: new Date(),
+  });
+
+  return score;
+}
+
+export async function recountQACommentScore(commentId: string) {
+  const votes = await listFirestoreDocumentsByField("qaCommentVotes", "commentId", commentId) as Array<{
+    id: string;
+    path: string;
+    value?: number;
+  }>;
+  const score = votes.reduce((sum, vote) => sum + normalizeQAVoteValue(Number(vote.value || 0)), 0);
+
+  await patchFirestoreDocument(`qaComments/${commentId}`, {
+    score,
+    updatedAt: new Date(),
+  });
+
+  return score;
+}
+
+export async function setQAPostVote(input: {
+  postId: string;
+  userId: string;
+  value: QAVoteValue;
+}) {
+  const voteId = buildQAPostVoteId(input.postId, input.userId);
+  const existingVote = await getFirestoreDocument<QAVoteRecord>(`qaPostVotes/${voteId}`);
+
+  if (input.value === 0) {
+    await deleteFirestoreDocument(`qaPostVotes/${voteId}`);
+  } else if (existingVote) {
+    await patchFirestoreDocument(`qaPostVotes/${voteId}`, {
+      value: input.value,
+    });
+  } else {
+    await createFirestoreDocument(
+      "qaPostVotes",
+      {
+        postId: input.postId,
+        userId: input.userId,
+        value: input.value,
+      },
+      voteId
+    );
+  }
+
+  return recountQAPostScore(input.postId);
+}
+
+export async function setQACommentVote(input: {
+  commentId: string;
+  userId: string;
+  value: QAVoteValue;
+}) {
+  const voteId = buildQACommentVoteId(input.commentId, input.userId);
+  const existingVote = await getFirestoreDocument<QAVoteRecord>(`qaCommentVotes/${voteId}`);
+
+  if (input.value === 0) {
+    await deleteFirestoreDocument(`qaCommentVotes/${voteId}`);
+  } else if (existingVote) {
+    await patchFirestoreDocument(`qaCommentVotes/${voteId}`, {
+      value: input.value,
+    });
+  } else {
+    await createFirestoreDocument(
+      "qaCommentVotes",
+      {
+        commentId: input.commentId,
+        userId: input.userId,
+        value: input.value,
+      },
+      voteId
+    );
+  }
+
+  return recountQACommentScore(input.commentId);
 }
 
 export async function recountQAPostComments(postId: string) {

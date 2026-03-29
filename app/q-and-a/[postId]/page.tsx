@@ -11,12 +11,15 @@ import { auth, db } from "../../../lib/firebase";
 import {
   buildQACommentTree,
   formatRelativeTimestamp,
+  normalizeQAVoteValue,
   type QACommentRecord,
   type QACommentSortMode,
   type QAPostRecord,
+  type QAVoteDocument,
 } from "../../../lib/q-and-a";
 import QACommentComposer from "../_components/QACommentComposer";
 import QACommentItem from "../_components/QACommentItem";
+import QAVoteControls from "../_components/QAVoteControls";
 
 const sectionStyle: React.CSSProperties = {
   borderRadius: 18,
@@ -47,6 +50,8 @@ export default function QAPostDetailPage() {
   const [loading, setLoading] = useState(true);
   const [postRecord, setPostRecord] = useState<QAPostRecord | null>(null);
   const [comments, setComments] = useState<QACommentRecord[]>([]);
+  const [postVote, setPostVote] = useState(0);
+  const [commentVotesById, setCommentVotesById] = useState<Record<string, number>>({});
   const [commentSortMode, setCommentSortMode] = useState<QACommentSortMode>("top");
   const [editingPost, setEditingPost] = useState(false);
   const [postDraftTitle, setPostDraftTitle] = useState("");
@@ -83,6 +88,50 @@ export default function QAPostDetailPage() {
 
     return () => unsubscribe();
   }, [params.postId, user]);
+
+  useEffect(() => {
+    if (!user || !params.postId) {
+      setPostVote(0);
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      query(collection(db, "qaPostVotes"), where("userId", "==", user.uid)),
+      (snapshot) => {
+        const firstVote = snapshot.docs
+          .map((docSnap) => docSnap.data() as QAVoteDocument)
+          .find((vote) => vote.postId === params.postId);
+        setPostVote(normalizeQAVoteValue(Number(firstVote?.value || 0)));
+      }
+    );
+
+    return () => unsubscribe();
+  }, [params.postId, user]);
+
+  useEffect(() => {
+    if (!user) {
+      setCommentVotesById({});
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      query(collection(db, "qaCommentVotes"), where("userId", "==", user.uid)),
+      (snapshot) => {
+        const nextVotes: Record<string, number> = {};
+
+        snapshot.docs.forEach((docSnap) => {
+          const vote = docSnap.data() as QAVoteDocument;
+          if (vote.commentId) {
+            nextVotes[vote.commentId] = normalizeQAVoteValue(Number(vote.value || 0));
+          }
+        });
+
+        setCommentVotesById(nextVotes);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
 
   useEffect(() => {
     if (!user || !params.postId) {
@@ -204,7 +253,34 @@ export default function QAPostDetailPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 12, flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <span style={infoPillStyle}>{postRecord.commentCount || 0} comments</span>
-              <span style={infoPillStyle}>Score {postRecord.score || 0}</span>
+              <QAVoteControls
+                score={postRecord.score || 0}
+                currentVote={postVote}
+                onVote={async (value) => {
+                  const idToken = await auth.currentUser?.getIdToken();
+
+                  if (!idToken) {
+                    throw new Error("You need to sign in again before voting.");
+                  }
+
+                  const nextValue = postVote === value ? 0 : value;
+                  const response = await fetch(`/api/q-and-a/posts/${postRecord.id}/vote`, {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${idToken}`,
+                    },
+                    body: JSON.stringify({ value: nextValue }),
+                  });
+
+                  const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+                  if (!response.ok) {
+                    throw new Error(payload.error || "Could not update the vote.");
+                  }
+                }}
+                compact
+              />
             </div>
             {canManagePost ? (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -503,6 +579,8 @@ export default function QAPostDetailPage() {
                   comment={comment}
                   depth={0}
                   currentUserId={user.uid}
+                  currentVote={commentVotesById[comment.id] || 0}
+                  voteByCommentId={commentVotesById}
                   onReply={async (parentCommentId, body) => {
                     const idToken = await auth.currentUser?.getIdToken();
 
@@ -574,6 +652,30 @@ export default function QAPostDetailPage() {
 
                     if (!response.ok) {
                       throw new Error(payload.error || "Could not delete the comment.");
+                    }
+                  }}
+                  onVote={async (commentId, value) => {
+                    const idToken = await auth.currentUser?.getIdToken();
+
+                    if (!idToken) {
+                      throw new Error("You need to sign in again before voting.");
+                    }
+
+                    const currentVote = commentVotesById[commentId] || 0;
+                    const nextValue = currentVote === value ? 0 : value;
+                    const response = await fetch(`/api/q-and-a/comments/${commentId}/vote`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${idToken}`,
+                      },
+                      body: JSON.stringify({ value: nextValue }),
+                    });
+
+                    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+                    if (!response.ok) {
+                      throw new Error(payload.error || "Could not update the vote.");
                     }
                   }}
                 />

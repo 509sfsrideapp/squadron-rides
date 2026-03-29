@@ -7,23 +7,30 @@ import {
   type QACommentNode,
 } from "../../../lib/q-and-a";
 import QACommentComposer from "./QACommentComposer";
+import QAVoteControls from "./QAVoteControls";
 
 type QACommentItemProps = {
   comment: QACommentNode;
   depth: number;
   currentUserId: string | null;
+  currentVote?: number;
+  voteByCommentId?: Record<string, number>;
   onReply: (parentCommentId: string, body: string) => Promise<void>;
   onUpdate: (commentId: string, body: string) => Promise<void>;
   onDelete: (commentId: string) => Promise<void>;
+  onVote: (commentId: string, value: 1 | -1) => Promise<void>;
 };
 
 export default function QACommentItem({
   comment,
   depth,
   currentUserId,
+  currentVote = 0,
+  voteByCommentId = {},
   onReply,
   onUpdate,
   onDelete,
+  onVote,
 }: QACommentItemProps) {
   const [collapsed, setCollapsed] = useState(false);
   const [replyOpen, setReplyOpen] = useState(false);
@@ -64,6 +71,14 @@ export default function QACommentItem({
           </div>
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {!comment.deleted ? (
+              <QAVoteControls
+                score={comment.score || 0}
+                currentVote={currentVote}
+                onVote={(value) => onVote(comment.id, value)}
+                compact
+              />
+            ) : null}
             {comment.children.length > 0 ? (
               <button
                 type="button"
@@ -205,9 +220,12 @@ export default function QACommentItem({
               comment={child}
               depth={depth + 1}
               currentUserId={currentUserId}
+              currentVote={voteByCommentId[child.id] || 0}
+              voteByCommentId={voteByCommentId}
               onReply={onReply}
               onUpdate={onUpdate}
               onDelete={onDelete}
+              onVote={onVote}
             />
           ))}
         </div>

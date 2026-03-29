@@ -19,6 +19,8 @@ const ACCOUNT_CLEANUP_TARGETS: AccountCleanupTarget[] = [
   { collection: "globalMessages", ownerField: "senderUid", label: "global chat messages" },
   { collection: "inboxPosts", ownerField: "createdByUid", label: "admin or dev inbox posts" },
   { collection: "eventAttendees", ownerField: "attendeeUid", label: "event attendance records" },
+  { collection: "qaPostVotes", ownerField: "userId", label: "Q&A post votes" },
+  { collection: "qaCommentVotes", ownerField: "userId", label: "Q&A comment votes" },
 ];
 
 export async function deleteUserOwnedDocuments(userId: string) {

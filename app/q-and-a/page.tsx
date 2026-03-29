@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
-import { sortQAPosts, type QAPostRecord, type QAPostSortMode } from "../../lib/q-and-a";
+import { normalizeQAVoteValue, sortQAPosts, type QAPostRecord, type QAPostSortMode, type QAVoteDocument } from "../../lib/q-and-a";
 import QAPostCard from "./_components/QAPostCard";
 
 const pageShellStyle: React.CSSProperties = {
@@ -60,6 +60,7 @@ export default function QAndAPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [posts, setPosts] = useState<QAPostRecord[]>([]);
+  const [postVotesById, setPostVotesById] = useState<Record<string, number>>({});
   const [sortMode, setSortMode] = useState<QAPostSortMode>("newest");
 
   useEffect(() => {
@@ -84,6 +85,30 @@ export default function QAndAPage() {
 
       setPosts(nextPosts);
     });
+
+    return () => unsubscribe();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    const unsubscribe = onSnapshot(
+      query(collection(db, "qaPostVotes"), where("userId", "==", user.uid)),
+      (snapshot) => {
+        const nextVotes: Record<string, number> = {};
+
+        snapshot.docs.forEach((docSnap) => {
+          const vote = docSnap.data() as QAVoteDocument;
+          if (vote.postId) {
+            nextVotes[vote.postId] = normalizeQAVoteValue(Number(vote.value || 0));
+          }
+        });
+
+        setPostVotesById(nextVotes);
+      }
+    );
 
     return () => unsubscribe();
   }, [user]);
@@ -196,7 +221,35 @@ export default function QAndAPage() {
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
               {visiblePosts.map((post) => (
-                <QAPostCard key={post.id} post={post} />
+                <QAPostCard
+                  key={post.id}
+                  post={post}
+                  currentVote={postVotesById[post.id] || 0}
+                  onVote={async (value) => {
+                    const idToken = await auth.currentUser?.getIdToken();
+
+                    if (!idToken) {
+                      throw new Error("You need to sign in again before voting.");
+                    }
+
+                    const currentVote = postVotesById[post.id] || 0;
+                    const nextValue = currentVote === value ? 0 : value;
+                    const response = await fetch(`/api/q-and-a/posts/${post.id}/vote`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${idToken}`,
+                      },
+                      body: JSON.stringify({ value: nextValue }),
+                    });
+
+                    const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+                    if (!response.ok) {
+                      throw new Error(payload.error || "Could not update the vote.");
+                    }
+                  }}
+                />
               ))}
             </div>
           )}

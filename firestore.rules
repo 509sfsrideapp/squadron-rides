@@ -309,6 +309,16 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    match /qaPostVotes/{voteId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /qaCommentVotes/{voteId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
     match /auditLogs/{entryId} {
       allow read: if isAdmin();
       allow write: if false;

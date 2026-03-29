@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v291",
+    title: "Q&A Post and Comment Voting",
+    summary: "Added simple thumbs up and thumbs down voting to Q&A posts and comments, with compact controls that fit into the existing cards and live score syncing backed by new vote records and Firestore rules.",
+  },
+  {
     commit: "v290",
     title: "Q&A My Posts View",
     summary: "Added a My Posts button to the top-right of the Q&A feed and a dedicated My Posts page so users can review just the discussion threads they created from one place.",

@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { formatRelativeTimestamp, type QAPostRecord } from "../../../lib/q-and-a";
+import QAVoteControls from "./QAVoteControls";
 
 type QAPostCardProps = {
   post: QAPostRecord;
+  currentVote?: number;
+  onVote?: (value: 1 | -1) => Promise<void>;
 };
 
-export default function QAPostCard({ post }: QAPostCardProps) {
+export default function QAPostCard({ post, currentVote = 0, onVote }: QAPostCardProps) {
   const preview = post.snippet?.trim() || post.body?.trim() || "";
 
   return (
@@ -77,23 +80,7 @@ export default function QAPostCard({ post }: QAPostCardProps) {
       ) : null}
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <span
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            padding: "7px 11px",
-            borderRadius: 999,
-            border: "1px solid rgba(126, 142, 160, 0.16)",
-            background: "rgba(17, 24, 39, 0.62)",
-            color: "#dbe7f5",
-            fontSize: 11,
-            letterSpacing: "0.08em",
-            textTransform: "uppercase",
-            fontFamily: "var(--font-display)",
-          }}
-        >
-          Score {post.score || 0}
-        </span>
+        {onVote ? <QAVoteControls score={post.score || 0} currentVote={currentVote} onVote={onVote} compact /> : null}
         <span
           style={{
             display: "inline-flex",

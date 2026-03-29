@@ -7,6 +7,7 @@ export type TimestampLike =
 
 export type QAPostSortMode = "newest" | "oldest" | "top";
 export type QACommentSortMode = "newest" | "oldest" | "top";
+export type QAVoteValue = -1 | 0 | 1;
 
 export type QAAuthorProfile = {
   firstName?: string | null;
@@ -56,6 +57,13 @@ export type QACommentRecord = QACommentDocument & {
 
 export type QACommentNode = QACommentRecord & {
   children: QACommentNode[];
+};
+
+export type QAVoteDocument = {
+  userId: string;
+  value: QAVoteValue;
+  postId?: string;
+  commentId?: string;
 };
 
 export function buildQAAuthorLabel(profile?: QAAuthorProfile | null, fallbackEmail?: string | null) {
@@ -242,4 +250,24 @@ export function buildQACommentTree(comments: QACommentRecord[], sortMode: QAComm
 
 export function countQACommentDescendants(comment: QACommentNode): number {
   return comment.children.reduce((total, child) => total + 1 + countQACommentDescendants(child), 0);
+}
+
+export function normalizeQAVoteValue(value: number): QAVoteValue {
+  if (value > 0) {
+    return 1;
+  }
+
+  if (value < 0) {
+    return -1;
+  }
+
+  return 0;
+}
+
+export function buildQAPostVoteId(postId: string, userId: string) {
+  return `${postId}__${userId}`;
+}
+
+export function buildQACommentVoteId(commentId: string, userId: string) {
+  return `${commentId}__${userId}`;
 }
