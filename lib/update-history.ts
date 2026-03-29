@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v273",
+    title: "Inbox Read-On-Open Narrowing",
+    summary: "Changed inbox threads so posts only get marked read when the user actually expands that specific message, instead of clearing just from opening the inbox thread page.",
+  },
+  {
     commit: "v272",
     title: "Homepage Applications Status Line",
     summary: "Added a small applications uplink status readout beside the Applications header on the homepage that shows operational apps versus total visible apps.",

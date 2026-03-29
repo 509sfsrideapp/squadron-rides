@@ -148,18 +148,6 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
     };
   }, [thread]);
 
-  useEffect(() => {
-    if (!thread || posts.length === 0) {
-      return;
-    }
-
-    const latestTimestamp = toTimestampMs(posts[0]?.createdAt);
-    markInboxThreadRead(thread.id, latestTimestamp);
-    if (latestTimestamp) {
-      setReadCutoff((current) => Math.max(current, latestTimestamp));
-    }
-  }, [posts, thread]);
-
   const fallbackMessages = useMemo(() => (thread ? getSystemThreadMessages(thread.id) : []), [thread]);
 
   const submitResponse = async (event: FormEvent<HTMLFormElement>, post: InboxPost) => {
@@ -196,10 +184,10 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
         throw new Error(payload.error || "Could not submit your response.");
       }
 
-      const latestTimestamp = toTimestampMs(posts[0]?.createdAt);
-      markInboxThreadRead(thread.id, latestTimestamp);
-      if (latestTimestamp) {
-        setReadCutoff((current) => Math.max(current, latestTimestamp));
+      const responseTimestamp = toTimestampMs(post.createdAt);
+      markInboxThreadRead(thread.id, responseTimestamp);
+      if (responseTimestamp) {
+        setReadCutoff((current) => Math.max(current, responseTimestamp));
       }
       setResponseDrafts((current) => ({ ...current, [post.id]: "" }));
     } catch (error) {
@@ -269,6 +257,17 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
 
                     if (nextExpanded) {
                       setResponseError("");
+
+                      const openedPostTimestamp = toTimestampMs(post.createdAt);
+                      const canMarkReadOnOpen = !post.requiresResponse || Boolean(post.responseSubmittedAt);
+
+                      if (canMarkReadOnOpen) {
+                        markInboxThreadRead(thread.id, openedPostTimestamp);
+
+                        if (openedPostTimestamp) {
+                          setReadCutoff((current) => Math.max(current, openedPostTimestamp));
+                        }
+                      }
                     }
                   }}
                   style={{
