@@ -36,6 +36,35 @@ type AppUser = {
   locationServicesEnabled?: boolean;
 };
 
+const rankOrder = [
+  "Gen",
+  "Lt Gen",
+  "Maj Gen",
+  "Brig Gen",
+  "Col",
+  "Lt Col",
+  "Maj",
+  "Capt",
+  "1st Lt",
+  "2d Lt",
+  "CMSgt",
+  "SMSgt",
+  "MSgt",
+  "TSgt",
+  "SSgt",
+  "SrA",
+  "A1C",
+  "Amn",
+  "AB",
+  "CIV",
+] as const;
+
+function getRankPriority(rank?: string | null) {
+  const normalizedRank = rank?.trim().toLowerCase() || "";
+  const index = rankOrder.findIndex((value) => value.toLowerCase() === normalizedRank);
+  return index === -1 ? rankOrder.length : index;
+}
+
 export default function AdminAccountsPage() {
   const [user, setUser] = useState<User | null>(null);
   const [authorized, setAuthorized] = useState(false);
@@ -84,7 +113,15 @@ export default function AdminAccountsPage() {
     [users]
   );
   const uniqueRanks = useMemo(
-    () => Array.from(new Set(users.map((appUser) => appUser.rank).filter(Boolean))).sort(),
+    () =>
+      Array.from(new Set(users.map((appUser) => appUser.rank).filter(Boolean))).sort((left, right) => {
+        const rankDifference = getRankPriority(left) - getRankPriority(right);
+        if (rankDifference !== 0) {
+          return rankDifference;
+        }
+
+        return String(left).localeCompare(String(right));
+      }),
     [users]
   );
 
@@ -131,6 +168,11 @@ export default function AdminAccountsPage() {
         return searchableFields.includes(normalizedAccountSearch);
       })
       .sort((left, right) => {
+        const rankDifference = getRankPriority(left.rank) - getRankPriority(right.rank);
+        if (rankDifference !== 0) {
+          return rankDifference;
+        }
+
         const leftName = (left.name || left.email || left.id).toLowerCase();
         const rightName = (right.name || right.email || right.id).toLowerCase();
         return leftName.localeCompare(rightName);

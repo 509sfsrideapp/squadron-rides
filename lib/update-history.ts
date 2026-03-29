@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v298",
+    title: "Admin Account Rank Sorting",
+    summary: "Updated the admin account viewer to sort accounts by rank from highest to lowest, with the rank filter list using the same hierarchy.",
+  },
+  {
     commit: "v297",
     title: "CIV Rank Option",
     summary: "Added CIV as a selectable rank during account creation and in account settings, and placed it below AB in the event-attendance rank hierarchy.",
