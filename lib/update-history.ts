@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v281",
+    title: "Admin Driver Clock-Out Control",
+    summary: "Added a manual Clock Out Driver button to each available-driver card on the admin page so admins can force a driver off availability directly from the board.",
+  },
+  {
     commit: "v280",
     title: "Homepage Applications Grid Lock",
     summary: "Adjusted the homepage applications layout so it always fills as a clean 3x3 grid instead of spilling into an extra row.",

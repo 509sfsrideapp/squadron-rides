@@ -170,6 +170,20 @@ export default function AdminPage() {
     }
   };
 
+  const clockOutDriver = async (driverId: string, driverName?: string) => {
+    const confirmed = window.confirm(`Clock out ${driverName || "this driver"}?`);
+    if (!confirmed) return;
+
+    try {
+      await updateDoc(doc(db, "users", driverId), {
+        available: false,
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Could not clock out that driver.");
+    }
+  };
+
   const assignRideToDriver = async (rideId: string) => {
     const driverId = selectedDriversByRide[rideId];
 
@@ -408,6 +422,30 @@ export default function AdminPage() {
               <p>
                 <strong>Plate:</strong> {driver.carPlate || "N/A"}
               </p>
+              <div style={{ marginTop: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => void clockOutDriver(driver.id, driver.name)}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    minHeight: 40,
+                    padding: "9px 14px",
+                    borderRadius: 10,
+                    border: "1px solid rgba(248, 113, 113, 0.24)",
+                    background: "linear-gradient(180deg, rgba(123, 36, 36, 0.96) 0%, rgba(84, 25, 25, 0.98) 100%)",
+                    color: "#fff5f5",
+                    fontFamily: "var(--font-display)",
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                    fontSize: 11,
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), 0 12px 24px rgba(69, 10, 10, 0.22)",
+                  }}
+                >
+                  Clock Out Driver
+                </button>
+              </div>
             </div>
           ))
         )}
