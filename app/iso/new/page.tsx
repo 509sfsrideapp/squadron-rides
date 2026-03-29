@@ -241,11 +241,11 @@ export default function NewISORequestPage() {
               value={photoUrl}
               onChange={setPhotoUrl}
               cropShape="square"
-              cropAspectRatio={2}
+              cropAspectRatio={1}
               previewSize={120}
               outputSize={960}
               maxEncodedLength={220000}
-              helperText="Optional reference photo for the request card and detail page. Crop uses a 2:1 landscape frame for consistency."
+              helperText="Optional reference photo for the request card and detail page. Crop uses a square frame for consistency."
               statusMessage={photoStatusMessage}
               onStatusMessageChange={setPhotoStatusMessage}
             />

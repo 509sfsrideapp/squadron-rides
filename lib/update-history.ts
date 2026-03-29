@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v322",
+    title: "Marketplace and ISO Square Upload Crops",
+    summary: "Changed the Marketplace and ISO image uploaders to use square crop framing so new listing and request photos are positioned and saved in a consistent square format.",
+  },
+  {
     commit: "v321",
     title: "Direct Message Thread Launch Fix",
     summary: "Changed the new messaging feature to load DM conversation lists and thread contents through secure app APIs, so tapping Message on a user now opens into the actual conversation flow instead of only landing on the Messages app shell.",
