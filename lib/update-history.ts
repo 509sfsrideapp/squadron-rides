@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v266",
+    title: "Emergency Ride Pulse Boost",
+    summary: "Increased the emergency ride button’s color and glow pulse slightly so it reads more clearly while still keeping the button physically still with no size animation.",
+  },
+  {
     commit: "v265",
     title: "Event Scheduling Copy Trim",
     summary: "Simplified the add-event Scheduling section so it now shows just the Scheduling title and the Schedule Type control without the extra explanatory text between them.",

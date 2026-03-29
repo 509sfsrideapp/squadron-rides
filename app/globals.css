@@ -319,14 +319,17 @@ button:disabled {
   0%,
   100% {
     filter: brightness(1) saturate(1);
-    box-shadow: 0 20px 44px rgba(127, 18, 18, 0.34);
+    box-shadow:
+      0 20px 44px rgba(127, 18, 18, 0.34),
+      0 0 0 1px rgba(255, 255, 255, 0.02);
   }
 
   50% {
-    filter: brightness(1.04) saturate(1.04);
+    filter: brightness(1.08) saturate(1.08);
     box-shadow:
-      0 20px 48px rgba(127, 18, 18, 0.4),
-      0 0 0 1px rgba(255, 255, 255, 0.04);
+      0 22px 54px rgba(127, 18, 18, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 0 18px rgba(192, 29, 29, 0.16);
   }
 }
 
