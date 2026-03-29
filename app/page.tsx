@@ -71,7 +71,7 @@ type OpenRideBadgeRecord = {
   createdAt?: { seconds?: number; nanoseconds?: number } | null;
 };
 
-const appTilePlaceholderCount = 5;
+const appTilePlaceholderCount = 6;
 const homepageCardStyle: React.CSSProperties = {
   borderRadius: 18,
   border: "1px solid rgba(126, 142, 160, 0.18)",
@@ -289,26 +289,6 @@ function SteeringWheelIcon() {
       <path d="M27.2 28.7 18.3 20.6" />
       <path d="M36.8 28.7 45.7 20.6" />
       <path d="M32 38.5v8.7" />
-    </svg>
-  );
-}
-
-function MessagesIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 64 64"
-      width="34"
-      height="34"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 16h40a6 6 0 0 1 6 6v20a6 6 0 0 1-6 6H28l-10 8v-8h-6a6 6 0 0 1-6-6V22a6 6 0 0 1 6-6Z" />
-      <path d="M20 28h24" />
-      <path d="M20 36h18" />
     </svg>
   );
 }
@@ -1357,7 +1337,6 @@ export default function HomePage() {
                     label={driverReady ? "Driver Dashboard" : undefined}
                     badgeCount={visibleDriverRequestCount}
                   />
-                  <AppTile href="/messages/direct" icon={<MessagesIcon />} label="Messages" />
                   <AppTile href="/events" icon={<EventsIcon />} label="EVENTS" />
                   {showDevTile ? <AppTile href="/developer" icon={<DevIcon />} label="Dev" /> : <PlaceholderTile />}
                   {Array.from({ length: showDevTile ? appTilePlaceholderCount : appTilePlaceholderCount + 1 }).map((_, index) => (

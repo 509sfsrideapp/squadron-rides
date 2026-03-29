@@ -78,6 +78,14 @@ export default async function DeveloperPage() {
         </div>
 
         <div style={featureCardStyle}>
+          <h2 style={{ marginTop: 0 }}>Messages</h2>
+          <p style={{ maxWidth: 320 }}>Keep the inbox and direct-message feature accessible from here while we leave it off the main dashboard for now.</p>
+          <Link href="/messages/direct" style={featureLinkStyle}>
+            Open Messages
+          </Link>
+        </div>
+
+        <div style={featureCardStyle}>
           <h2 style={{ marginTop: 0 }}>Global Chat</h2>
           <p style={{ maxWidth: 320 }}>Open the live chat page while we keep refining the feature.</p>
           <Link href="/chat" style={featureLinkStyle}>
