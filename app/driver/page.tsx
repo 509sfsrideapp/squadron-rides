@@ -402,7 +402,7 @@ export default function DriverPage() {
   if (loading) {
     return (
       <main style={{ padding: 20 }}>
-        <AppLoadingState title="Loading Driver Dashboard" caption="Checking your availability and open ride queue." />
+        <AppLoadingState title="Loading Driver" caption="Checking your availability and open ride queue." />
       </main>
     );
   }
@@ -434,7 +434,7 @@ export default function DriverPage() {
   return (
     <main style={{ padding: 20 }}>
       <HomeIconLink style={{ marginRight: 12 }} />
-      <h1 style={{ marginTop: 20, marginBottom: 8 }}>Driver Dashboard</h1>
+      <h1 style={{ marginTop: 20, marginBottom: 8 }}>Driver</h1>
 
       <section
         style={{

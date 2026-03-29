@@ -973,7 +973,7 @@ export default function HomePage() {
           href: "/account",
           title: "Driver Readiness",
           status: "Needs attention",
-          detail: driverIssues[0] ?? "Complete your driver setup before accessing the driver dashboard.",
+          detail: driverIssues[0] ?? "Complete your driver setup before accessing Driver.",
         }
       : null,
     emergencyRideBlockers.length > 0
@@ -1688,7 +1688,7 @@ export default function HomePage() {
                     href={driverReady ? "/driver" : undefined}
                     disabled={!driverReady}
                     icon={driverReady ? <SteeringWheelIcon /> : <NullStatusIcon text={driverUnavailableLabel} />}
-                    label={driverReady ? "Driver Dashboard" : undefined}
+                    label={driverReady ? "Driver" : undefined}
                     badgeCount={visibleDriverRequestCount}
                     pulseGreen={Boolean(driverReady && profile?.available)}
                   />

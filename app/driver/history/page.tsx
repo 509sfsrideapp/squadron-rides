@@ -88,7 +88,7 @@ export default function DriverHistoryPage() {
           borderRadius: 8,
         }}
       >
-        Driver Dashboard
+        Driver
       </Link>
 
       <h1>Driver History</h1>

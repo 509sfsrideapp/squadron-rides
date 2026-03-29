@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v312",
+    title: "Driver Label Cleanup",
+    summary: "Renamed the main Driver Dashboard user-facing label to just Driver across the homepage app tile and the related driver page headings so the app naming stays shorter and more consistent.",
+  },
+  {
     commit: "v311",
     title: "Q&A Anonymous Copy Cleanup",
     summary: "Removed the extra anonymous-post helper sentence in the Q&A post composer so the checkbox no longer calls out admin visibility there.",
