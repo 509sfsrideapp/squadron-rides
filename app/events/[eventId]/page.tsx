@@ -56,6 +56,7 @@ const rankOrder = [
   "A1C",
   "Amn",
   "AB",
+  "CIV",
 ] as const;
 
 function getAttendeeRankPriority(label: string) {

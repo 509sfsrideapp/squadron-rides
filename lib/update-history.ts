@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v297",
+    title: "CIV Rank Option",
+    summary: "Added CIV as a selectable rank during account creation and in account settings, and placed it below AB in the event-attendance rank hierarchy.",
+  },
+  {
     commit: "v296",
     title: "Homepage Post Check Console Line",
     summary: "Added the new INITIATE_POST_CHECK status line to the homepage console, using the requested rotating post names and CODE-1 through CODE-22 status values.",
