@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v293",
+    title: "Q&A Comment Header Layout Tightening",
+    summary: "Moved the non-vote Q&A comment actions up inline with the author line so the comment cards read cleaner and the header controls stay more compact.",
+  },
+  {
     commit: "v292",
     title: "Homepage Console Line Addition",
     summary: "Added the new EFD_STATUS//ERROR404:NOT-FOUND line into the homepage app-status console rotation.",
