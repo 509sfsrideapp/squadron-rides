@@ -15,8 +15,9 @@ import { getLatestActiveRideForRider } from "../lib/ride-state";
 import { useActiveRides } from "../lib/use-active-rides";
 import { shouldClearCorruptedVehicleYear } from "../lib/text-format";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { addDoc, collection, doc, getDoc, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, limit, onSnapshot, orderBy, query, updateDoc, where } from "firebase/firestore";
 import { isMessageThreadId, type MessageThreadId } from "../lib/messages";
+import { logFirestoreListenerAttach, logFirestoreListenerDetach, logFirestoreQueryResult, logFirestoreScreenMount } from "../lib/firestore-read-debug";
 
 type UserProfile = {
   name: string;
@@ -656,6 +657,7 @@ export default function HomePage() {
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
 
   useEffect(() => {
+    logFirestoreScreenMount("home");
     const timeoutId = window.setTimeout(() => {
       setCheckingAuth(false);
       setAuthWarning("Still waiting on account status. You can keep using the app and refresh if needed.");
@@ -773,8 +775,10 @@ export default function HomePage() {
       return;
     }
 
-    const inboxPostsQuery = query(collection(db, "inboxPosts"), orderBy("createdAt", "desc"));
+    const inboxPostsQuery = query(collection(db, "inboxPosts"), orderBy("createdAt", "desc"), limit(120));
+    logFirestoreListenerAttach("home.global-inbox", { limit: 120 });
     const unsubscribe = onSnapshot(inboxPostsQuery, (snapshot) => {
+      logFirestoreQueryResult("home.global-inbox", { count: snapshot.size });
       setGlobalInboxPosts(
         snapshot.docs
           .map((docSnap) => ({
@@ -785,7 +789,10 @@ export default function HomePage() {
       );
     });
 
-    return () => unsubscribe();
+    return () => {
+      logFirestoreListenerDetach("home.global-inbox");
+      unsubscribe();
+    };
   }, [user]);
 
   useEffect(() => {
@@ -795,7 +802,9 @@ export default function HomePage() {
     }
 
     const inboxPostsQuery = query(collection(db, "userInboxPosts"), where("userId", "==", user.uid));
+    logFirestoreListenerAttach("home.user-inbox", { userId: user.uid });
     const unsubscribe = onSnapshot(inboxPostsQuery, (snapshot) => {
+      logFirestoreQueryResult("home.user-inbox", { count: snapshot.size });
       setUserInboxPosts(
         snapshot.docs
           .map((docSnap) => ({
@@ -806,7 +815,10 @@ export default function HomePage() {
       );
     });
 
-    return () => unsubscribe();
+    return () => {
+      logFirestoreListenerDetach("home.user-inbox", { userId: user.uid });
+      unsubscribe();
+    };
   }, [user]);
 
   useEffect(() => {

@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import { getInboxUnreadCountsByThread, INBOX_READ_EVENT, loadInboxReadState } from "../../lib/inbox-badges";
+import { logFirestoreListenerAttach, logFirestoreListenerDetach, logFirestoreQueryResult, logFirestoreScreenMount } from "../../lib/firestore-read-debug";
 import { getAllMessageThreads, isMessageThreadId, type MessageThreadDefinition, type MessageThreadIconKey, type MessageThreadId } from "../../lib/messages";
 
 type InboxPost = {
@@ -122,6 +123,7 @@ export default function InboxPageClient({ userId }: { userId: string }) {
   const [readVersion, setReadVersion] = useState(0);
 
   useEffect(() => {
+    logFirestoreScreenMount("inbox.index", { userId });
     const handleReadStateChange = () => setReadVersion((current) => current + 1);
     window.addEventListener("storage", handleReadStateChange);
     window.addEventListener(INBOX_READ_EVENT, handleReadStateChange as EventListener);
@@ -130,30 +132,40 @@ export default function InboxPageClient({ userId }: { userId: string }) {
       window.removeEventListener("storage", handleReadStateChange);
       window.removeEventListener(INBOX_READ_EVENT, handleReadStateChange as EventListener);
     };
-  }, []);
+  }, [userId]);
 
   useEffect(() => {
-    const postsQuery = query(collection(db, "inboxPosts"), orderBy("createdAt", "desc"));
+    const postsQuery = query(collection(db, "inboxPosts"), orderBy("createdAt", "desc"), limit(120));
+    logFirestoreListenerAttach("inbox.global-posts", { limit: 120 });
     const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+      logFirestoreQueryResult("inbox.global-posts", { count: snapshot.size });
       setGlobalPosts(
         snapshot.docs
         .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Omit<InboxPost, "id">) }))
         .filter((post) => isMessageThreadId(post.threadId))
       );
     });
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      logFirestoreListenerDetach("inbox.global-posts");
+      unsubscribe();
+    };
+  }, [userId]);
 
   useEffect(() => {
     const postsQuery = query(collection(db, "userInboxPosts"), where("userId", "==", userId));
+    logFirestoreListenerAttach("inbox.user-posts", { userId });
     const unsubscribe = onSnapshot(postsQuery, (snapshot) => {
+      logFirestoreQueryResult("inbox.user-posts", { count: snapshot.size });
       setPrivatePosts(
         snapshot.docs
           .map((docSnap) => ({ id: docSnap.id, ...(docSnap.data() as Omit<InboxPost, "id">) }))
           .filter((post) => isMessageThreadId(post.threadId))
       );
     });
-    return () => unsubscribe();
+    return () => {
+      logFirestoreListenerDetach("inbox.user-posts", { userId });
+      unsubscribe();
+    };
   }, [userId]);
 
   const allPosts = useMemo(() => sortPostsNewestFirst([...globalPosts, ...privatePosts]), [globalPosts, privatePosts]);

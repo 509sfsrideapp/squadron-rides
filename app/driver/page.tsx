@@ -7,6 +7,7 @@ import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import PushNotificationsCard from "../components/PushNotificationsCard";
 import { auth, db } from "../../lib/firebase";
+import { logFirestoreListenerAttach, logFirestoreListenerDetach, logFirestoreQueryResult, logFirestoreScreenMount } from "../../lib/firestore-read-debug";
 import { canDrive, getDriverReadinessIssues } from "../../lib/profile-readiness";
 import {
   canDriverSeeRideDuringDispatchWindow,
@@ -114,6 +115,7 @@ export default function DriverPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    logFirestoreScreenMount("driver.dashboard");
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
@@ -137,8 +139,10 @@ export default function DriverPage() {
     }
 
     const q = query(collection(db, "rides"), where("status", "==", "open"));
+    logFirestoreListenerAttach("driver.open-rides", { userId: user.uid });
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      logFirestoreQueryResult("driver.open-rides", { count: snapshot.size });
       const rideList: Ride[] = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...(docSnap.data() as Omit<Ride, "id">),
@@ -146,15 +150,20 @@ export default function DriverPage() {
       setOpenRides(rideList);
     });
 
-    return () => unsubscribe();
+    return () => {
+      logFirestoreListenerDetach("driver.open-rides", { userId: user.uid });
+      unsubscribe();
+    };
   }, [profile?.available, user]);
 
   useEffect(() => {
     if (!user) return;
 
     const q = query(collection(db, "rides"), where("acceptedBy", "==", user.uid));
+    logFirestoreListenerAttach("driver.assigned-rides", { userId: user.uid });
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      logFirestoreQueryResult("driver.assigned-rides", { count: snapshot.size });
       const allDriverRides: Ride[] = snapshot.docs
         .map((docSnap) => ({
           id: docSnap.id,
@@ -163,21 +172,13 @@ export default function DriverPage() {
       const rideList: Ride[] = allDriverRides
         .filter((ride) => ACTIVE_RIDE_STATUSES.includes(ride.status as (typeof ACTIVE_RIDE_STATUSES)[number]));
       setAcceptedRides(rideList);
+      setCompletedRideCount(allDriverRides.filter((ride) => ride.status === "completed").length);
     });
 
-    return () => unsubscribe();
-  }, [user]);
-
-  useEffect(() => {
-    if (!user) return;
-
-    const q = query(collection(db, "rides"), where("acceptedBy", "==", user.uid), where("status", "==", "completed"));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      setCompletedRideCount(snapshot.size);
-    });
-
-    return () => unsubscribe();
+    return () => {
+      logFirestoreListenerDetach("driver.assigned-rides", { userId: user.uid });
+      unsubscribe();
+    };
   }, [user]);
 
   const visibleOpenRides = openRides.filter((ride) =>

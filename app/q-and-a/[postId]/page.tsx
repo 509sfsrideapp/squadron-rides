@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../../components/AppLoadingState";
 import HomeIconLink from "../../components/HomeIconLink";
@@ -11,6 +11,7 @@ import { ReportableTarget } from "../../components/MisconductReporting";
 import UserPreviewTrigger from "../../components/UserPreviewTrigger";
 import { auth, db } from "../../../lib/firebase";
 import { isAdminEmail } from "../../../lib/admin";
+import { logFirestoreQueryResult, logFirestoreQueryRun, logFirestoreScreenMount } from "../../../lib/firestore-read-debug";
 import { buildMisconductPreviewText } from "../../../lib/misconduct";
 import {
   buildQACommentTree,
@@ -65,7 +66,63 @@ export default function QAPostDetailPage() {
   const [savingPost, setSavingPost] = useState(false);
   const [deletingPost, setDeletingPost] = useState(false);
 
+  const loadPostDetail = useCallback(async (currentUser: User, postId: string) => {
+    logFirestoreQueryRun("forums.post.detail", { postId });
+    const snapshot = await getDoc(doc(db, "qaPosts", postId));
+
+    if (!snapshot.exists()) {
+      logFirestoreQueryResult("forums.post.detail", { postId, count: 0 });
+      setPostRecord(null);
+      return;
+    }
+
+    setPostRecord({
+      id: snapshot.id,
+      ...(snapshot.data() as Omit<QAPostRecord, "id">),
+    });
+    logFirestoreQueryResult("forums.post.detail", { postId, count: 1 });
+
+    logFirestoreQueryRun("forums.post.vote", { postId, userId: currentUser.uid });
+    const postVotesSnapshot = await getDocs(
+      query(collection(db, "qaPostVotes"), where("userId", "==", currentUser.uid))
+    );
+    const firstVote = postVotesSnapshot.docs
+      .map((docSnap) => docSnap.data() as QAVoteDocument)
+      .find((vote) => vote.postId === postId);
+    setPostVote(normalizeQAVoteValue(Number(firstVote?.value || 0)));
+    logFirestoreQueryResult("forums.post.vote", { postId, count: postVotesSnapshot.size });
+
+    logFirestoreQueryRun("forums.post.comment-votes", { postId, userId: currentUser.uid });
+    const commentVotesSnapshot = await getDocs(
+      query(collection(db, "qaCommentVotes"), where("userId", "==", currentUser.uid))
+    );
+    const nextCommentVotes: Record<string, number> = {};
+
+    commentVotesSnapshot.docs.forEach((docSnap) => {
+      const vote = docSnap.data() as QAVoteDocument;
+      if (vote.commentId) {
+        nextCommentVotes[vote.commentId] = normalizeQAVoteValue(Number(vote.value || 0));
+      }
+    });
+
+    setCommentVotesById(nextCommentVotes);
+    logFirestoreQueryResult("forums.post.comment-votes", { postId, count: commentVotesSnapshot.size });
+
+    logFirestoreQueryRun("forums.post.comments", { postId });
+    const commentsSnapshot = await getDocs(
+      query(collection(db, "qaComments"), where("postId", "==", postId))
+    );
+    setComments(
+      commentsSnapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...(docSnap.data() as Omit<QACommentRecord, "id">),
+      }))
+    );
+    logFirestoreQueryResult("forums.post.comments", { postId, count: commentsSnapshot.size });
+  }, []);
+
   useEffect(() => {
+    logFirestoreScreenMount("forums.post");
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -76,87 +133,17 @@ export default function QAPostDetailPage() {
 
   useEffect(() => {
     if (!user || !params.postId) {
-      return;
-    }
-
-    const unsubscribe = onSnapshot(doc(db, "qaPosts", params.postId), (snapshot) => {
-      if (!snapshot.exists()) {
-        setPostRecord(null);
-        return;
-      }
-
-      setPostRecord({
-        id: snapshot.id,
-        ...(snapshot.data() as Omit<QAPostRecord, "id">),
-      });
-    });
-
-    return () => unsubscribe();
-  }, [params.postId, user]);
-
-  useEffect(() => {
-    if (!user || !params.postId) {
+      setPostRecord(null);
+      setComments([]);
       setPostVote(0);
-      return;
-    }
-
-    const unsubscribe = onSnapshot(
-      query(collection(db, "qaPostVotes"), where("userId", "==", user.uid)),
-      (snapshot) => {
-        const firstVote = snapshot.docs
-          .map((docSnap) => docSnap.data() as QAVoteDocument)
-          .find((vote) => vote.postId === params.postId);
-        setPostVote(normalizeQAVoteValue(Number(firstVote?.value || 0)));
-      }
-    );
-
-    return () => unsubscribe();
-  }, [params.postId, user]);
-
-  useEffect(() => {
-    if (!user) {
       setCommentVotesById({});
       return;
     }
 
-    const unsubscribe = onSnapshot(
-      query(collection(db, "qaCommentVotes"), where("userId", "==", user.uid)),
-      (snapshot) => {
-        const nextVotes: Record<string, number> = {};
-
-        snapshot.docs.forEach((docSnap) => {
-          const vote = docSnap.data() as QAVoteDocument;
-          if (vote.commentId) {
-            nextVotes[vote.commentId] = normalizeQAVoteValue(Number(vote.value || 0));
-          }
-        });
-
-        setCommentVotesById(nextVotes);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
-
-  useEffect(() => {
-    if (!user || !params.postId) {
-      return;
-    }
-
-    const unsubscribe = onSnapshot(
-      query(collection(db, "qaComments"), where("postId", "==", params.postId)),
-      (snapshot) => {
-        setComments(
-          snapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...(docSnap.data() as Omit<QACommentRecord, "id">),
-          }))
-        );
-      }
-    );
-
-    return () => unsubscribe();
-  }, [params.postId, user]);
+    void loadPostDetail(user, params.postId).finally(() => {
+      setLoading(false);
+    });
+  }, [loadPostDetail, params.postId, user]);
 
   const commentTree = useMemo(() => buildQACommentTree(comments, commentSortMode), [commentSortMode, comments]);
   const showAdminIdentity = isAdminEmail(user?.email);
@@ -299,12 +286,23 @@ export default function QAPostDetailPage() {
 
                   const payload = (await response.json().catch(() => ({}))) as { error?: string };
 
-                  if (!response.ok) {
-                    throw new Error(payload.error || "Could not update the vote.");
-                  }
-                }}
-                compact
-              />
+                      if (!response.ok) {
+                        throw new Error(payload.error || "Could not update the vote.");
+                      }
+
+                      const currentVoteValue = postVote;
+                      setPostVote(nextValue);
+                      setPostRecord((current) =>
+                        current
+                          ? {
+                              ...current,
+                              score: (current.score || 0) - currentVoteValue + nextValue,
+                            }
+                          : current
+                      );
+                    }}
+                    compact
+                  />
             </div>
             {canEditPost || canDeletePost ? (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -464,6 +462,7 @@ export default function QAPostDetailPage() {
                       }
 
                       setEditingPost(false);
+                      await loadPostDetail(user, postRecord.id);
                     } catch (error) {
                       setPostActionError(error instanceof Error ? error.message : "Could not update the post.");
                     } finally {
@@ -623,6 +622,8 @@ export default function QAPostDetailPage() {
                 if (!response.ok) {
                   throw new Error(payload.error || "Could not create the comment.");
                 }
+
+                await loadPostDetail(user, postRecord.id);
               }}
             />
           ) : null}
@@ -666,6 +667,8 @@ export default function QAPostDetailPage() {
                     if (!response.ok) {
                       throw new Error(payload.error || "Could not create the reply.");
                     }
+
+                    await loadPostDetail(user, postRecord.id);
                   }}
                   onUpdate={async (commentId, body) => {
                     const idToken = await auth.currentUser?.getIdToken();
@@ -688,6 +691,8 @@ export default function QAPostDetailPage() {
                     if (!response.ok) {
                       throw new Error(payload.error || "Could not update the comment.");
                     }
+
+                    await loadPostDetail(user, postRecord.id);
                   }}
                   onDelete={async (commentId) => {
                     const confirmed = window.confirm("Delete this comment?");
@@ -713,6 +718,8 @@ export default function QAPostDetailPage() {
                     if (!response.ok) {
                       throw new Error(payload.error || "Could not delete the comment.");
                     }
+
+                    await loadPostDetail(user, postRecord.id);
                   }}
                   onVote={async (commentId, value) => {
                     const idToken = await auth.currentUser?.getIdToken();
@@ -737,6 +744,21 @@ export default function QAPostDetailPage() {
                     if (!response.ok) {
                       throw new Error(payload.error || "Could not update the vote.");
                     }
+
+                    setCommentVotesById((current) => ({
+                      ...current,
+                      [commentId]: nextValue,
+                    }));
+                    setComments((current) =>
+                      current.map((currentComment) =>
+                        currentComment.id === commentId
+                          ? {
+                              ...currentComment,
+                              score: (currentComment.score || 0) - currentVote + nextValue,
+                            }
+                          : currentComment
+                      )
+                    );
                   }}
                 />
               ))}

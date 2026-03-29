@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v340",
+    title: "Firestore Read Audit Cleanup",
+    summary: "Removed the live Forums feed and thread listeners in favor of lower-read fetch flows, tightened broad homepage and Inbox system-post listeners with limits, merged duplicate Driver ride listeners, slowed dev-locked message polling, and added temporary Firestore read debug logging so remaining hotspots are easier to trace without changing the app’s visible behavior.",
+  },
+  {
     commit: "v339",
     title: "Events Read Optimization",
     summary: "Embedded lightweight organizer summary fields onto new events and removed the broad live users-collection listeners from the Events board and event detail page, replacing them with targeted fallbacks for older records so the event experience stays the same while background Firestore reads drop sharply.",

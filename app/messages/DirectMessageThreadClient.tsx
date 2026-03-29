@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { auth } from "../../lib/firebase";
+import { logFirestoreQueryResult, logFirestoreQueryRun, logFirestoreScreenMount } from "../../lib/firestore-read-debug";
 import {
   formatConversationTimestamp,
   getOtherConversationParticipant,
@@ -138,6 +139,10 @@ export default function DirectMessageThreadClient({
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
+    logFirestoreScreenMount("messages.thread", { userId, conversationId });
+  }, [conversationId, userId]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const loadConversation = async (showLoadingState: boolean) => {
@@ -157,6 +162,7 @@ export default function DirectMessageThreadClient({
           return;
         }
 
+        logFirestoreQueryRun("messages.thread.conversation", { conversationId, userId });
         const response = await fetch(`/api/messages/conversations/${conversationId}`, {
           headers: {
             Authorization: `Bearer ${idToken}`,
@@ -173,6 +179,10 @@ export default function DirectMessageThreadClient({
         }
 
         if (!cancelled) {
+          logFirestoreQueryResult("messages.thread.conversation", {
+            conversationId,
+            count: payload.conversation ? 1 : 0,
+          });
           setConversation(payload.conversation || null);
           setConversationLoading(false);
         }
@@ -191,13 +201,13 @@ export default function DirectMessageThreadClient({
     void loadConversation(true);
     const interval = window.setInterval(() => {
       void loadConversation(false);
-    }, 4000);
+    }, 30000);
 
     return () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [conversationId]);
+  }, [conversationId, userId]);
 
   useEffect(() => {
     let cancelled = false;
@@ -219,6 +229,7 @@ export default function DirectMessageThreadClient({
           return;
         }
 
+        logFirestoreQueryRun("messages.thread.messages", { conversationId, userId });
         const response = await fetch(
           `/api/messages/conversations/${conversationId}/messages`,
           {
@@ -238,6 +249,10 @@ export default function DirectMessageThreadClient({
         }
 
         if (!cancelled) {
+          logFirestoreQueryResult("messages.thread.messages", {
+            conversationId,
+            count: (payload.messages || []).length,
+          });
           setMessages(payload.messages || []);
           setMessageLoading(false);
         }
@@ -255,13 +270,13 @@ export default function DirectMessageThreadClient({
     void loadMessages(true);
     const interval = window.setInterval(() => {
       void loadMessages(false);
-    }, 2500);
+    }, 15000);
 
     return () => {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [conversationId]);
+  }, [conversationId, userId]);
 
   useEffect(() => {
     if (!conversation) return;

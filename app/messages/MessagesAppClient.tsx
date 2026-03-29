@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { auth } from "../../lib/firebase";
+import { logFirestoreQueryResult, logFirestoreQueryRun, logFirestoreScreenMount } from "../../lib/firestore-read-debug";
 import {
   formatConversationTimestamp,
   getOtherConversationParticipant,
@@ -174,6 +175,10 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
   );
 
   useEffect(() => {
+    logFirestoreScreenMount("messages.list", { userId });
+  }, [userId]);
+
+  useEffect(() => {
     let cancelled = false;
 
     const loadConversations = async (showLoadingState: boolean) => {
@@ -192,6 +197,7 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
           return;
         }
 
+        logFirestoreQueryRun("messages.list.conversations", { userId });
         const response = await fetch("/api/messages/conversations", {
           headers: {
             Authorization: `Bearer ${idToken}`,
@@ -208,6 +214,10 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
         }
 
         if (!cancelled) {
+          logFirestoreQueryResult("messages.list.conversations", {
+            userId,
+            count: (payload.conversations || []).length,
+          });
           setAllConversations(sortDirectMessageConversations(payload.conversations || []));
           setConversationLoading(false);
         }
@@ -222,7 +232,7 @@ export default function MessagesAppClient({ userId }: { userId: string }) {
     void loadConversations(true);
     const interval = window.setInterval(() => {
       void loadConversations(false);
-    }, 4000);
+    }, 30000);
 
     return () => {
       cancelled = true;

@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../components/AppLoadingState";
 import HomeIconLink from "../components/HomeIconLink";
 import { auth, db } from "../../lib/firebase";
 import { isAdminEmail } from "../../lib/admin";
+import { logFirestoreQueryResult, logFirestoreQueryRun, logFirestoreScreenMount } from "../../lib/firestore-read-debug";
 import { normalizeQAVoteValue, sortQAPosts, type QAPostRecord, type QAPostSortMode, type QAVoteDocument } from "../../lib/q-and-a";
 import QAPostCard from "./_components/QAPostCard";
 
@@ -65,6 +66,7 @@ export default function QAndAPage() {
   const [sortMode, setSortMode] = useState<QAPostSortMode>("newest");
 
   useEffect(() => {
+    logFirestoreScreenMount("forums.feed");
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
@@ -78,16 +80,27 @@ export default function QAndAPage() {
       return;
     }
 
-    const unsubscribe = onSnapshot(collection(db, "qaPosts"), (snapshot) => {
+    let cancelled = false;
+
+    void (async () => {
+      logFirestoreQueryRun("forums.feed.posts", { collection: "qaPosts", limit: 50 });
+      const snapshot = await getDocs(query(collection(db, "qaPosts"), orderBy("createdAt", "desc"), limit(50)));
+      if (cancelled) {
+        return;
+      }
       const nextPosts = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...(docSnap.data() as Omit<QAPostRecord, "id">),
       }));
-
+      logFirestoreQueryResult("forums.feed.posts", { count: nextPosts.length });
       setPosts(nextPosts);
+    })().catch((error) => {
+      console.error(error);
     });
 
-    return () => unsubscribe();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   useEffect(() => {
@@ -95,23 +108,32 @@ export default function QAndAPage() {
       return;
     }
 
-    const unsubscribe = onSnapshot(
-      query(collection(db, "qaPostVotes"), where("userId", "==", user.uid)),
-      (snapshot) => {
-        const nextVotes: Record<string, number> = {};
+    let cancelled = false;
 
-        snapshot.docs.forEach((docSnap) => {
-          const vote = docSnap.data() as QAVoteDocument;
-          if (vote.postId) {
-            nextVotes[vote.postId] = normalizeQAVoteValue(Number(vote.value || 0));
-          }
-        });
-
-        setPostVotesById(nextVotes);
+    void (async () => {
+      logFirestoreQueryRun("forums.feed.votes", { collection: "qaPostVotes", userId: user.uid });
+      const snapshot = await getDocs(query(collection(db, "qaPostVotes"), where("userId", "==", user.uid)));
+      if (cancelled) {
+        return;
       }
-    );
+      const nextVotes: Record<string, number> = {};
 
-    return () => unsubscribe();
+      snapshot.docs.forEach((docSnap) => {
+        const vote = docSnap.data() as QAVoteDocument;
+        if (vote.postId) {
+          nextVotes[vote.postId] = normalizeQAVoteValue(Number(vote.value || 0));
+        }
+      });
+
+      logFirestoreQueryResult("forums.feed.votes", { count: snapshot.size });
+      setPostVotesById(nextVotes);
+    })().catch((error) => {
+      console.error(error);
+    });
+
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const visiblePosts = useMemo(() => sortQAPosts(posts, sortMode), [posts, sortMode]);
@@ -251,6 +273,21 @@ export default function QAndAPage() {
                     if (!response.ok) {
                       throw new Error(payload.error || "Could not update the vote.");
                     }
+
+                    setPostVotesById((current) => ({
+                      ...current,
+                      [post.id]: nextValue,
+                    }));
+                    setPosts((current) =>
+                      current.map((currentPost) =>
+                        currentPost.id === post.id
+                          ? {
+                              ...currentPost,
+                              score: (currentPost.score || 0) - currentVote + nextValue,
+                            }
+                          : currentPost
+                      )
+                    );
                   }}
                 />
               ))}
