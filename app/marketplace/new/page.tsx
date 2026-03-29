@@ -3,12 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { addDoc, collection } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../../components/AppLoadingState";
 import HomeIconLink from "../../components/HomeIconLink";
 import ImageCropField from "../../components/ImageCropField";
-import { auth, db } from "../../../lib/firebase";
+import { auth } from "../../../lib/firebase";
 import { formatStructuredText } from "../../../lib/text-format";
 import {
   MARKETPLACE_CATEGORY_OPTIONS,
@@ -109,22 +108,35 @@ export default function NewMarketplaceListingPage() {
     try {
       setSaving(true);
       setStatusMessage("Saving listing...");
-
-      const createdRef = await addDoc(collection(db, "marketplaceListings"), {
-        title: formatStructuredText(title),
-        category,
-        exchangeMethod,
-        description: description.trim(),
-        photoUrl: photoUrl.trim() || null,
-        priceText: priceText.trim() || null,
-        condition,
-        status,
-        createdByUid: user.uid,
-        createdByEmail: user.email || null,
-        createdAt: new Date(),
+      const idToken = await user.getIdToken();
+      const response = await fetch("/api/marketplace", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          title: formatStructuredText(title),
+          category,
+          exchangeMethod,
+          description: description.trim(),
+          photoUrl: photoUrl.trim() || null,
+          priceText: priceText.trim() || null,
+          condition,
+          status,
+        }),
       });
 
-      router.push(`/marketplace/${createdRef.id}`);
+      const payload = (await response.json().catch(() => ({}))) as {
+        listingId?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.listingId) {
+        throw new Error(payload.error || "Could not create the listing.");
+      }
+
+      router.push(`/marketplace/${payload.listingId}`);
     } catch (error) {
       console.error(error);
       setStatusMessage(error instanceof Error ? error.message : "Could not create the listing.");
