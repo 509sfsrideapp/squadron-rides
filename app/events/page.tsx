@@ -342,8 +342,6 @@ export default function EventsPage() {
                 </div>
 
                 <div style={{ display: "grid", gap: 5, color: "#cbd5e1" }}>
-                  <p style={{ margin: 0 }}><strong>When:</strong> {getEventCardDateLabel(event)}</p>
-                  <p style={{ margin: 0 }}><strong>Where:</strong> {event.location}</p>
                   {event.address ? (
                     <p style={{ margin: 0 }}><strong>Address:</strong> {event.address}</p>
                   ) : null}
