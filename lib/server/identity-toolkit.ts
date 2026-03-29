@@ -34,6 +34,13 @@ export async function setIdentityUserDisabled(userId: string, disabled: boolean)
   });
 }
 
+export async function updateIdentityUserEmail(userId: string, email: string) {
+  await callIdentityToolkit("accounts:update", {
+    localId: userId,
+    email,
+  });
+}
+
 export async function deleteIdentityUser(userId: string) {
   await callIdentityToolkit("accounts:delete", {
     localId: userId,

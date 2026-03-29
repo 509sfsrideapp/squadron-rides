@@ -6,6 +6,8 @@ import AppLoadingState from "../../components/AppLoadingState";
 import HomeIconLink from "../../components/HomeIconLink";
 import { auth, db } from "../../../lib/firebase";
 import { ADMIN_EMAIL, isAdminEmail } from "../../../lib/admin";
+import { splitHomeAddress } from "../../../lib/home-address";
+import { formatAddressPart, formatStateCode, formatVehicleField, formatVehiclePlate, normalizeVehicleYear } from "../../../lib/text-format";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, onSnapshot } from "firebase/firestore";
 
@@ -26,6 +28,8 @@ type AppUser = {
   homeZip?: string;
   rank?: string;
   flight?: string;
+  jobDescription?: string;
+  bio?: string;
   riderPhotoUrl?: string;
   carYear?: string;
   carMake?: string;
@@ -34,7 +38,70 @@ type AppUser = {
   carPlate?: string;
   driverPhotoUrl?: string;
   locationServicesEnabled?: boolean;
+  emergencyRideAddressConsent?: boolean;
+  emergencyRideDispatchMode?: string;
 };
+
+type AdminEditDraft = {
+  firstName: string;
+  lastName: string;
+  username: string;
+  email: string;
+  phone: string;
+  rank: string;
+  flight: string;
+  jobDescription: string;
+  bio: string;
+  homeStreet: string;
+  homeCity: string;
+  homeState: string;
+  homeZip: string;
+  riderPhotoUrl: string;
+  driverPhotoUrl: string;
+  carYear: string;
+  carMake: string;
+  carModel: string;
+  carColor: string;
+  carPlate: string;
+  locationServicesEnabled: boolean;
+  emergencyRideAddressConsent: boolean;
+  emergencyRideDispatchMode: string;
+  available: boolean;
+};
+
+const flightOptions = ["Alpha", "Bravo", "Charlie", "Delta", "Foxtrot", "Staff"] as const;
+const rankOptions = ["Gen", "Lt Gen", "Maj Gen", "Brig Gen", "Col", "Lt Col", "Maj", "Capt", "1st Lt", "2d Lt", "CMSgt", "SMSgt", "MSgt", "TSgt", "SSgt", "SrA", "A1C", "Amn", "AB", "CIV"] as const;
+
+function buildEditDraftFromUser(appUser: AppUser): AdminEditDraft {
+  const fallbackAddress = splitHomeAddress(appUser.homeAddress);
+
+  return {
+    firstName: appUser.firstName || "",
+    lastName: appUser.lastName || "",
+    username: appUser.username || "",
+    email: appUser.email || "",
+    phone: appUser.phone || "",
+    rank: appUser.rank || "",
+    flight: appUser.flight || "",
+    jobDescription: appUser.jobDescription || "",
+    bio: appUser.bio || "",
+    homeStreet: appUser.homeStreet || fallbackAddress.street,
+    homeCity: appUser.homeCity || fallbackAddress.city,
+    homeState: appUser.homeState || fallbackAddress.state,
+    homeZip: appUser.homeZip || fallbackAddress.zip,
+    riderPhotoUrl: appUser.riderPhotoUrl || "",
+    driverPhotoUrl: appUser.driverPhotoUrl || "",
+    carYear: appUser.carYear || "",
+    carMake: appUser.carMake || "",
+    carModel: appUser.carModel || "",
+    carColor: appUser.carColor || "",
+    carPlate: appUser.carPlate || "",
+    locationServicesEnabled: appUser.locationServicesEnabled !== false,
+    emergencyRideAddressConsent: Boolean(appUser.emergencyRideAddressConsent),
+    emergencyRideDispatchMode: appUser.emergencyRideDispatchMode || "closest_available",
+    available: Boolean(appUser.available),
+  };
+}
 
 const rankOrder = [
   "Gen",
@@ -81,6 +148,8 @@ export default function AdminAccountsPage() {
   const [messageDraftUserId, setMessageDraftUserId] = useState("");
   const [messageTitle, setMessageTitle] = useState("");
   const [messageBody, setMessageBody] = useState("");
+  const [editDraftUserId, setEditDraftUserId] = useState("");
+  const [editDraftsByUserId, setEditDraftsByUserId] = useState<Record<string, AdminEditDraft>>({});
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -268,6 +337,29 @@ export default function AdminAccountsPage() {
     setMessageBody("");
   };
 
+  const openEditComposer = (appUser: AppUser) => {
+    setEditDraftUserId(appUser.id);
+    setEditDraftsByUserId((current) => ({
+      ...current,
+      [appUser.id]: buildEditDraftFromUser(appUser),
+    }));
+    setAccountActionMessage("");
+  };
+
+  const closeEditComposer = () => {
+    setEditDraftUserId("");
+  };
+
+  const handleEditDraftChange = (userId: string, field: keyof AdminEditDraft, value: string | boolean) => {
+    setEditDraftsByUserId((current) => ({
+      ...current,
+      [userId]: {
+        ...(current[userId] || ({} as AdminEditDraft)),
+        [field]: value,
+      },
+    }));
+  };
+
   const sendAccountMessage = async (appUser: AppUser) => {
     if (!auth.currentUser) {
       setAccountActionMessage("Admin session expired. Please log in again.");
@@ -307,6 +399,77 @@ export default function AdminAccountsPage() {
     } catch (error) {
       console.error(error);
       setAccountActionMessage(error instanceof Error ? error.message : "Could not send the admin message.");
+    } finally {
+      setActingOnUserId("");
+    }
+  };
+
+  const saveAccountEdits = async (appUser: AppUser) => {
+    if (!auth.currentUser) {
+      setAccountActionMessage("Admin session expired. Please log in again.");
+      return;
+    }
+
+    const draft = editDraftsByUserId[appUser.id];
+
+    if (!draft) {
+      setAccountActionMessage("Open the edit form again before saving.");
+      return;
+    }
+
+    if (
+      !draft.firstName.trim() ||
+      !draft.lastName.trim() ||
+      !draft.username.trim() ||
+      !draft.email.trim() ||
+      !draft.phone.trim() ||
+      !draft.rank.trim() ||
+      !draft.flight.trim()
+    ) {
+      setAccountActionMessage("First name, last name, username, email, phone, rank, and flight are required.");
+      return;
+    }
+
+    try {
+      setActingOnUserId(appUser.id);
+      setAccountActionMessage("Saving account edits...");
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/accounts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          action: "update",
+          userId: appUser.id,
+          email: appUser.email || "",
+          updates: {
+            ...draft,
+            homeStreet: formatAddressPart(draft.homeStreet),
+            homeCity: formatAddressPart(draft.homeCity),
+            homeState: formatStateCode(draft.homeState),
+            homeZip: draft.homeZip.trim(),
+            carYear: normalizeVehicleYear(draft.carYear),
+            carMake: formatVehicleField(draft.carMake),
+            carModel: formatVehicleField(draft.carModel),
+            carColor: formatVehicleField(draft.carColor),
+            carPlate: formatVehiclePlate(draft.carPlate),
+          },
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Could not save account edits.");
+      }
+
+      setAccountActionMessage(`Saved account edits for ${draft.firstName.trim()} ${draft.lastName.trim()}.`);
+      closeEditComposer();
+    } catch (error) {
+      console.error(error);
+      setAccountActionMessage(error instanceof Error ? error.message : "Could not save account edits.");
     } finally {
       setActingOnUserId("");
     }
@@ -442,6 +605,8 @@ export default function AdminAccountsPage() {
             const busy = actingOnUserId === appUser.id;
             const expanded = Boolean(expandedUserIds[appUser.id]);
             const messageComposerOpen = messageDraftUserId === appUser.id;
+            const editComposerOpen = editDraftUserId === appUser.id;
+            const editDraft = editDraftsByUserId[appUser.id] || buildEditDraftFromUser(appUser);
 
             return (
               <div
@@ -577,6 +742,21 @@ export default function AdminAccountsPage() {
                       </Link>
                       <button
                         type="button"
+                        onClick={() => (editComposerOpen ? closeEditComposer() : openEditComposer(appUser))}
+                        disabled={busy}
+                        style={{
+                          padding: "8px 12px",
+                          backgroundColor: "#0f766e",
+                          color: "white",
+                          border: "none",
+                          borderRadius: 8,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {busy && editComposerOpen ? "Working..." : editComposerOpen ? "Close Edit" : "Edit Account"}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => (messageComposerOpen ? closeMessageComposer() : openMessageComposer(appUser))}
                         disabled={busy}
                         style={{
@@ -620,6 +800,139 @@ export default function AdminAccountsPage() {
                       >
                         {busy ? "Working..." : "Delete"}
                       </button>
+                    </div>
+
+                    <div
+                      className={`app-collapsible-panel${editComposerOpen ? " app-collapsible-panel-open" : ""}`}
+                      style={{ marginTop: editComposerOpen ? 14 : 0, maxHeight: editComposerOpen ? 1200 : 0 }}
+                      aria-hidden={!editComposerOpen}
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 12,
+                          padding: 14,
+                          borderRadius: 12,
+                          border: "1px solid rgba(16, 185, 129, 0.18)",
+                          backgroundColor: "rgba(8, 20, 18, 0.82)",
+                        }}
+                      >
+                        <strong>Edit Account</strong>
+                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
+                          <input value={editDraft.firstName} onChange={(event) => handleEditDraftChange(appUser.id, "firstName", event.target.value)} placeholder="First Name" disabled={busy} />
+                          <input value={editDraft.lastName} onChange={(event) => handleEditDraftChange(appUser.id, "lastName", event.target.value)} placeholder="Last Name" disabled={busy} />
+                          <input value={editDraft.username} onChange={(event) => handleEditDraftChange(appUser.id, "username", event.target.value)} placeholder="Username" disabled={busy} />
+                          <input value={editDraft.email} onChange={(event) => handleEditDraftChange(appUser.id, "email", event.target.value)} placeholder="Email" disabled={busy} />
+                          <input value={editDraft.phone} onChange={(event) => handleEditDraftChange(appUser.id, "phone", event.target.value)} placeholder="Phone" disabled={busy} />
+                          <select value={editDraft.rank} onChange={(event) => handleEditDraftChange(appUser.id, "rank", event.target.value)} disabled={busy}>
+                            <option value="">Select Rank</option>
+                            {rankOptions.map((rankOption) => (
+                              <option key={rankOption} value={rankOption}>{rankOption}</option>
+                            ))}
+                          </select>
+                          <select value={editDraft.flight} onChange={(event) => handleEditDraftChange(appUser.id, "flight", event.target.value)} disabled={busy}>
+                            <option value="">Select Flight</option>
+                            {flightOptions.map((flightOption) => (
+                              <option key={flightOption} value={flightOption}>{flightOption}</option>
+                            ))}
+                          </select>
+                          <input value={editDraft.jobDescription} onChange={(event) => handleEditDraftChange(appUser.id, "jobDescription", event.target.value)} placeholder="Job Description" disabled={busy} />
+                          <input value={editDraft.homeStreet} onChange={(event) => handleEditDraftChange(appUser.id, "homeStreet", event.target.value)} placeholder="Street Address" disabled={busy} />
+                          <input value={editDraft.homeCity} onChange={(event) => handleEditDraftChange(appUser.id, "homeCity", event.target.value)} placeholder="City" disabled={busy} />
+                          <input value={editDraft.homeState} onChange={(event) => handleEditDraftChange(appUser.id, "homeState", event.target.value)} placeholder="State" maxLength={2} disabled={busy} />
+                          <input value={editDraft.homeZip} onChange={(event) => handleEditDraftChange(appUser.id, "homeZip", event.target.value)} placeholder="ZIP Code" disabled={busy} />
+                          <input value={editDraft.carYear} onChange={(event) => handleEditDraftChange(appUser.id, "carYear", event.target.value)} placeholder="Vehicle Year" disabled={busy} />
+                          <input value={editDraft.carMake} onChange={(event) => handleEditDraftChange(appUser.id, "carMake", event.target.value)} placeholder="Vehicle Make" disabled={busy} />
+                          <input value={editDraft.carModel} onChange={(event) => handleEditDraftChange(appUser.id, "carModel", event.target.value)} placeholder="Vehicle Model" disabled={busy} />
+                          <input value={editDraft.carColor} onChange={(event) => handleEditDraftChange(appUser.id, "carColor", event.target.value)} placeholder="Vehicle Color" disabled={busy} />
+                          <input value={editDraft.carPlate} onChange={(event) => handleEditDraftChange(appUser.id, "carPlate", event.target.value)} placeholder="License Plate" disabled={busy} />
+                          <input value={editDraft.riderPhotoUrl} onChange={(event) => handleEditDraftChange(appUser.id, "riderPhotoUrl", event.target.value)} placeholder="Rider Photo URL" disabled={busy} />
+                          <input value={editDraft.driverPhotoUrl} onChange={(event) => handleEditDraftChange(appUser.id, "driverPhotoUrl", event.target.value)} placeholder="Driver Photo URL" disabled={busy} />
+                          <select value={editDraft.emergencyRideDispatchMode} onChange={(event) => handleEditDraftChange(appUser.id, "emergencyRideDispatchMode", event.target.value)} disabled={busy}>
+                            <option value="closest_available">Emergency Dispatch: Closest Available</option>
+                            <option value="same_flight_first">Emergency Dispatch: Same Flight First</option>
+                            <option value="manual_admin_review">Emergency Dispatch: Manual Admin Review</option>
+                          </select>
+                        </div>
+
+                        <textarea
+                          value={editDraft.bio}
+                          onChange={(event) => handleEditDraftChange(appUser.id, "bio", event.target.value)}
+                          placeholder="Bio"
+                          rows={3}
+                          disabled={busy}
+                          style={{ minHeight: 92 }}
+                        />
+
+                        <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                          <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                            <input
+                              type="checkbox"
+                              checked={editDraft.locationServicesEnabled}
+                              onChange={(event) => handleEditDraftChange(appUser.id, "locationServicesEnabled", event.target.checked)}
+                              disabled={busy}
+                            />
+                            <span>Location Services Enabled</span>
+                          </label>
+                          <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                            <input
+                              type="checkbox"
+                              checked={editDraft.emergencyRideAddressConsent}
+                              onChange={(event) => handleEditDraftChange(appUser.id, "emergencyRideAddressConsent", event.target.checked)}
+                              disabled={busy}
+                            />
+                            <span>Emergency Ride Consent</span>
+                          </label>
+                          <label style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                            <input
+                              type="checkbox"
+                              checked={editDraft.available}
+                              onChange={(event) => handleEditDraftChange(appUser.id, "available", event.target.checked)}
+                              disabled={busy}
+                            />
+                            <span>Driver Clocked In</span>
+                          </label>
+                        </div>
+
+                        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                          <button
+                            type="button"
+                            onClick={() => void saveAccountEdits(appUser)}
+                            disabled={busy}
+                            style={{
+                              padding: "8px 12px",
+                              backgroundColor: "#0f766e",
+                              color: "white",
+                              border: "none",
+                              borderRadius: 8,
+                              cursor: "pointer",
+                            }}
+                          >
+                            {busy ? "Saving..." : "Save Account Edits"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditDraftsByUserId((current) => ({
+                                ...current,
+                                [appUser.id]: buildEditDraftFromUser(appUser),
+                              }));
+                              closeEditComposer();
+                            }}
+                            disabled={busy}
+                            style={{
+                              padding: "8px 12px",
+                              backgroundColor: "#1f2937",
+                              color: "white",
+                              border: "none",
+                              borderRadius: 8,
+                              cursor: "pointer",
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     <div

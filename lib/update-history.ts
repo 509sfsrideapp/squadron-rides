@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v309",
+    title: "Admin In-App Account Editing",
+    summary: "Added a full native account edit form inside the admin account viewer so admins can update user profile fields, contact info, rank and flight, address, vehicle data, photo URLs, and key permission states directly in-app instead of going out to Firebase.",
+  },
+  {
     commit: "v308",
     title: "Misconduct Reporting and Admin Review",
     summary: "Added a bottom Report Misconduct flow with tap-to-select reporting on Q&A posts and comments plus Event, Marketplace, and ISO items, then wired those reports into a new admin moderation queue with allow/delete actions and reporter follow-up sent into the Admin inbox.",
