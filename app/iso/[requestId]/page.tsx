@@ -18,6 +18,8 @@ import {
   formatIsoCategoryLabel,
   formatIsoLocationLabel,
   formatIsoNeedByLabel,
+  formatIsoPostTypeLabel,
+  getIsoPhotoUrls,
   formatIsoStatusLabel,
   formatIsoUrgencyLabel,
   type IsoRequestRecord,
@@ -149,6 +151,10 @@ export default function ISORequestDetailPage() {
 
     return "Requester: Not listed";
   }, [creatorProfile]);
+  const requestPhotoUrls = useMemo(
+    () => (requestRecord ? getIsoPhotoUrls(requestRecord) : []),
+    [requestRecord]
+  );
 
   const handleDeleteRequest = async () => {
     if (!isAdminViewer || !params.requestId || deletingRequest) {
@@ -253,7 +259,7 @@ export default function ISORequestDetailPage() {
           }}
         >
         <section style={{ ...sectionStyle, display: "grid", gap: 18 }}>
-          {requestRecord.photoUrl ? (
+          {requestPhotoUrls[0] ? (
             <>
               <button
                 type="button"
@@ -266,7 +272,7 @@ export default function ISORequestDetailPage() {
                     width: "100%",
                     aspectRatio: "2 / 1",
                     borderRadius: 16,
-                    backgroundImage: `url(${requestRecord.photoUrl})`,
+                    backgroundImage: `url(${requestPhotoUrls[0]})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     border: "1px solid rgba(126, 142, 160, 0.16)",
@@ -275,16 +281,36 @@ export default function ISORequestDetailPage() {
               </button>
 
               <FullscreenImageViewer
-                src={requestRecord.photoUrl}
+                src={requestPhotoUrls[0]}
                 alt={requestRecord.title}
                 open={photoExpanded}
                 onClose={() => setPhotoExpanded(false)}
               />
+
+              {requestPhotoUrls.length > 1 ? (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(96px, 1fr))", gap: 10 }}>
+                  {requestPhotoUrls.slice(1).map((photoUrl, index) => (
+                    <div
+                      key={`${photoUrl}-${index}`}
+                      style={{
+                        width: "100%",
+                        aspectRatio: "1 / 1",
+                        borderRadius: 12,
+                        backgroundImage: `url(${photoUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        border: "1px solid rgba(126, 142, 160, 0.16)",
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </>
           ) : null}
 
           <div style={{ display: "grid", gap: 10 }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <span style={metaPillStyle}>{formatIsoPostTypeLabel(requestRecord.postType)}</span>
               <span style={metaPillStyle}>{formatIsoStatusLabel(requestRecord.status)}</span>
               <span style={metaPillStyle}>{formatIsoUrgencyLabel(requestRecord.urgency)}</span>
               {requestRecord.quantityText?.trim() ? <span style={metaPillStyle}>{requestRecord.quantityText.trim()}</span> : null}
@@ -348,6 +374,7 @@ export default function ISORequestDetailPage() {
             }}
           >
             <strong style={{ display: "block", marginBottom: 6 }}>Request Details</strong>
+            <p style={{ margin: 0, color: "#cbd5e1" }}>Type: {formatIsoPostTypeLabel(requestRecord.postType)}</p>
             <p style={{ margin: 0, color: "#cbd5e1" }}>Status: {formatIsoStatusLabel(requestRecord.status)}</p>
             <p style={{ margin: 0, color: "#cbd5e1" }}>Urgency: {formatIsoUrgencyLabel(requestRecord.urgency)}</p>
             {requestRecord.quantityText?.trim() ? <p style={{ margin: 0, color: "#cbd5e1" }}>Quantity / Count: {requestRecord.quantityText.trim()}</p> : null}

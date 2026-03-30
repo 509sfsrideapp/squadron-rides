@@ -107,13 +107,13 @@ export default function NewEventPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
-  const [photoStatusMessage, setPhotoStatusMessage] = useState("");
+  const [photoStatusMessages, setPhotoStatusMessages] = useState(["", "", ""]);
   const [eventName, setEventName] = useState("");
   const [eventType, setEventType] = useState<EventType>("fun");
   const [location, setLocation] = useState("");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [photoUrls, setPhotoUrls] = useState(["", "", ""]);
   const [neededPeople, setNeededPeople] = useState("");
   const [scheduleMode, setScheduleMode] = useState<"specific_dates" | "recurring">("specific_dates");
   const [scheduleEntries, setScheduleEntries] = useState<EventDateEntry[]>([createEmptyEventDateEntry()]);
@@ -313,7 +313,8 @@ export default function NewEventPage() {
         location: normalizedLocation,
         address: normalizedAddress || null,
         description: description.trim(),
-        photoUrl: photoUrl.trim() || null,
+        photoUrl: photoUrls.map((photoUrl) => photoUrl.trim()).filter(Boolean)[0] || null,
+        photoUrls: photoUrls.map((photoUrl) => photoUrl.trim()).filter(Boolean).slice(0, 3),
         neededPeople: neededPeople.trim() ? Number(neededPeople) : null,
         scheduleMode,
         scheduleEntries: scheduleMode === "specific_dates" ? cleanedEntries : [],
@@ -433,19 +434,36 @@ export default function NewEventPage() {
           </div>
 
           <div style={{ display: "grid", gap: 8 }}>
-            <span>Photo</span>
-            <ImageCropField
-              value={photoUrl}
-              onChange={setPhotoUrl}
-              cropShape="square"
-              cropAspectRatio={2}
-              previewSize={120}
-              outputSize={960}
-              maxEncodedLength={220000}
-              helperText="Optional event image for the card and detail page. Crop uses a 2:1 landscape frame so the banner stays consistent."
-              statusMessage={photoStatusMessage}
-              onStatusMessageChange={setPhotoStatusMessage}
-            />
+            <span>Photos</span>
+            <div style={{ display: "grid", gap: 12 }}>
+              {photoUrls.map((photoUrl, index) => (
+                <ImageCropField
+                  key={index}
+                  value={photoUrl}
+                  onChange={(nextValue) =>
+                    setPhotoUrls((current) =>
+                      current.map((value, valueIndex) => (valueIndex === index ? nextValue : value))
+                    )
+                  }
+                  cropShape="square"
+                  cropAspectRatio={2}
+                  previewSize={120}
+                  outputSize={960}
+                  maxEncodedLength={220000}
+                  helperText={
+                    index === 0
+                      ? "Primary event photo. You can add up to three total photos using the same 2:1 banner crop."
+                      : `Optional additional photo ${index + 1}.`
+                  }
+                  statusMessage={photoStatusMessages[index] || ""}
+                  onStatusMessageChange={(nextStatusMessage) =>
+                    setPhotoStatusMessages((current) =>
+                      current.map((value, valueIndex) => (valueIndex === index ? nextStatusMessage : value))
+                    )
+                  }
+                />
+              ))}
+            </div>
           </div>
 
           <div style={sectionTitleStyle}>

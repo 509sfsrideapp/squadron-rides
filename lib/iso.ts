@@ -1,10 +1,27 @@
-export type IsoCategory =
-  | "gear"
-  | "vehicle"
-  | "equipment"
-  | "uniform"
-  | "household"
-  | "other";
+import {
+  MARKETPLACE_CATEGORY_OPTIONS,
+  type MarketplaceCategory,
+} from "./marketplace";
+
+export type IsoPostType = "item" | "service";
+
+export type IsoServiceCategory =
+  | "moving_help"
+  | "home_repair"
+  | "cleaning"
+  | "yard_work"
+  | "vehicle_help"
+  | "childcare"
+  | "pet_care"
+  | "tutoring"
+  | "fitness_help"
+  | "tech_help"
+  | "furniture_assembly"
+  | "ride_help"
+  | "event_help"
+  | "admin_help";
+
+export type IsoCategory = MarketplaceCategory | IsoServiceCategory;
 
 export type IsoUrgency = "routine" | "priority" | "urgent";
 
@@ -12,11 +29,13 @@ export type IsoStatus = "open" | "in_progress" | "fulfilled" | "closed";
 
 export type IsoRequestDocument = {
   title: string;
+  postType: IsoPostType;
   category: IsoCategory;
   location: string;
   address?: string | null;
   description: string;
   photoUrl?: string | null;
+  photoUrls?: string[] | null;
   quantityText?: string | null;
   neededByDate?: string | null;
   urgency: IsoUrgency;
@@ -33,13 +52,33 @@ export type IsoRequestRecord = IsoRequestDocument & {
   id: string;
 };
 
+export const ISO_POST_TYPE_OPTIONS: Array<{ value: IsoPostType; label: string }> = [
+  { value: "item", label: "Item" },
+  { value: "service", label: "Service" },
+];
+
+export const ISO_ITEM_CATEGORY_OPTIONS = MARKETPLACE_CATEGORY_OPTIONS;
+
+export const ISO_SERVICE_CATEGORY_OPTIONS: Array<{ value: IsoServiceCategory; label: string }> = [
+  { value: "moving_help", label: "Moving Help" },
+  { value: "home_repair", label: "Home Repair" },
+  { value: "cleaning", label: "Cleaning" },
+  { value: "yard_work", label: "Yard Work" },
+  { value: "vehicle_help", label: "Vehicle Help (mechanic/basic fixes)" },
+  { value: "childcare", label: "Childcare / Babysitting" },
+  { value: "pet_care", label: "Pet Care" },
+  { value: "tutoring", label: "Tutoring / School Help" },
+  { value: "fitness_help", label: "Fitness / PT Help" },
+  { value: "tech_help", label: "Tech Help" },
+  { value: "furniture_assembly", label: "Furniture Assembly" },
+  { value: "ride_help", label: "Ride / Transportation Help (non-emergency)" },
+  { value: "event_help", label: "Event Help" },
+  { value: "admin_help", label: "Admin / Paperwork Help" },
+];
+
 export const ISO_CATEGORY_OPTIONS: Array<{ value: IsoCategory; label: string }> = [
-  { value: "gear", label: "Gear" },
-  { value: "vehicle", label: "Vehicle" },
-  { value: "equipment", label: "Equipment" },
-  { value: "uniform", label: "Uniform" },
-  { value: "household", label: "Household" },
-  { value: "other", label: "Other" },
+  ...ISO_ITEM_CATEGORY_OPTIONS,
+  ...ISO_SERVICE_CATEGORY_OPTIONS,
 ];
 
 export const ISO_URGENCY_OPTIONS: Array<{ value: IsoUrgency; label: string }> = [
@@ -71,6 +110,10 @@ export function formatIsoCategoryLabel(category: IsoCategory) {
   return ISO_CATEGORY_OPTIONS.find((option) => option.value === category)?.label || "Other";
 }
 
+export function formatIsoPostTypeLabel(postType?: IsoPostType | null) {
+  return ISO_POST_TYPE_OPTIONS.find((option) => option.value === postType)?.label || "Item";
+}
+
 export function formatIsoUrgencyLabel(urgency: IsoUrgency) {
   return ISO_URGENCY_OPTIONS.find((option) => option.value === urgency)?.label || "Routine";
 }
@@ -96,6 +139,21 @@ export function formatIsoNeedByLabel(neededByDate?: string | null) {
     day: "numeric",
     year: "numeric",
   });
+}
+
+export function getIsoPhotoUrls(
+  request: Pick<IsoRequestDocument, "photoUrl" | "photoUrls">
+) {
+  const normalizedPhotoUrls = (request.photoUrls || [])
+    .map((photoUrl) => photoUrl?.trim() || "")
+    .filter(Boolean);
+
+  if (normalizedPhotoUrls.length > 0) {
+    return normalizedPhotoUrls;
+  }
+
+  const fallbackPhotoUrl = request.photoUrl?.trim() || "";
+  return fallbackPhotoUrl ? [fallbackPhotoUrl] : [];
 }
 
 export function isoMatchesCategory(request: IsoRequestDocument, selectedCategory: string) {

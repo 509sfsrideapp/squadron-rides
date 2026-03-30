@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v363",
+    title: "ISO Post Types and Multi-Photo Expansion",
+    summary: "Split ISO creation into item and service post types with the new service category set, removed the ISO status selector from creation, and expanded ISO plus Events to support up to three photos while keeping only the first image as the main board/detail display and surfacing the secondary photos on the detail pages.",
+  },
+  {
     commit: "v362",
     title: "Event POC Messaging",
     summary: "Added a Message POC action on event detail pages and expanded the bucketed Messages system with an Events tab so event-related threads route and display the same way Marketplace and ISO context conversations do.",

@@ -11,10 +11,12 @@ import ImageCropField from "../../components/ImageCropField";
 import { auth, db } from "../../../lib/firebase";
 import { formatAddressPart, formatStructuredText } from "../../../lib/text-format";
 import {
-  ISO_CATEGORY_OPTIONS,
-  ISO_STATUS_OPTIONS,
+  ISO_ITEM_CATEGORY_OPTIONS,
+  ISO_POST_TYPE_OPTIONS,
+  ISO_SERVICE_CATEGORY_OPTIONS,
   ISO_URGENCY_OPTIONS,
   type IsoCategory,
+  type IsoPostType,
   type IsoStatus,
   type IsoUrgency,
 } from "../../../lib/iso";
@@ -69,17 +71,26 @@ export default function NewISORequestPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
-  const [photoStatusMessage, setPhotoStatusMessage] = useState("");
+  const [photoStatusMessages, setPhotoStatusMessages] = useState(["", "", ""]);
   const [title, setTitle] = useState("");
-  const [category, setCategory] = useState<IsoCategory>("gear");
+  const [postType, setPostType] = useState<IsoPostType>("item");
+  const [category, setCategory] = useState<IsoCategory>("furniture");
   const [location, setLocation] = useState("");
   const [address, setAddress] = useState("");
   const [quantityText, setQuantityText] = useState("");
   const [neededByDate, setNeededByDate] = useState("");
   const [urgency, setUrgency] = useState<IsoUrgency>("routine");
-  const [status, setStatus] = useState<IsoStatus>("open");
   const [description, setDescription] = useState("");
-  const [photoUrl, setPhotoUrl] = useState("");
+  const [photoUrls, setPhotoUrls] = useState(["", "", ""]);
+
+  useEffect(() => {
+    const validOptions =
+      postType === "service" ? ISO_SERVICE_CATEGORY_OPTIONS : ISO_ITEM_CATEGORY_OPTIONS;
+
+    if (!validOptions.some((option) => option.value === category)) {
+      setCategory(validOptions[0]?.value || "other");
+    }
+  }, [category, postType]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -117,15 +128,17 @@ export default function NewISORequestPage() {
 
       const createdRef = await addDoc(collection(db, "isoRequests"), {
         title: formatStructuredText(title),
+        postType,
         category,
         location: formatStructuredText(location),
         address: formatAddressPart(address) || null,
         description: description.trim(),
-        photoUrl: photoUrl.trim() || null,
+        photoUrl: photoUrls.map((photoUrl) => photoUrl.trim()).filter(Boolean)[0] || null,
+        photoUrls: photoUrls.map((photoUrl) => photoUrl.trim()).filter(Boolean).slice(0, 3),
         quantityText: quantityText.trim() || null,
         neededByDate: neededByDate.trim() || null,
         urgency,
-        status,
+        status: "open" satisfies IsoStatus,
         createdByUid: user.uid,
         createdByEmail: user.email || null,
         createdAt: new Date(),
@@ -177,7 +190,7 @@ export default function NewISORequestPage() {
               Request Basics
             </strong>
             <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.55 }}>
-              Build the first-pass ISO request with the item wanted, location, urgency, and enough detail for follow-up.
+              Build the first-pass ISO post with the item or service needed, location, urgency, and enough detail for follow-up.
             </p>
           </div>
 
@@ -188,9 +201,18 @@ export default function NewISORequestPage() {
             </label>
 
             <label style={{ display: "grid", gap: 6 }}>
+              <span>Post Type</span>
+              <select value={postType} onChange={(event) => setPostType(event.target.value as IsoPostType)}>
+                {ISO_POST_TYPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </label>
+
+            <label style={{ display: "grid", gap: 6 }}>
               <span>Category</span>
               <select value={category} onChange={(event) => setCategory(event.target.value as IsoCategory)}>
-                {ISO_CATEGORY_OPTIONS.map((option) => (
+                {(postType === "service" ? ISO_SERVICE_CATEGORY_OPTIONS : ISO_ITEM_CATEGORY_OPTIONS).map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
@@ -200,15 +222,6 @@ export default function NewISORequestPage() {
               <span>Urgency</span>
               <select value={urgency} onChange={(event) => setUrgency(event.target.value as IsoUrgency)}>
                 {ISO_URGENCY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </label>
-
-            <label style={{ display: "grid", gap: 6 }}>
-              <span>Status</span>
-              <select value={status} onChange={(event) => setStatus(event.target.value as IsoStatus)}>
-                {ISO_STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
@@ -236,19 +249,36 @@ export default function NewISORequestPage() {
           </div>
 
           <div style={{ display: "grid", gap: 8 }}>
-            <span>Reference Photo</span>
-            <ImageCropField
-              value={photoUrl}
-              onChange={setPhotoUrl}
-              cropShape="square"
-              cropAspectRatio={1}
-              previewSize={120}
-              outputSize={960}
-              maxEncodedLength={220000}
-              helperText="Optional reference photo for the request card and detail page. Crop uses a square frame for consistency."
-              statusMessage={photoStatusMessage}
-              onStatusMessageChange={setPhotoStatusMessage}
-            />
+            <span>Reference Photos</span>
+            <div style={{ display: "grid", gap: 12 }}>
+              {photoUrls.map((photoUrl, index) => (
+                <ImageCropField
+                  key={index}
+                  value={photoUrl}
+                  onChange={(nextValue) =>
+                    setPhotoUrls((current) =>
+                      current.map((value, valueIndex) => (valueIndex === index ? nextValue : value))
+                    )
+                  }
+                  cropShape="square"
+                  cropAspectRatio={1}
+                  previewSize={120}
+                  outputSize={960}
+                  maxEncodedLength={220000}
+                  helperText={
+                    index === 0
+                      ? "Primary reference photo. You can add up to three total square photos."
+                      : `Optional additional photo ${index + 1}.`
+                  }
+                  statusMessage={photoStatusMessages[index] || ""}
+                  onStatusMessageChange={(nextStatusMessage) =>
+                    setPhotoStatusMessages((current) =>
+                      current.map((value, valueIndex) => (valueIndex === index ? nextStatusMessage : value))
+                    )
+                  }
+                />
+              ))}
+            </div>
           </div>
 
           <label style={{ display: "grid", gap: 6 }}>

@@ -31,6 +31,7 @@ export type EventDocument = {
   address?: string | null;
   description: string;
   photoUrl?: string | null;
+  photoUrls?: string[] | null;
   neededPeople?: number | null;
   scheduleMode: EventScheduleMode;
   scheduleEntries: EventDateEntry[];
@@ -215,6 +216,21 @@ export function createEmptyEventDateEntry(): EventDateEntry {
 
 export function formatEventTypeLabel(type: EventType) {
   return EVENT_TYPE_OPTIONS.find((option) => option.value === type)?.label || "Other";
+}
+
+export function getEventPhotoUrls(
+  event: Pick<EventDocument, "photoUrl" | "photoUrls">
+) {
+  const normalizedPhotoUrls = (event.photoUrls || [])
+    .map((photoUrl) => photoUrl?.trim() || "")
+    .filter(Boolean);
+
+  if (normalizedPhotoUrls.length > 0) {
+    return normalizedPhotoUrls;
+  }
+
+  const fallbackPhotoUrl = event.photoUrl?.trim() || "";
+  return fallbackPhotoUrl ? [fallbackPhotoUrl] : [];
 }
 
 export function formatEventCreatorLabel(event: Pick<EventDocument, "createdByName" | "createdByFirstName" | "createdByLastName" | "createdByRank">) {

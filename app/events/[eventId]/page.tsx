@@ -14,7 +14,7 @@ import { isAdminEmail } from "../../../lib/admin";
 import { openEventConversation } from "../../../lib/direct-message-launch";
 import { auth, db } from "../../../lib/firebase";
 import { buildMisconductPreviewText } from "../../../lib/misconduct";
-import { formatEventCreatorLabel, formatEventDateEntry, formatEventLocationLabel, formatEventTypeLabel, formatRecurringRule, getEventCardDateLabel, getRecurringOccurrenceDateTexts, type EventRecord } from "../../../lib/events";
+import { formatEventCreatorLabel, formatEventDateEntry, formatEventLocationLabel, formatEventTypeLabel, formatRecurringRule, getEventCardDateLabel, getEventPhotoUrls, getRecurringOccurrenceDateTexts, type EventRecord } from "../../../lib/events";
 
 type UserProfile = {
   firstName?: string | null;
@@ -263,6 +263,10 @@ export default function EventDetailPage() {
 
     return getEventCardDateLabel(eventRecord);
   }, [eventRecord]);
+  const eventPhotoUrls = useMemo(
+    () => (eventRecord ? getEventPhotoUrls(eventRecord) : []),
+    [eventRecord]
+  );
 
   const organizerLabel = useMemo(() => {
     if (!eventRecord) {
@@ -486,7 +490,7 @@ export default function EventDetailPage() {
           }}
         >
         <section style={{ ...sectionStyle, display: "grid", gap: 18 }}>
-          {eventRecord.photoUrl ? (
+          {eventPhotoUrls[0] ? (
             <>
               <button
                 type="button"
@@ -506,7 +510,7 @@ export default function EventDetailPage() {
                     width: "100%",
                     aspectRatio: "2 / 1",
                     borderRadius: 16,
-                    backgroundImage: `url(${eventRecord.photoUrl})`,
+                    backgroundImage: `url(${eventPhotoUrls[0]})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     border: "1px solid rgba(126, 142, 160, 0.16)",
@@ -515,11 +519,30 @@ export default function EventDetailPage() {
               </button>
 
               <FullscreenImageViewer
-                src={eventRecord.photoUrl}
+                src={eventPhotoUrls[0]}
                 alt={eventRecord.name}
                 open={photoExpanded}
                 onClose={() => setPhotoExpanded(false)}
               />
+
+              {eventPhotoUrls.length > 1 ? (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
+                  {eventPhotoUrls.slice(1).map((photoUrl, index) => (
+                    <div
+                      key={`${photoUrl}-${index}`}
+                      style={{
+                        width: "100%",
+                        aspectRatio: "2 / 1",
+                        borderRadius: 12,
+                        backgroundImage: `url(${photoUrl})`,
+                        backgroundSize: "cover",
+                        backgroundPosition: "center",
+                        border: "1px solid rgba(126, 142, 160, 0.16)",
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : null}
             </>
           ) : null}
 
@@ -587,7 +610,7 @@ export default function EventDetailPage() {
             {eventRecord.address ? (
               <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.55 }}>{eventRecord.address}</p>
             ) : null}
-            {eventRecord.photoUrl ? (
+            {eventPhotoUrls[0] ? (
               <p style={{ margin: 0, color: "#7f8da3", fontSize: 12 }}>
                 Tap the event photo to expand it.
               </p>

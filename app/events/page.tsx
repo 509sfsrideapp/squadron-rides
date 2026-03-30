@@ -9,7 +9,7 @@ import HomeIconLink from "../components/HomeIconLink";
 import { ReportableTarget } from "../components/MisconductReporting";
 import { auth, db } from "../../lib/firebase";
 import { buildMisconductPreviewText } from "../../lib/misconduct";
-import { EVENT_TYPE_OPTIONS, eventMatchesDateRange, eventMatchesType, formatEventCreatorLabel, formatEventLocationLabel, formatEventTypeLabel, getEventCardDateLabel, isUpcomingEvent, sortEventsByUpcomingDate, type EventRecord } from "../../lib/events";
+import { EVENT_TYPE_OPTIONS, eventMatchesDateRange, eventMatchesType, formatEventCreatorLabel, formatEventLocationLabel, formatEventTypeLabel, getEventCardDateLabel, getEventPhotoUrls, isUpcomingEvent, sortEventsByUpcomingDate, type EventRecord } from "../../lib/events";
 
 type EventCreatorProfile = {
   name?: string | null;
@@ -357,13 +357,13 @@ export default function EventsPage() {
                 color: "#e5edf7",
               }}
             >
-              {event.photoUrl ? (
+              {getEventPhotoUrls(event)[0] ? (
                 <div
                   style={{
                     width: "100%",
                     aspectRatio: "2 / 1",
                     borderRadius: 14,
-                    backgroundImage: `url(${event.photoUrl})`,
+                    backgroundImage: `url(${getEventPhotoUrls(event)[0]})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     border: "1px solid rgba(126, 142, 160, 0.16)",

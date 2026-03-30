@@ -13,8 +13,10 @@ import {
   formatIsoCategoryLabel,
   formatIsoLocationLabel,
   formatIsoNeedByLabel,
+  formatIsoPostTypeLabel,
   formatIsoStatusLabel,
   formatIsoUrgencyLabel,
+  getIsoPhotoUrls,
   ISO_CATEGORY_OPTIONS,
   ISO_STATUS_OPTIONS,
   isoMatchesCategory,
@@ -212,7 +214,7 @@ export default function ISOPage() {
                   fontFamily: "var(--font-display)",
                 }}
               >
-                In-search-of board for wanted items and requests
+                In-search-of board for wanted items, services, and requests
               </p>
               <h1 style={{ margin: "4px 0 0" }}>ISO</h1>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -327,13 +329,13 @@ export default function ISOPage() {
                 color: "#e5edf7",
               }}
             >
-              {request.photoUrl ? (
+              {getIsoPhotoUrls(request)[0] ? (
                 <div
                   style={{
                     width: "100%",
                     aspectRatio: "2 / 1",
                     borderRadius: 14,
-                    backgroundImage: `url(${request.photoUrl})`,
+                    backgroundImage: `url(${getIsoPhotoUrls(request)[0]})`,
                     backgroundSize: "cover",
                     backgroundPosition: "center",
                     border: "1px solid rgba(126, 142, 160, 0.16)",
@@ -383,6 +385,7 @@ export default function ISOPage() {
                 </div>
 
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  <span style={infoPillStyle}>{formatIsoPostTypeLabel(request.postType)}</span>
                   <span style={infoPillStyle}>{formatIsoStatusLabel(request.status)}</span>
                   <span style={infoPillStyle}>{formatIsoUrgencyLabel(request.urgency)}</span>
                   <span style={infoPillStyle}>{formatIsoLocationLabel(request.location)}</span>
@@ -414,7 +417,7 @@ export default function ISOPage() {
             <div style={{ ...cardStyle, padding: "1rem 1rem 1.1rem" }}>
               <strong style={{ display: "block", marginBottom: 8 }}>No ISO requests match this filter set</strong>
               <p style={{ margin: 0, color: "#94a3b8", lineHeight: 1.55 }}>
-                Try widening the status or category filter, or post the first item request from the button above.
+                Try widening the status or category filter, or post the first ISO item or service request from the button above.
               </p>
             </div>
           )}
