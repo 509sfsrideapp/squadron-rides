@@ -223,9 +223,10 @@ export default function SignupTermsPage() {
             style={{ marginTop: 3 }}
           />
           <span>
-            I understand that requesting an Emergency Ride will automatically share my saved pickup address with the
-            assigned driver. This is intended to speed up the request process when I may be impaired. If I do not
-            agree, I will be required to manually enter my pickup location each time, which may delay assistance.
+            I understand that requesting an Emergency Ride will automatically share my current GPS location and my
+            home address for dropoff with the assigned driver. This is intended to speed up the request process when I
+            may be impaired. If I do not agree, I will be required to manually enter my pickup location each time,
+            which may delay assistance.
           </span>
         </label>
         <p>

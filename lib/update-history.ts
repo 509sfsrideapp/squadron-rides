@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v358",
+    title: "Signup Permissions Copy Update",
+    summary: "Reworded the account-creation Emergency Ride consent checkbox so it now explains that the app will automatically share the user’s current GPS location and home address for dropoff with the assigned driver.",
+  },
+  {
     commit: "v357",
     title: "Office Profile Field Refresh",
     summary: "Replaced the account Flight selector with the new Office list across signup, account settings, and admin account editing, while auto-normalizing saved office values and clearing any legacy entries that no longer match the approved office options.",
