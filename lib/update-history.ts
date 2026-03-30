@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v349",
+    title: "Messages, Marketplace, and ISO Restored",
+    summary: "Moved Messages, Marketplace, and ISO back onto the main homepage applications grid and removed their temporary developer-only route and API restrictions, while keeping the newer Realtime Database messaging and live-ride backend improvements in place underneath.",
+  },
+  {
     commit: "v348",
     title: "Realtime Ride Live State",
     summary: "Moved the frequently changing live ride-location stream out of Firestore and onto Realtime Database for both the rider status page and the driver active-ride page, so live location refreshes keep the same behavior while reducing Firestore read and write pressure during active rides.",

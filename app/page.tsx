@@ -576,6 +576,67 @@ function QuestionMarkIcon() {
   );
 }
 
+function MessagesIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 64 64"
+      width="34"
+      height="34"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M16 18h32a8 8 0 0 1 8 8v15a8 8 0 0 1-8 8H30l-10 7v-7h-4a8 8 0 0 1-8-8V26a8 8 0 0 1 8-8Z" />
+      <path d="M21 29h22" />
+      <path d="M21 37h15" />
+    </svg>
+  );
+}
+
+function MarketplaceIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 64 64"
+      width="34"
+      height="34"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M14 26h36v24a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4V26Z" />
+      <path d="M10 26h44" />
+      <path d="M14 18h36l4 8H10l4-8Z" />
+      <path d="M22 54V36h10v18" />
+      <path d="M38 35h7v8h-7z" />
+    </svg>
+  );
+}
+
+function IsoIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 64 64"
+      width="34"
+      height="34"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="28" cy="28" r="14" />
+      <path d="m39 39 11 11" />
+    </svg>
+  );
+}
+
 function DevIcon() {
   return (
     <svg
@@ -878,10 +939,10 @@ export default function HomePage() {
   const userRoleLabel = profile?.flight ? `${profile.rank || "Member"} • ${profile.flight}` : profile?.rank || "Member";
   const showDevTile = Boolean(user);
   const showAdminTile = Boolean(user && isAdminEmail(user.email));
-  const visibleAppTileCount = 3 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
+  const visibleAppTileCount = 6 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
   const appTilePlaceholderCount = Math.max(0, 9 - visibleAppTileCount);
-  const totalOperationalApps = (driverReady ? 1 : 0) + 2 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
-  const totalVisibleApps = 3 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
+  const totalOperationalApps = (driverReady ? 1 : 0) + 5 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
+  const totalVisibleApps = 6 + (showDevTile ? 1 : 0) + (showAdminTile ? 1 : 0);
   const authTokenUserLabel =
     profile?.lastName?.trim() && profile?.firstName?.trim()
       ? `${profile.lastName.trim().toUpperCase()}, ${profile.firstName.trim().toUpperCase()}${profile.rank?.trim() ? ` (${profile.rank.trim()})` : ""}`
@@ -1658,6 +1719,9 @@ export default function HomePage() {
                   />
                   <AppTile href="/events" icon={<EventsIcon />} label="EVENTS" />
                   <AppTile href="/q-and-a" icon={<QuestionMarkIcon />} label="FORUMS" />
+                  <AppTile href="/messages" icon={<MessagesIcon />} label="MESSAGES" />
+                  <AppTile href="/marketplace" icon={<MarketplaceIcon />} label="MARKETPLACE" />
+                  <AppTile href="/iso" icon={<IsoIcon />} label="ISO" />
                   {showDevTile ? <AppTile href="/developer" icon={<DevIcon />} label="Dev" /> : null}
                   {showAdminTile ? <AppTile href="/admin" icon={<AdminIcon />} label="Admin Dashboard" /> : null}
                   {Array.from({ length: appTilePlaceholderCount }).map((_, index) => (

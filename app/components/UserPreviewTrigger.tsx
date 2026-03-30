@@ -3,7 +3,7 @@
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
-import { db } from "../../lib/firebase";
+import { auth, db } from "../../lib/firebase";
 import { buildQAAuthorLabel } from "../../lib/q-and-a";
 import { openDirectMessage } from "../../lib/direct-message-launch";
 
@@ -67,7 +67,8 @@ export default function UserPreviewTrigger({
   const [errorMessage, setErrorMessage] = useState("");
   const [profile, setProfile] = useState<UserPreviewProfile | null>(null);
   const canOpen = Boolean(userId && !disabled);
-  const canMessage = false;
+  const currentUserId = auth.currentUser?.uid || null;
+  const canMessage = Boolean(userId && currentUserId && userId !== currentUserId);
 
   useEffect(() => {
     if (!open || !userId) {
