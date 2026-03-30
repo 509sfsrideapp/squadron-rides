@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v353",
+    title: "Message Composer Copy Cleanup",
+    summary: "Removed the extra helper sentence above the send button in the direct-message composer so the messaging send area stays cleaner without changing the surrounding layout.",
+  },
+  {
     commit: "v352",
     title: "Message Pane Scroll Fix",
     summary: "Changed direct-message auto-scroll to move only the inner chat pane instead of calling scrollIntoView on the bottom anchor, which stops message sends and thread opens from yanking the whole page back to the top.",

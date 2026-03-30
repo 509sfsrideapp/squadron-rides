@@ -776,15 +776,9 @@ export default function DirectMessageThreadClient({
         <div
           style={{
             display: "flex",
-            justifyContent: "space-between",
-            gap: 10,
-            alignItems: "center",
-            flexWrap: "wrap",
+            justifyContent: "flex-end",
           }}
         >
-          <p style={{ margin: 0, color: "#94a3b8", fontSize: 12 }}>
-            Messages stay tied to this thread so you can pick them back up later.
-          </p>
           <button
             type="submit"
             disabled={!messageDraft.trim() || sending}
