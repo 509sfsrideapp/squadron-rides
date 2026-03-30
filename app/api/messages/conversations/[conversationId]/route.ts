@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  DEVELOPER_ACCESS_DISABLED_MESSAGE,
+  requestHasDeveloperAccess,
+} from "../../../../../lib/server/developer-access";
 import { verifyFirebaseIdToken } from "../../../../../lib/server/firebase-auth";
 import { getDirectMessageConversation } from "../../../../../lib/server/direct-messages";
 
@@ -22,6 +26,13 @@ export async function GET(
   context: { params: Promise<{ conversationId: string }> }
 ) {
   try {
+    if (!requestHasDeveloperAccess(request)) {
+      return NextResponse.json(
+        { error: DEVELOPER_ACCESS_DISABLED_MESSAGE },
+        { status: 403 }
+      );
+    }
+
     const authHeader = request.headers.get("authorization");
     const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 

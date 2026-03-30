@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v344",
+    title: "Marketplace and Messages Re-Locked",
+    summary: "Moved Marketplace, ISO, and Messages back behind developer access, removed their public homepage entry points, restored dev-session safe routing for those sections, blocked their APIs from serving normal-user requests, and swapped Marketplace/DM quota failures to cleaner unavailable states so hidden background fetches and raw Firestore dumps do not break the UI.",
+  },
+  {
     commit: "v343",
     title: "Messages Quota Guardrails",
     summary: "Reduced direct-message background refresh pressure by removing the thread header repoll loop and slowing conversation/message refreshes to visible-tab intervals, while also replacing raw Firestore quota JSON dumps with a cleaner temporary-busy message in the Messages experience.",

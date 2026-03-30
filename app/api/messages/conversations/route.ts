@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyFirebaseIdToken } from "../../../../lib/server/firebase-auth";
 import {
+  DEVELOPER_ACCESS_DISABLED_MESSAGE,
+  requestHasDeveloperAccess,
+} from "../../../../lib/server/developer-access";
+import {
   listDirectMessageConversationsForUser,
   openDirectConversation,
   openIsoConversation,
@@ -35,6 +39,13 @@ type RequestBody =
 
 export async function POST(request: NextRequest) {
   try {
+    if (!requestHasDeveloperAccess(request)) {
+      return NextResponse.json(
+        { error: DEVELOPER_ACCESS_DISABLED_MESSAGE },
+        { status: 403 }
+      );
+    }
+
     const authHeader = request.headers.get("authorization");
     const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
@@ -129,6 +140,13 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    if (!requestHasDeveloperAccess(request)) {
+      return NextResponse.json(
+        { error: DEVELOPER_ACCESS_DISABLED_MESSAGE },
+        { status: 403 }
+      );
+    }
+
     const authHeader = request.headers.get("authorization");
     const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 

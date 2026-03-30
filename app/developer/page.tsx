@@ -80,7 +80,7 @@ export default async function DeveloperPage() {
         <div style={featureCardStyle}>
           <h2 style={{ marginTop: 0 }}>Messages</h2>
           <p style={{ maxWidth: 320 }}>Open the direct-message feature from here too while we keep building on top of it.</p>
-          <Link href="/messages/direct" style={featureLinkStyle}>
+          <Link href="/messages/direct" prefetch={false} style={featureLinkStyle}>
             Open Messages
           </Link>
         </div>
@@ -88,7 +88,7 @@ export default async function DeveloperPage() {
         <div style={featureCardStyle}>
           <h2 style={{ marginTop: 0 }}>Marketplace</h2>
           <p style={{ maxWidth: 320 }}>Open the Marketplace feature from here for quick testing and iteration.</p>
-          <Link href="/marketplace" style={featureLinkStyle}>
+          <Link href="/marketplace" prefetch={false} style={featureLinkStyle}>
             Open Marketplace
           </Link>
         </div>
@@ -96,7 +96,7 @@ export default async function DeveloperPage() {
         <div style={featureCardStyle}>
           <h2 style={{ marginTop: 0 }}>ISO</h2>
           <p style={{ maxWidth: 320 }}>Open the ISO board from here for quick testing and iteration.</p>
-          <Link href="/iso" style={featureLinkStyle}>
+          <Link href="/iso" prefetch={false} style={featureLinkStyle}>
             Open ISO
           </Link>
         </div>

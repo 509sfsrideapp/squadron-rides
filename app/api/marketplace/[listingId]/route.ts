@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  DEVELOPER_ACCESS_DISABLED_MESSAGE,
+  requestHasDeveloperAccess,
+} from "../../../../lib/server/developer-access";
 import { writeAuditLog } from "../../../../lib/server/audit-log";
 import { verifyFirebaseIdToken } from "../../../../lib/server/firebase-auth";
 import { deleteFirestoreDocument } from "../../../../lib/server/firestore-admin";
@@ -13,8 +17,30 @@ type RouteContext = {
   }>;
 };
 
+function getSafeMarketplaceError(error: unknown, fallback: string) {
+  const message = error instanceof Error ? error.message : "";
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("quota exceeded") ||
+    normalized.includes("resource_exhausted") ||
+    normalized.includes("\"code\": 429")
+  ) {
+    return "Marketplace is temporarily unavailable right now. Give it a moment and try again.";
+  }
+
+  return message || fallback;
+}
+
 export async function GET(request: NextRequest, context: RouteContext) {
   try {
+    if (!requestHasDeveloperAccess(request)) {
+      return NextResponse.json(
+        { error: DEVELOPER_ACCESS_DISABLED_MESSAGE },
+        { status: 403 }
+      );
+    }
+
     const authHeader = request.headers.get("authorization");
     const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
@@ -34,7 +60,12 @@ export async function GET(request: NextRequest, context: RouteContext) {
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Could not load marketplace listing." },
+      {
+        error: getSafeMarketplaceError(
+          error,
+          "Could not load marketplace listing."
+        ),
+      },
       { status: 500 }
     );
   }
@@ -42,6 +73,13 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(request: NextRequest, context: RouteContext) {
   try {
+    if (!requestHasDeveloperAccess(request)) {
+      return NextResponse.json(
+        { error: DEVELOPER_ACCESS_DISABLED_MESSAGE },
+        { status: 403 }
+      );
+    }
+
     const authHeader = request.headers.get("authorization");
     const idToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
@@ -72,7 +110,12 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Could not delete marketplace listing." },
+      {
+        error: getSafeMarketplaceError(
+          error,
+          "Could not delete marketplace listing."
+        ),
+      },
       { status: 500 }
     );
   }
