@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v360",
+    title: "Post-Ride Follow-Up Notifications",
+    summary: "Added automatic Notifications inbox check-ins for both riders and drivers after a ride is completed, with optional comment boxes that do not require a response and still mark as read as soon as the message is opened.",
+  },
+  {
     commit: "v359",
     title: "Notification Preference Controls",
     summary: "Added per-user notification-category toggles for forum replies, inbox messages, Messages/Marketplace/ISO threads, new event creations, and event RSVPs, then wired those preferences into the actual push notification send paths and event notification triggers.",

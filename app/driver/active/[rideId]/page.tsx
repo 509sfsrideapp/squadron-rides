@@ -589,6 +589,24 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
           updatedAt: new Date(),
         });
       });
+
+      const idToken = await auth.currentUser?.getIdToken();
+
+      if (idToken) {
+        void fetch("/api/rides/completion-follow-up", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({
+            rideId: ride.id,
+          }),
+        }).catch((error) => {
+          console.error("Ride completion follow-up notification failed", error);
+        });
+      }
+
       alert("Ride completed");
       router.replace("/driver");
     } catch (error) {

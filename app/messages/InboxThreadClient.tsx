@@ -258,6 +258,18 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
             const postCreatedAtMs = toTimestampMs(post.createdAt);
             const needsResponseUnread = Boolean(post.requiresResponse && !post.responseSubmittedAt);
             const isUnread = needsResponseUnread || (postCreatedAtMs != null && postCreatedAtMs > readCutoff);
+            const supportsOptionalComment = Boolean(!post.requiresResponse && post.responsePrompt?.trim());
+            const responseBoxTitle = post.requiresResponse
+              ? post.responseSubmittedAt
+                ? "Response received"
+                : "Response required"
+              : post.responseSubmittedAt
+                ? "Comment saved"
+                : "Optional comment";
+            const responsePlaceholder = post.requiresResponse
+              ? "Enter your explanation here."
+              : "Add an optional comment here.";
+            const responseButtonLabel = post.requiresResponse ? "Submit Response" : "Send Comment";
 
             return (
               <div
@@ -353,7 +365,7 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
                       <div>
                         <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{post.body}</p>
 
-                        {post.requiresResponse ? (
+                        {post.requiresResponse || supportsOptionalComment ? (
                           <div
                             style={{
                               marginTop: 14,
@@ -366,10 +378,11 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
                             }}
                           >
                             <strong style={{ color: "#e0f2fe" }}>
-                              {post.responseSubmittedAt ? "Response received" : "Response required"}
+                              {responseBoxTitle}
                             </strong>
                             <p style={{ margin: 0, color: "#cbd5e1" }}>
-                              {post.responsePrompt || "Please tell us why this action was taken so dispatch can track issues and improve operations."}
+                              {post.responsePrompt ||
+                                "Please tell us why this action was taken so dispatch can track issues and improve operations."}
                             </p>
 
                             {post.responseSubmittedAt ? (
@@ -397,7 +410,7 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
                                     }))
                                   }
                                   rows={4}
-                                  placeholder="Enter your explanation here."
+                                  placeholder={responsePlaceholder}
                                   style={{
                                     width: "100%",
                                     padding: 12,
@@ -425,7 +438,7 @@ export default function InboxThreadClient({ threadId, userId }: { threadId: stri
                                     fontWeight: 700,
                                   }}
                                 >
-                                  {submittingResponseId === post.id ? "Submitting..." : "Submit Response"}
+                                  {submittingResponseId === post.id ? "Submitting..." : responseButtonLabel}
                                 </button>
                               </form>
                             )}

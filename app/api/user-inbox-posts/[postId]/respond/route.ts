@@ -9,6 +9,7 @@ type UserInboxPostRecord = {
   threadId?: string;
   title?: string;
   requiresResponse?: boolean;
+  responsePrompt?: string | null;
   responseText?: string | null;
   responseSubmittedAt?: string | null;
   rideId?: string | null;
@@ -49,8 +50,10 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized inbox response." }, { status: 403 });
     }
 
-    if (!post.requiresResponse) {
-      return NextResponse.json({ error: "This inbox post does not require a response." }, { status: 400 });
+    const allowsOptionalResponse = Boolean(post.responsePrompt?.trim());
+
+    if (!post.requiresResponse && !allowsOptionalResponse) {
+      return NextResponse.json({ error: "This inbox post does not accept a response." }, { status: 400 });
     }
 
     if (post.responseSubmittedAt) {
@@ -71,7 +74,9 @@ export async function POST(
       targetType: "userInboxPost",
       targetId: postId,
       status: "success",
-      message: "User submitted a required inbox response.",
+      message: post.requiresResponse
+        ? "User submitted a required inbox response."
+        : "User submitted an optional inbox comment.",
       details: {
         rideId: post.rideId || null,
         title: post.title || null,
