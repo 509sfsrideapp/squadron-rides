@@ -188,8 +188,10 @@ export default function MarketplaceDetailPage() {
       return;
     }
 
-    const confirmed = window.confirm("Delete this listing from the marketplace?");
-    if (!confirmed) {
+    const adminMessage = window.prompt(
+      "Optional admin reason for deleting this marketplace listing. Leave blank to delete without a reason."
+    );
+    if (adminMessage === null) {
       return;
     }
 
@@ -200,8 +202,12 @@ export default function MarketplaceDetailPage() {
       const response = await fetch(`/api/marketplace/${params.listingId}`, {
         method: "DELETE",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${idToken}`,
         },
+        body: JSON.stringify({
+          message: adminMessage.trim(),
+        }),
       });
       const payload = (await response.json().catch(() => ({}))) as { error?: string };
 

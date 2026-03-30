@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeAuditLog } from "../../../../lib/server/audit-log";
+import { createAdminRemovalInboxNotice } from "../../../../lib/server/admin-content-removal";
 import { verifyFirebaseIdToken } from "../../../../lib/server/firebase-auth";
 import { deleteFirestoreDocument } from "../../../../lib/server/firestore-admin";
 import {
@@ -71,6 +72,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     const decoded = await verifyFirebaseIdToken(idToken);
     const { listingId } = await context.params;
+    const body = (await request.json().catch(() => ({}))) as { message?: string };
     const deleteCheck = await canDeleteMarketplaceListing(decoded.sub, decoded.email, listingId);
 
     if (!deleteCheck.allowed) {
@@ -79,6 +81,20 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     await deleteFirestoreDocument(`marketplaceListings/${listingId}`);
+
+    const isAdminDelete = deleteCheck.listing.createdByUid !== decoded.sub;
+
+    if (isAdminDelete && deleteCheck.listing.createdByUid) {
+      await createAdminRemovalInboxNotice({
+        userId: deleteCheck.listing.createdByUid,
+        contentTypeLabel: "marketplace listing",
+        contentTitle: deleteCheck.listing.title || "Untitled Listing",
+        reason: body.message || "",
+        adminUid: decoded.sub,
+        adminEmail: decoded.email || null,
+      });
+    }
+
     await writeAuditLog({
       action: "marketplace.listing.delete",
       actor: { uid: decoded.sub, email: decoded.email || null },
@@ -86,6 +102,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       targetId: listingId,
       status: "success",
       message: "Deleted marketplace listing.",
+      details: {
+        adminMessage: body.message?.trim() || null,
+        adminDelete: isAdminDelete,
+      },
     });
 
     return NextResponse.json({ ok: true });

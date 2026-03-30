@@ -85,6 +85,7 @@ export async function createUserInboxPostAndMaybeNotify(input: {
   createdByEmail?: string | null;
   link?: string;
   origin?: string;
+  suppressPush?: boolean;
 }) {
   await createFirestoreDocument("userInboxPosts", {
     userId: input.userId,
@@ -104,6 +105,10 @@ export async function createUserInboxPostAndMaybeNotify(input: {
     createdByUid: input.createdByUid || null,
     createdByEmail: input.createdByEmail || null,
   });
+
+  if (input.suppressPush) {
+    return;
+  }
 
   await sendUserPushNotification({
     userId: input.userId,

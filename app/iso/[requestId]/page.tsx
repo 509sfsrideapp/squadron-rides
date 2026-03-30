@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { deleteDoc, doc, onSnapshot } from "firebase/firestore";
+import { doc, onSnapshot } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
 import AppLoadingState from "../../components/AppLoadingState";
 import FullscreenImageViewer from "../../components/FullscreenImageViewer";
@@ -161,15 +161,38 @@ export default function ISORequestDetailPage() {
       return;
     }
 
-    const confirmed = window.confirm("Delete this ISO request from the board?");
-    if (!confirmed) {
+    const adminMessage = window.prompt(
+      "Optional admin reason for deleting this ISO post. Leave blank to delete without a reason."
+    );
+    if (adminMessage === null) {
       return;
     }
 
     try {
       setDeletingRequest(true);
       setStatusMessage("");
-      await deleteDoc(doc(db, "isoRequests", params.requestId));
+      const idToken = await user?.getIdToken();
+
+      if (!idToken) {
+        throw new Error("You need to sign in again before deleting this ISO post.");
+      }
+
+      const response = await fetch(`/api/iso/${params.requestId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          message: adminMessage.trim(),
+        }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Could not delete ISO request.");
+      }
+
       router.replace("/iso");
     } catch (error) {
       console.error(error);

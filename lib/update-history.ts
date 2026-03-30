@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v364",
+    title: "Admin Delete Reason Notices",
+    summary: "Added optional admin reason prompts to admin-delete flows for Events, ISO, Marketplace, and Forums, then sent inbox-only Notifications messages to the affected content owners with the admin note when provided. Misconduct-driven admin deletions now send the same owner notice too.",
+  },
+  {
     commit: "v363",
     title: "ISO Post Types and Multi-Photo Expansion",
     summary: "Split ISO creation into item and service post types with the new service category set, removed the ISO status selector from creation, and expanded ISO plus Events to support up to three photos while keeping only the first image as the main board/detail display and surfacing the secondary photos on the detail pages.",

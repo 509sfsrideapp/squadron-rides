@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from "next/server";
 import { isAdminEmail } from "../../../../../lib/admin";
 import { verifyFirebaseIdToken } from "../../../../../lib/server/firebase-auth";
 import { writeAuditLog } from "../../../../../lib/server/audit-log";
+import { createAdminRemovalInboxNotice } from "../../../../../lib/server/admin-content-removal";
+import { getFirestoreDocument } from "../../../../../lib/server/firestore-admin";
 import { deleteQAPost, updateQAPost } from "../../../../../lib/server/q-and-a";
 
 type RequestBody = {
   title?: string;
   body?: string;
+  message?: string;
+};
+
+type QAPostDeleteRecord = {
+  authorId: string;
+  title?: string | null;
+  deleted?: boolean;
 };
 
 export async function PATCH(
@@ -74,9 +83,15 @@ export async function DELETE(
 
     const decoded = await verifyFirebaseIdToken(idToken);
     const { postId } = await context.params;
+    const body = (await request.json().catch(() => ({}))) as RequestBody;
+    const postRecord = await getFirestoreDocument<QAPostDeleteRecord>(`qaPosts/${postId}`);
 
     if (!postId) {
       return NextResponse.json({ error: "Post id is required." }, { status: 400 });
+    }
+
+    if (!postRecord || postRecord.deleted) {
+      return NextResponse.json({ error: "That post is unavailable." }, { status: 404 });
     }
 
     await deleteQAPost({
@@ -85,6 +100,19 @@ export async function DELETE(
       allowAdminDelete: isAdminEmail(decoded.email),
     });
 
+    const adminDeletingSomeoneElse = isAdminEmail(decoded.email) && postRecord.authorId !== decoded.sub;
+
+    if (adminDeletingSomeoneElse) {
+      await createAdminRemovalInboxNotice({
+        userId: postRecord.authorId,
+        contentTypeLabel: "forum post",
+        contentTitle: postRecord.title || "Untitled Forum Post",
+        reason: body.message || "",
+        adminUid: decoded.sub,
+        adminEmail: decoded.email || null,
+      });
+    }
+
     await writeAuditLog({
       action: "q_and_a.post.delete",
       actor: { uid: decoded.sub, email: decoded.email },
@@ -92,6 +120,10 @@ export async function DELETE(
       targetId: postId,
       status: "success",
       message: "Deleted Q&A post.",
+      details: {
+        adminMessage: body.message?.trim() || null,
+        adminDelete: adminDeletingSomeoneElse,
+      },
     });
 
     return NextResponse.json({ ok: true });

@@ -375,18 +375,39 @@ export default function EventDetailPage() {
       return;
     }
 
-    const confirmed = window.confirm(
-      "Delete this event? This will remove the event and its attendance roster."
+    const adminMessage = window.prompt(
+      "Optional admin reason for deleting this event. Leave blank to delete without a reason."
     );
-    if (!confirmed) {
+
+    if (adminMessage === null) {
       return;
     }
 
     try {
       setDeletingEvent(true);
       setAttendanceStatus("");
-      await Promise.all(attendees.map((attendee) => deleteDoc(doc(db, "eventAttendees", attendee.id))));
-      await deleteDoc(doc(db, "events", params.eventId));
+      const idToken = await user?.getIdToken();
+
+      if (!idToken) {
+        throw new Error("You need to sign in again before deleting this event.");
+      }
+
+      const response = await fetch(`/api/events/${params.eventId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          message: adminMessage.trim(),
+        }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Could not delete event.");
+      }
+
       router.replace("/events");
     } catch (error) {
       console.error(error);

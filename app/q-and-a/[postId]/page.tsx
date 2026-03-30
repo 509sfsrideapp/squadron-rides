@@ -533,10 +533,22 @@ export default function QAPostDetailPage() {
                     type="button"
                     disabled={deletingPost}
                     onClick={async () => {
-                      const confirmed = window.confirm("Delete this post? It will be removed from the feed.");
+                      const adminDeleting = showAdminIdentity && postRecord.authorId !== user.uid;
+                      const adminMessage = adminDeleting
+                        ? window.prompt("Optional admin reason for deleting this forum post. Leave blank to delete without a reason.")
+                        : "";
+                      const adminDeleteMessage = adminDeleting ? (adminMessage || "").trim() : "";
 
-                      if (!confirmed) {
+                      if (adminDeleting && adminMessage === null) {
                         return;
+                      }
+
+                      if (!adminDeleting) {
+                        const confirmed = window.confirm("Delete this post? It will be removed from the feed.");
+
+                        if (!confirmed) {
+                          return;
+                        }
                       }
 
                       const idToken = await auth.currentUser?.getIdToken();
@@ -553,8 +565,12 @@ export default function QAPostDetailPage() {
                         const response = await fetch(`/api/q-and-a/posts/${postRecord.id}`, {
                           method: "DELETE",
                           headers: {
+                            "Content-Type": "application/json",
                             Authorization: `Bearer ${idToken}`,
                           },
+                          body: JSON.stringify({
+                            message: adminDeleteMessage,
+                          }),
                         });
 
                         const payload = (await response.json().catch(() => ({}))) as { error?: string };
