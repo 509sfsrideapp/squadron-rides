@@ -2,6 +2,7 @@ import { auth, db } from "./firebase";
 import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
 import { doc, getDoc, writeBatch } from "firebase/firestore";
 import { buildHomeAddress } from "./home-address";
+import { normalizeOfficeValue } from "./offices";
 import { formatAddressPart, formatStateCode, formatVehicleField, formatVehiclePlate, normalizeVehicleYear } from "./text-format";
 import { isValidUsername, normalizeUsername } from "./username";
 
@@ -90,7 +91,7 @@ function getMissingRequiredFieldMessage(draft: SignupDraft) {
     [draft.firstName, "First name is required."],
     [draft.lastName, "Last name is required."],
     [draft.rank, "Rank is required."],
-    [draft.flight, "Flight is required."],
+    [draft.flight, "Office is required."],
     [draft.username, "Username is required."],
     [draft.email, "Email is required."],
     [draft.phone, "Phone number is required."],
@@ -111,6 +112,10 @@ export async function validateSignupDraft(draft: SignupDraft) {
 
   if (draft.password !== draft.confirmPassword) {
     return { ok: false as const, message: "Password and verify password must match." };
+  }
+
+  if (!normalizeOfficeValue(draft.flight)) {
+    return { ok: false as const, message: "Select a valid office." };
   }
 
   const normalizedPhone = getPhoneE164(draft.phone);
@@ -181,6 +186,7 @@ export async function finalizeSignupFromDraft(
   }
 
   const normalizedUsername = validation.normalizedUsername;
+  const normalizedOffice = normalizeOfficeValue(draft.flight);
   const normalizedHomeStreet = formatAddressPart(draft.homeStreet);
   const normalizedHomeCity = formatAddressPart(draft.homeCity);
   const normalizedHomeState = formatStateCode(draft.homeState);
@@ -209,7 +215,7 @@ export async function finalizeSignupFromDraft(
       lastName: draft.lastName.trim(),
       rank: draft.rank.trim(),
       rankOrRole: draft.rank.trim(),
-      flight: draft.flight.trim(),
+      flight: normalizedOffice,
       jobDescription: draft.jobDescription.trim(),
       username: normalizedUsername,
       phone: formattedPhone,

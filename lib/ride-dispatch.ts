@@ -19,13 +19,13 @@ export const RIDE_DISPATCH_OPTIONS: Array<{
   },
   {
     value: "same_flight_first",
-    label: "Send to my flight first",
-    description: "Only active drivers in your flight are alerted for the first 5 minutes, then everyone else is notified.",
+    label: "Send to my office first",
+    description: "Only active drivers in your office are alerted for the first 5 minutes, then everyone else is notified.",
   },
   {
     value: "other_flights_first",
-    label: "Send to everyone except my flight first",
-    description: "Active drivers outside your flight are alerted first for 5 minutes, then your flight is notified too.",
+    label: "Send to everyone except my office first",
+    description: "Active drivers outside your office are alerted first for 5 minutes, then your office is notified too.",
   },
 ];
 

@@ -7,6 +7,7 @@ import HomeIconLink from "../../components/HomeIconLink";
 import { auth, db } from "../../../lib/firebase";
 import { ADMIN_EMAIL, isAdminEmail } from "../../../lib/admin";
 import { splitHomeAddress } from "../../../lib/home-address";
+import { OFFICE_OPTIONS, normalizeOfficeValue } from "../../../lib/offices";
 import { formatAddressPart, formatStateCode, formatVehicleField, formatVehiclePlate, normalizeVehicleYear } from "../../../lib/text-format";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { collection, onSnapshot } from "firebase/firestore";
@@ -69,7 +70,6 @@ type AdminEditDraft = {
   available: boolean;
 };
 
-const flightOptions = ["Alpha", "Bravo", "Charlie", "Delta", "Foxtrot", "Staff"] as const;
 const rankOptions = ["Gen", "Lt Gen", "Maj Gen", "Brig Gen", "Col", "Lt Col", "Maj", "Capt", "1st Lt", "2d Lt", "CMSgt", "SMSgt", "MSgt", "TSgt", "SSgt", "SrA", "A1C", "Amn", "AB", "CIV"] as const;
 
 function buildEditDraftFromUser(appUser: AppUser): AdminEditDraft {
@@ -82,7 +82,7 @@ function buildEditDraftFromUser(appUser: AppUser): AdminEditDraft {
     email: appUser.email || "",
     phone: appUser.phone || "",
     rank: appUser.rank || "",
-    flight: appUser.flight || "",
+    flight: normalizeOfficeValue(appUser.flight),
     jobDescription: appUser.jobDescription || "",
     bio: appUser.bio || "",
     homeStreet: appUser.homeStreet || fallbackAddress.street,
@@ -170,6 +170,7 @@ export default function AdminAccountsPage() {
       const nextUsers: AppUser[] = snapshot.docs.map((docSnap) => ({
         id: docSnap.id,
         ...(docSnap.data() as Omit<AppUser, "id">),
+        flight: normalizeOfficeValue((docSnap.data() as Omit<AppUser, "id">).flight),
       }));
       setUsers(nextUsers);
     });
@@ -424,9 +425,9 @@ export default function AdminAccountsPage() {
       !draft.email.trim() ||
       !draft.phone.trim() ||
       !draft.rank.trim() ||
-      !draft.flight.trim()
+      !normalizeOfficeValue(draft.flight)
     ) {
-      setAccountActionMessage("First name, last name, username, email, phone, rank, and flight are required.");
+      setAccountActionMessage("First name, last name, username, email, phone, rank, and office are required.");
       return;
     }
 
@@ -559,7 +560,7 @@ export default function AdminAccountsPage() {
         <input
           value={accountSearch}
           onChange={(event) => setAccountSearch(event.target.value)}
-          placeholder="Search by name, username, phone, rank, flight, vehicle, or address"
+          placeholder="Search by name, username, phone, rank, office, vehicle, or address"
           style={{ width: "100%" }}
         />
         <div style={{ display: "grid", gap: 10, gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
@@ -574,10 +575,10 @@ export default function AdminAccountsPage() {
             <option value="unavailable">Not Clocked In</option>
           </select>
           <select value={flightFilter} onChange={(event) => setFlightFilter(event.target.value)}>
-            <option value="all">All Flights</option>
-            {uniqueFlights.map((flight) => (
-              <option key={flight} value={flight}>
-                {flight}
+            <option value="all">All Offices</option>
+            {uniqueFlights.map((office) => (
+              <option key={office} value={office}>
+                {office}
               </option>
             ))}
           </select>
@@ -716,7 +717,7 @@ export default function AdminAccountsPage() {
                       <div><strong>Username:</strong> {appUser.username || "N/A"}</div>
                       <div><strong>Phone:</strong> {appUser.phone || "N/A"}</div>
                       <div><strong>User ID:</strong> {appUser.id}</div>
-                      <div><strong>Flight:</strong> {appUser.flight || "N/A"}</div>
+                      <div><strong>Office:</strong> {appUser.flight || "N/A"}</div>
                       <div><strong>Rank:</strong> {appUser.rank || "N/A"}</div>
                       <div><strong>Location Services:</strong> {appUser.locationServicesEnabled === false ? "Off" : "On"}</div>
                       <div><strong>Vehicle:</strong> {vehicleSummary || "N/A"}</div>
@@ -831,9 +832,9 @@ export default function AdminAccountsPage() {
                             ))}
                           </select>
                           <select value={editDraft.flight} onChange={(event) => handleEditDraftChange(appUser.id, "flight", event.target.value)} disabled={busy}>
-                            <option value="">Select Flight</option>
-                            {flightOptions.map((flightOption) => (
-                              <option key={flightOption} value={flightOption}>{flightOption}</option>
+                            <option value="">Select Office</option>
+                            {OFFICE_OPTIONS.map((officeOption) => (
+                              <option key={officeOption} value={officeOption}>{officeOption}</option>
                             ))}
                           </select>
                           <input value={editDraft.jobDescription} onChange={(event) => handleEditDraftChange(appUser.id, "jobDescription", event.target.value)} placeholder="Job Description" disabled={busy} />
@@ -850,7 +851,7 @@ export default function AdminAccountsPage() {
                           <input value={editDraft.driverPhotoUrl} onChange={(event) => handleEditDraftChange(appUser.id, "driverPhotoUrl", event.target.value)} placeholder="Driver Photo URL" disabled={busy} />
                           <select value={editDraft.emergencyRideDispatchMode} onChange={(event) => handleEditDraftChange(appUser.id, "emergencyRideDispatchMode", event.target.value)} disabled={busy}>
                             <option value="closest_available">Emergency Dispatch: Closest Available</option>
-                            <option value="same_flight_first">Emergency Dispatch: Same Flight First</option>
+                            <option value="same_flight_first">Emergency Dispatch: Same Office First</option>
                             <option value="manual_admin_review">Emergency Dispatch: Manual Admin Review</option>
                           </select>
                         </div>

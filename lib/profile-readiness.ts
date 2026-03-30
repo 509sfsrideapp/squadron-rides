@@ -20,7 +20,7 @@ export function getRequiredAccountIssues(profile: ProfileReadinessShape | null |
   if (!profile?.firstName?.trim()) issues.push("Add your first name.");
   if (!profile?.lastName?.trim()) issues.push("Add your last name.");
   if (!profile?.rank?.trim()) issues.push("Add your rank.");
-  if (!profile?.flight?.trim()) issues.push("Select your flight.");
+  if (!profile?.flight?.trim()) issues.push("Select your office.");
   if (!profile?.username?.trim()) issues.push("Set your username.");
   if (!profile?.phone?.trim()) issues.push("Add your phone number.");
 

@@ -7,6 +7,7 @@ import AppLoadingState from "../../components/AppLoadingState";
 import HomeIconLink from "../../components/HomeIconLink";
 import { auth, db } from "../../../lib/firebase";
 import { disablePushNotifications, enablePushNotifications } from "../../../lib/push-notifications";
+import { normalizeOfficeValue } from "../../../lib/offices";
 import {
   DEFAULT_RIDE_DISPATCH_MODE,
   type EmergencyRideDispatchMode,
@@ -60,8 +61,10 @@ export default function AccountPermissionsPage() {
       }
 
       try {
-        const snap = await getDoc(doc(db, "users", currentUser.uid));
+        const userRef = doc(db, "users", currentUser.uid);
+        const snap = await getDoc(userRef);
         const data = snap.exists() ? (snap.data() as UserProfile) : null;
+        const normalizedOffice = normalizeOfficeValue(data?.flight);
         const idToken = await currentUser.getIdToken();
         const notificationResponse = await fetch("/api/notifications/debug", {
           headers: {
@@ -78,10 +81,17 @@ export default function AccountPermissionsPage() {
           setNotificationTokenCount(notificationDetails.tokenCount ?? 0);
         }
 
-        setProfile(data);
+        setProfile(data ? { ...data, flight: normalizedOffice } : null);
         setEmergencyRideAddressConsent(Boolean(data?.emergencyRideAddressConsent));
         setEmergencyRideDispatchMode(normalizeRideDispatchMode(data?.emergencyRideDispatchMode));
         setLocationServicesEnabled(data?.locationServicesEnabled !== false);
+
+        if (data && (data.flight?.trim() || "") !== normalizedOffice) {
+          await updateDoc(userRef, {
+            flight: normalizedOffice,
+            updatedAt: new Date(),
+          }).catch(() => undefined);
+        }
       } catch (error) {
         console.error(error);
         setStatusMessage("Could not load app permissions.");

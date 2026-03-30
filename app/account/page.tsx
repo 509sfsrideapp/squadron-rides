@@ -9,6 +9,7 @@ import ImageCropField from "../components/ImageCropField";
 import { auth, db } from "../../lib/firebase";
 import { isAdminEmail } from "../../lib/admin";
 import { buildHomeAddress, splitHomeAddress } from "../../lib/home-address";
+import { OFFICE_OPTIONS, normalizeOfficeValue } from "../../lib/offices";
 import { formatAddressPart, formatStateCode, formatVehicleField, formatVehiclePlate, normalizeVehicleYear, shouldClearCorruptedVehicleYear } from "../../lib/text-format";
 import { useActiveRides } from "../../lib/use-active-rides";
 import { EmailAuthProvider, onAuthStateChanged, reauthenticateWithCredential, User } from "firebase/auth";
@@ -44,7 +45,6 @@ type UserProfile = {
 };
 
 export default function AccountPage() {
-  const flightOptions = ["Alpha", "Bravo", "Charlie", "Delta", "Foxtrot", "Staff"] as const;
   const rankOptions = ["CIV", "AB", "Amn", "A1C", "SrA", "SSgt", "TSgt", "MSgt", "SMSgt", "CMSgt", "2d Lt", "1st Lt", "Capt", "Maj", "Lt Col", "Col", "Brig Gen", "Maj Gen", "Lt Gen", "Gen"] as const;
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -110,6 +110,7 @@ export default function AccountPage() {
         const snap = await getDoc(doc(db, "users", currentUser.uid));
         const data = snap.exists() ? (snap.data() as UserProfile) : null;
 
+        const normalizedOffice = normalizeOfficeValue(data?.flight);
         const shouldRepairCorruptedYear = data
           ? shouldClearCorruptedVehicleYear({
               carYear: data.carYear,
@@ -117,6 +118,7 @@ export default function AccountPage() {
               homeStreet: data.homeStreet,
             })
           : false;
+        const shouldRepairOffice = Boolean(data) && (data?.flight?.trim() || "") !== normalizedOffice;
 
         const [fallbackFirstName = "", ...fallbackLastNameParts] = (data?.name || "").trim().split(/\s+/);
         const fallbackAddress = splitHomeAddress(data?.homeAddress);
@@ -139,7 +141,7 @@ export default function AccountPage() {
           homeState: parsedAddress.state,
           homeZip: parsedAddress.zip,
           rank: data?.rank || data?.rankOrRole || "",
-          flight: data?.flight || "",
+          flight: normalizedOffice,
           profilePhotoUrl: data?.driverPhotoUrl || data?.riderPhotoUrl || "",
           bio: data?.bio || "",
           carYear: normalizeVehicleYear(data?.carYear || ""),
@@ -150,9 +152,10 @@ export default function AccountPage() {
         });
         setOriginalUsername(data?.username || "");
 
-        if (data && shouldRepairCorruptedYear) {
+        if (data && (shouldRepairCorruptedYear || shouldRepairOffice)) {
           await updateDoc(doc(db, "users", currentUser.uid), {
-            carYear: "",
+            ...(shouldRepairCorruptedYear ? { carYear: "" } : {}),
+            ...(shouldRepairOffice ? { flight: normalizedOffice } : {}),
             updatedAt: new Date(),
           });
         }
@@ -229,12 +232,12 @@ export default function AccountPage() {
       (!form.firstName.trim() ||
         !form.lastName.trim() ||
         !form.rank.trim() ||
-        !form.flight.trim() ||
+        !normalizeOfficeValue(form.flight) ||
         !form.phone.trim() ||
         !form.email.trim() ||
         !form.username.trim())
     ) {
-      setStatusMessage("First name, last name, rank, flight, username, phone, and email are required.");
+      setStatusMessage("First name, last name, rank, office, username, phone, and email are required.");
       return;
     }
 
@@ -308,7 +311,7 @@ export default function AccountPage() {
           homeState: normalizedHomeState,
           homeZip: normalizedHomeZip,
           rank: form.rank.trim(),
-          flight: form.flight.trim(),
+          flight: normalizeOfficeValue(form.flight),
           rankOrRole: form.rank.trim(),
           riderPhotoUrl: profilePhotoUrl,
           bio: form.bio.trim(),
@@ -519,10 +522,10 @@ export default function AccountPage() {
           onChange={(e) => handleChange("flight", e.target.value)}
           style={{ display: "block", marginBottom: 6, width: "100%" }}
         >
-          <option value="">Select Flight</option>
-          {flightOptions.map((flightOption) => (
-            <option key={flightOption} value={flightOption}>
-              {flightOption}
+          <option value="">Select Office</option>
+          {OFFICE_OPTIONS.map((officeOption) => (
+            <option key={officeOption} value={officeOption}>
+              {officeOption}
             </option>
           ))}
         </select>

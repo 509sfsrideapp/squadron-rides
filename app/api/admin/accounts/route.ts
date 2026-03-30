@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { isAdminEmail } from "../../../../lib/admin";
 import { buildHomeAddress } from "../../../../lib/home-address";
+import { normalizeOfficeValue } from "../../../../lib/offices";
 import { formatAddressPart, formatStateCode, formatVehicleField, formatVehiclePlate, normalizeVehicleYear } from "../../../../lib/text-format";
 import { isValidUsername, normalizeUsername } from "../../../../lib/username";
 import { verifyAdminRequest } from "../../../../lib/server/admin-access";
@@ -201,6 +202,12 @@ export async function POST(request: NextRequest) {
       }
 
       const normalizedCarYear = normalizeVehicleYear(updates.carYear || "");
+      const normalizedOffice = normalizeOfficeValue(updates.flight);
+
+      if (!normalizedOffice) {
+        return NextResponse.json({ error: "A valid office is required." }, { status: 400 });
+      }
+
       const patch = {
         name: `${updates.firstName?.trim() || ""} ${updates.lastName?.trim() || ""}`.trim(),
         firstName: updates.firstName?.trim() || "",
@@ -210,7 +217,7 @@ export async function POST(request: NextRequest) {
         phone: updates.phone?.trim() || "",
         rank: updates.rank?.trim() || "",
         rankOrRole: updates.rank?.trim() || "",
-        flight: updates.flight?.trim() || "",
+        flight: normalizedOffice,
         jobDescription: updates.jobDescription?.trim() || "",
         bio: updates.bio?.trim() || "",
         homeStreet: normalizedHomeStreet,

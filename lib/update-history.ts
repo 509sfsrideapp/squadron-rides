@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v357",
+    title: "Office Profile Field Refresh",
+    summary: "Replaced the account Flight selector with the new Office list across signup, account settings, and admin account editing, while auto-normalizing saved office values and clearing any legacy entries that no longer match the approved office options.",
+  },
+  {
     commit: "v356",
     title: "Forum Tags and Feed Filtering",
     summary: "Added selectable tags to forum post creation, stored those tags on each post, surfaced them in the forum feed and post detail view, and added a tag filter to the main forums feed for Help, Question, Discussion, Info, Announcement, Advice, Guide, and Off Topic posts.",

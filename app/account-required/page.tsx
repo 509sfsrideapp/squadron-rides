@@ -5,7 +5,8 @@ import Link from "next/link";
 import AppLoadingState from "../components/AppLoadingState";
 import { auth, db } from "../../lib/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { normalizeOfficeValue } from "../../lib/offices";
 import { getRequiredAccountIssues } from "../../lib/profile-readiness";
 
 type GateProfile = {
@@ -31,9 +32,19 @@ export default function AccountRequiredPage() {
         return;
       }
 
-      const snap = await getDoc(doc(db, "users", currentUser.uid)).catch(() => null);
+      const userRef = doc(db, "users", currentUser.uid);
+      const snap = await getDoc(userRef).catch(() => null);
       const profile = snap?.exists() ? (snap.data() as GateProfile) : null;
-      setIssues(getRequiredAccountIssues(profile));
+      const normalizedOffice = normalizeOfficeValue(profile?.flight);
+
+      if (profile && (profile.flight?.trim() || "") !== normalizedOffice) {
+        await updateDoc(userRef, {
+          flight: normalizedOffice,
+          updatedAt: new Date(),
+        }).catch(() => undefined);
+      }
+
+      setIssues(getRequiredAccountIssues(profile ? { ...profile, flight: normalizedOffice } : null));
       setLoading(false);
     });
 

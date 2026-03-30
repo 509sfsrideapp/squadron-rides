@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import HomeIconLink from "../components/HomeIconLink";
 import ImageCropField from "../components/ImageCropField";
+import { OFFICE_OPTIONS, normalizeOfficeValue } from "../../lib/offices";
 import { validateSignupDraft, SIGNUP_DRAFT_STORAGE_KEY, type SignupDraft } from "../../lib/signup";
 
-const flightOptions = ["Alpha", "Bravo", "Charlie", "Delta", "Foxtrot", "Staff"] as const;
 const rankOptions = ["CIV", "AB", "Amn", "A1C", "SrA", "SSgt", "TSgt", "MSgt", "SMSgt", "CMSgt", "2d Lt", "1st Lt", "Capt", "Maj", "Lt Col", "Col", "Brig Gen", "Maj Gen", "Lt Gen", "Gen"] as const;
 
 function loadInitialSignupDraft(): SignupDraft | null {
@@ -34,7 +34,7 @@ export default function SignupPage() {
   const [firstName, setFirstName] = useState(() => initialDraft?.firstName || "");
   const [lastName, setLastName] = useState(() => initialDraft?.lastName || "");
   const [rank, setRank] = useState(() => initialDraft?.rank || "");
-  const [flight, setFlight] = useState(() => initialDraft?.flight || "");
+  const [flight, setFlight] = useState(() => normalizeOfficeValue(initialDraft?.flight));
   const [jobDescription, setJobDescription] = useState(() => initialDraft?.jobDescription || "");
   const [phone, setPhone] = useState(() => initialDraft?.phone || "");
   const [confirmPhone, setConfirmPhone] = useState(() => initialDraft?.confirmPhone || "");
@@ -194,10 +194,10 @@ export default function SignupPage() {
           onChange={(e) => setFlight(e.target.value)}
           style={{ display: "block", marginBottom: 10, width: "100%" }}
         >
-          <option value="">Select Flight</option>
-          {flightOptions.map((flightOption) => (
-            <option key={flightOption} value={flightOption}>
-              {flightOption}
+          <option value="">Select Office</option>
+          {OFFICE_OPTIONS.map((officeOption) => (
+            <option key={officeOption} value={officeOption}>
+              {officeOption}
             </option>
           ))}
         </select>

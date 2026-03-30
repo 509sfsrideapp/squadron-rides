@@ -10,6 +10,7 @@ import { auth, db } from "../lib/firebase";
 import { beginDriverPresenceSession, clearDriverPresence, publishDriverPresence } from "../lib/driver-presence";
 import { subscribeToUserDirectMessageConversations } from "../lib/direct-message-live";
 import { isAdminEmail } from "../lib/admin";
+import { normalizeOfficeValue } from "../lib/offices";
 import { canDrive, canRequestRide, getDriverReadinessIssues, getRideReadinessIssues } from "../lib/profile-readiness";
 import { getInboxUnreadCount, INBOX_READ_EVENT, loadInboxReadState } from "../lib/inbox-badges";
 import { canDriverSeeRideDuringDispatchWindow, DEFAULT_RIDE_DISPATCH_MODE, type EmergencyRideDispatchMode, normalizeRideDispatchMode } from "../lib/ride-dispatch";
@@ -731,29 +732,36 @@ export default function HomePage() {
       setUser(currentUser);
 
       try {
-        if (currentUser) {
-          const userRef = doc(db, "users", currentUser.uid);
-          const userSnap = await getDoc(userRef);
+          if (currentUser) {
+            const userRef = doc(db, "users", currentUser.uid);
+            const userSnap = await getDoc(userRef);
 
-          if (userSnap.exists()) {
-            const nextProfile = userSnap.data() as UserProfile & { homeStreet?: string };
-            const shouldRepairCorruptedYear = shouldClearCorruptedVehicleYear({
-              carYear: nextProfile.carYear,
-              homeAddress: nextProfile.homeAddress,
-              homeStreet: nextProfile.homeStreet,
-            });
-
-            if (shouldRepairCorruptedYear) {
-              await updateDoc(userRef, {
-                carYear: "",
-                updatedAt: new Date(),
+            if (userSnap.exists()) {
+              const nextProfile = userSnap.data() as UserProfile & { homeStreet?: string };
+              const normalizedOffice = normalizeOfficeValue(nextProfile.flight);
+              const shouldRepairCorruptedYear = shouldClearCorruptedVehicleYear({
+                carYear: nextProfile.carYear,
+                homeAddress: nextProfile.homeAddress,
+                homeStreet: nextProfile.homeStreet,
               });
-              setProfile({ ...nextProfile, carYear: "" });
+              const shouldRepairOffice = (nextProfile.flight?.trim() || "") !== normalizedOffice;
+
+              if (shouldRepairCorruptedYear || shouldRepairOffice) {
+                await updateDoc(userRef, {
+                  ...(shouldRepairCorruptedYear ? { carYear: "" } : {}),
+                  ...(shouldRepairOffice ? { flight: normalizedOffice } : {}),
+                  updatedAt: new Date(),
+                });
+                setProfile({
+                  ...nextProfile,
+                  flight: normalizedOffice,
+                  ...(shouldRepairCorruptedYear ? { carYear: "" } : {}),
+                });
+              } else {
+                setProfile({ ...nextProfile, flight: normalizedOffice });
+              }
             } else {
-              setProfile(nextProfile);
-            }
-          } else {
-            setProfile(null);
+              setProfile(null);
           }
         } else {
           setProfile(null);
