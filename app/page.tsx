@@ -7,7 +7,7 @@ import AppLoadingState from "./components/AppLoadingState";
 import { useRouter } from "next/navigation";
 import PushNotificationsCard from "./components/PushNotificationsCard";
 import { auth, db } from "../lib/firebase";
-import { APP_HOMEPAGE_REVEAL_KEY } from "../lib/app-pin";
+import { APP_HOMEPAGE_REVEAL_KEY } from "../lib/startup-access";
 import { beginDriverPresenceSession, clearDriverPresence, publishDriverPresence } from "../lib/driver-presence";
 import { subscribeToUserDirectMessageConversations } from "../lib/direct-message-live";
 import { isAdminEmail } from "../lib/admin";
@@ -609,6 +609,81 @@ function QuestionMarkIcon() {
   );
 }
 
+function StartupTypedText({
+  text,
+  active,
+  delayMs = 0,
+  durationMs = 560,
+  style,
+  cursorColor = "#7dd3fc",
+  as = "span",
+}: {
+  text: string;
+  active: boolean;
+  delayMs?: number;
+  durationMs?: number;
+  style?: React.CSSProperties;
+  cursorColor?: string;
+  as?: "span" | "p" | "div" | "h2";
+}) {
+  const [visibleCount, setVisibleCount] = useState(text.length);
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+
+    let animationFrame = 0;
+    let timeoutId = 0;
+    const totalLength = text.length;
+
+    timeoutId = window.setTimeout(() => {
+      setVisibleCount(0);
+      const startedAt = performance.now();
+
+      const tick = (currentTime: number) => {
+        const progress = Math.min((currentTime - startedAt) / durationMs, 1);
+        setVisibleCount(Math.max(1, Math.round(totalLength * progress)));
+
+        if (progress < 1) {
+          animationFrame = window.requestAnimationFrame(tick);
+        }
+      };
+
+      animationFrame = window.requestAnimationFrame(tick);
+    }, delayMs);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      window.cancelAnimationFrame(animationFrame);
+    };
+  }, [active, delayMs, durationMs, text]);
+
+  const Component = as;
+  const renderedText = active ? text.slice(0, visibleCount) : text;
+  const showCursor = active && visibleCount < text.length;
+
+  return (
+    <Component style={style}>
+      {renderedText}
+      {showCursor ? (
+        <span
+          aria-hidden="true"
+          style={{
+            display: "inline-block",
+            width: 7,
+            height: "1em",
+            marginLeft: 4,
+            backgroundColor: cursorColor,
+            verticalAlign: "-0.12em",
+            animation: "auth-status-pulse 1s ease-in-out infinite",
+          }}
+        />
+      ) : null}
+    </Component>
+  );
+}
+
 function MessagesIcon() {
   return (
     <svg
@@ -768,7 +843,7 @@ export default function HomePage() {
 
     const timer = window.setTimeout(() => {
       setStartupRevealActive(false);
-    }, 2600);
+    }, 2200);
 
     return () => window.clearTimeout(timer);
   }, []);
@@ -841,7 +916,7 @@ export default function HomePage() {
     startupRevealActive
       ? {
           opacity: 0,
-          transform: "translateY(14px) scale(0.985)",
+          transform: "translateY(10px) scale(0.988)",
           animation: "homepage-section-reveal 560ms cubic-bezier(0.2, 0.82, 0.24, 1) forwards",
           animationDelay: `${delayMs}ms`,
         }
@@ -1585,13 +1660,18 @@ export default function HomePage() {
               padding: "clamp(1.2rem, 3vw, 2rem)",
               display: "grid",
               gap: 18,
-              ...getStartupRevealStyle(140),
+              ...getStartupRevealStyle(80),
             }}
           >
             <div style={{ maxWidth: 760 }}>
-              <p style={{ margin: 0, color: "#cbd5e1", fontSize: "1.05rem" }}>
-                Emergency ride coordination for squadron personnel. Request support quickly, follow ride progress in real time, and keep accountability centralized through one shared operations platform.
-              </p>
+              <StartupTypedText
+                as="p"
+                text="Emergency ride coordination for squadron personnel. Request support quickly, follow ride progress in real time, and keep accountability centralized through one shared operations platform."
+                active={startupRevealActive}
+                delayMs={120}
+                durationMs={620}
+                style={{ margin: 0, color: "#cbd5e1", fontSize: "1.05rem" }}
+              />
             </div>
 
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
@@ -1655,10 +1735,17 @@ export default function HomePage() {
               padding: "1.1rem 1.2rem",
               display: "grid",
               gap: 10,
-              ...getStartupRevealStyle(280),
+              ...getStartupRevealStyle(220),
             }}
           >
-            <h2 style={{ margin: 0 }}>Core Capabilities</h2>
+            <StartupTypedText
+              as="h2"
+              text="Core Capabilities"
+              active={startupRevealActive}
+              delayMs={260}
+              durationMs={280}
+              style={{ margin: 0 }}
+            />
             <div style={{ display: "grid", gap: 8 }}>
               <p style={{ margin: 0, color: "#cbd5e1" }}>Rapid emergency ride requests with live driver response.</p>
               <p style={{ margin: 0, color: "#cbd5e1" }}>Driver availability, dispatch visibility, and active ride workflow.</p>
@@ -1719,10 +1806,21 @@ export default function HomePage() {
                     fontFamily: "var(--font-display)",
                       letterSpacing: "0.1em",
                       textTransform: "uppercase",
-                      boxShadow: "0 20px 44px rgba(127, 18, 18, 0.34)",
-                      animation: submittingEmergencyRide ? undefined : "emergency-ride-pulse 3.8s ease-in-out infinite",
-                    }}
-                  >
+                    boxShadow: "0 20px 44px rgba(127, 18, 18, 0.34)",
+                    animation: submittingEmergencyRide ? undefined : "emergency-ride-pulse 3.8s ease-in-out infinite",
+                    ...(startupRevealActive
+                      ? {
+                          opacity: 0,
+                          transform: "translateY(10px) scale(0.988)",
+                          animation:
+                            submittingEmergencyRide
+                              ? "homepage-section-reveal 420ms cubic-bezier(0.2, 0.82, 0.24, 1) forwards"
+                              : "homepage-section-reveal 420ms cubic-bezier(0.2, 0.82, 0.24, 1) forwards, emergency-ride-pulse 3.8s ease-in-out infinite 520ms",
+                          animationDelay: submittingEmergencyRide ? "160ms" : "160ms, 520ms",
+                        }
+                      : {}),
+                  }}
+                >
                     <span style={{ display: "grid", gap: 6 }}>
                       <span>{submittingEmergencyRide ? "Requesting..." : "Request Emergency Ride"}</span>
                       <span
@@ -1772,12 +1870,19 @@ export default function HomePage() {
                   ...homepageCardStyle,
                   maxWidth: 840,
                   padding: "1.1rem 1.15rem 1.2rem",
-                  ...getStartupRevealStyle(420),
+                  ...getStartupRevealStyle(340),
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 12, flexWrap: "wrap", alignItems: "baseline" }}>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-                    <h2 style={{ margin: 0 }}>Applications</h2>
+                    <StartupTypedText
+                      as="h2"
+                      text="Applications"
+                      active={startupRevealActive}
+                      delayMs={390}
+                      durationMs={240}
+                      style={{ margin: 0 }}
+                    />
                     <span
                       style={{
                         color: "#94a3b8",
@@ -1856,17 +1961,17 @@ export default function HomePage() {
                     badgeCount={visibleDriverRequestCount}
                     pulseGreen={Boolean(driverReady && profile?.available)}
                     revealActive={startupRevealActive}
-                    revealDelayMs={520}
+                    revealDelayMs={440}
                   />
-                  <AppTile href="/events" icon={<EventsIcon />} label="EVENTS" revealActive={startupRevealActive} revealDelayMs={600} />
-                  <AppTile href="/q-and-a" icon={<QuestionMarkIcon />} label="FORUMS" revealActive={startupRevealActive} revealDelayMs={680} />
-                  <AppTile href="/messages" icon={<MessagesIcon />} label="MESSAGES" badgeCount={messageUnreadCount} revealActive={startupRevealActive} revealDelayMs={760} />
-                  <AppTile href="/marketplace" icon={<MarketplaceIcon />} label="MARKETPLACE" revealActive={startupRevealActive} revealDelayMs={840} />
-                  <AppTile href="/iso" icon={<IsoIcon />} label="ISO" revealActive={startupRevealActive} revealDelayMs={920} />
-                  {showDevTile ? <AppTile href="/developer" icon={<DevIcon />} label="Dev" revealActive={startupRevealActive} revealDelayMs={1000} /> : null}
-                  {showAdminTile ? <AppTile href="/admin" icon={<AdminIcon />} label="Admin Dashboard" revealActive={startupRevealActive} revealDelayMs={1080} /> : null}
+                  <AppTile href="/events" icon={<EventsIcon />} label="EVENTS" revealActive={startupRevealActive} revealDelayMs={510} />
+                  <AppTile href="/q-and-a" icon={<QuestionMarkIcon />} label="FORUMS" revealActive={startupRevealActive} revealDelayMs={580} />
+                  <AppTile href="/messages" icon={<MessagesIcon />} label="MESSAGES" badgeCount={messageUnreadCount} revealActive={startupRevealActive} revealDelayMs={650} />
+                  <AppTile href="/marketplace" icon={<MarketplaceIcon />} label="MARKETPLACE" revealActive={startupRevealActive} revealDelayMs={720} />
+                  <AppTile href="/iso" icon={<IsoIcon />} label="ISO" revealActive={startupRevealActive} revealDelayMs={790} />
+                  {showDevTile ? <AppTile href="/developer" icon={<DevIcon />} label="Dev" revealActive={startupRevealActive} revealDelayMs={860} /> : null}
+                  {showAdminTile ? <AppTile href="/admin" icon={<AdminIcon />} label="Admin Dashboard" revealActive={startupRevealActive} revealDelayMs={930} /> : null}
                   {Array.from({ length: appTilePlaceholderCount }).map((_, index) => (
-                    <PlaceholderTile key={index} revealActive={startupRevealActive} revealDelayMs={1160 + index * 80} />
+                    <PlaceholderTile key={index} revealActive={startupRevealActive} revealDelayMs={1000 + index * 70} />
                   ))}
                 </div>
               </section>
@@ -1879,7 +1984,7 @@ export default function HomePage() {
                     "linear-gradient(180deg, rgba(8, 16, 28, 0.98) 0%, rgba(4, 10, 18, 0.995) 100%)",
                   boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 36px rgba(2, 6, 23, 0.3)",
                   overflow: "hidden",
-                  ...getStartupRevealStyle(980),
+                  ...getStartupRevealStyle(1040),
                 }}
               >
                 <div

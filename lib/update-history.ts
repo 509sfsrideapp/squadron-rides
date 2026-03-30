@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v368",
+    title: "Faster Access Sequence and PIN Removal",
+    summary: "Removed the launch App PIN feature from account settings and startup, cleaned those stored PIN fields out of user profiles, shortened the app-opening access sequence to a faster terminal-style handoff, and tightened the homepage reveal so text types in while panels and buttons fade down the screen more quickly.",
+  },
+  {
     commit: "v367",
     title: "Consistency and Reuse Pass",
     summary: "Standardized the context-message action across Events, Marketplace, and ISO with a shared button, added matching board-level message shortcuts where those message buckets exist, and moved ISO onto the same server-backed create/list/detail pattern Marketplace already uses so those sections behave more like one unified product.",

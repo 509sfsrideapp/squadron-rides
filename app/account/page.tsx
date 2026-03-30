@@ -8,13 +8,12 @@ import HomeIconLink from "../components/HomeIconLink";
 import ImageCropField from "../components/ImageCropField";
 import { auth, db } from "../../lib/firebase";
 import { isAdminEmail } from "../../lib/admin";
-import { APP_PIN_LENGTH, createStoredAppPin, isStoredAppPinEnabled, isValidAppPin } from "../../lib/app-pin";
 import { buildHomeAddress, splitHomeAddress } from "../../lib/home-address";
 import { OFFICE_OPTIONS, normalizeOfficeValue } from "../../lib/offices";
 import { formatAddressPart, formatStateCode, formatVehicleField, formatVehiclePlate, normalizeVehicleYear, shouldClearCorruptedVehicleYear } from "../../lib/text-format";
 import { useActiveRides } from "../../lib/use-active-rides";
 import { EmailAuthProvider, onAuthStateChanged, reauthenticateWithCredential, User } from "firebase/auth";
-import { collection, doc, getDoc, onSnapshot, query, updateDoc, where, writeBatch } from "firebase/firestore";
+import { collection, deleteField, doc, getDoc, onSnapshot, query, updateDoc, where, writeBatch } from "firebase/firestore";
 import { isValidUsername, normalizeUsername } from "../../lib/username";
 
 type UserProfile = {
@@ -43,9 +42,6 @@ type UserProfile = {
   carPlate?: string;
   driverPhotoUrl?: string;
   emergencyRideAddressConsent?: boolean;
-  appPinEnabled?: boolean;
-  appPinHash?: string | null;
-  appPinSalt?: string | null;
 };
 
 export default function AccountPage() {
@@ -59,12 +55,6 @@ export default function AccountPage() {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [deleteStatusMessage, setDeleteStatusMessage] = useState("");
-  const [appPinEnabled, setAppPinEnabled] = useState(false);
-  const [hasStoredAppPin, setHasStoredAppPin] = useState(false);
-  const [appPinValue, setAppPinValue] = useState("");
-  const [appPinConfirmValue, setAppPinConfirmValue] = useState("");
-  const [savingAppPin, setSavingAppPin] = useState(false);
-  const [appPinStatusMessage, setAppPinStatusMessage] = useState("");
   const [originalUsername, setOriginalUsername] = useState("");
   const [hasRideHistory, setHasRideHistory] = useState(false);
   const [hasDriverHistory, setHasDriverHistory] = useState(false);
@@ -161,14 +151,21 @@ export default function AccountPage() {
           carPlate: data?.carPlate || "",
         });
         setOriginalUsername(data?.username || "");
-        setAppPinEnabled(isStoredAppPinEnabled(data));
-        setHasStoredAppPin(Boolean(data?.appPinHash?.trim() && data?.appPinSalt?.trim()));
 
         if (data && (shouldRepairCorruptedYear || shouldRepairOffice)) {
           await updateDoc(doc(db, "users", currentUser.uid), {
             ...(shouldRepairCorruptedYear ? { carYear: "" } : {}),
             ...(shouldRepairOffice ? { flight: normalizedOffice } : {}),
             updatedAt: new Date(),
+          });
+        }
+
+        if (data && ("appPinEnabled" in data || "appPinHash" in data || "appPinSalt" in data)) {
+          await updateDoc(doc(db, "users", currentUser.uid), {
+            appPinEnabled: deleteField(),
+            appPinHash: deleteField(),
+            appPinSalt: deleteField(),
+            appPinUpdatedAt: deleteField(),
           });
         }
       } catch (error) {
@@ -445,109 +442,6 @@ export default function AccountPage() {
     }
   };
 
-  const handleSaveAppPin = async () => {
-    if (!user) {
-      setAppPinStatusMessage("You need to log in first.");
-      return;
-    }
-
-    try {
-      setSavingAppPin(true);
-      setAppPinStatusMessage("Saving app PIN settings...");
-
-      if (!appPinEnabled) {
-        await updateDoc(doc(db, "users", user.uid), {
-          appPinEnabled: false,
-          appPinHash: null,
-          appPinSalt: null,
-          appPinUpdatedAt: new Date(),
-        });
-
-        setHasStoredAppPin(false);
-        setAppPinValue("");
-        setAppPinConfirmValue("");
-        setAppPinStatusMessage("App PIN disabled.");
-        return;
-      }
-
-      const trimmedPin = appPinValue.trim();
-      const trimmedConfirmPin = appPinConfirmValue.trim();
-
-      if (!trimmedPin && hasStoredAppPin) {
-        await updateDoc(doc(db, "users", user.uid), {
-          appPinEnabled: true,
-          appPinUpdatedAt: new Date(),
-        });
-
-        setAppPinStatusMessage("App PIN remains enabled.");
-        return;
-      }
-
-      if (!isValidAppPin(trimmedPin)) {
-        setAppPinStatusMessage(`App PIN must be exactly ${APP_PIN_LENGTH} digits.`);
-        return;
-      }
-
-      if (trimmedPin !== trimmedConfirmPin) {
-        setAppPinStatusMessage("App PIN entries do not match.");
-        return;
-      }
-
-      const credential = await createStoredAppPin(trimmedPin);
-
-      await updateDoc(doc(db, "users", user.uid), {
-        appPinEnabled: true,
-        appPinHash: credential.hash,
-        appPinSalt: credential.salt,
-        appPinUpdatedAt: new Date(),
-      });
-
-      setHasStoredAppPin(true);
-      setAppPinValue("");
-      setAppPinConfirmValue("");
-      setAppPinStatusMessage(hasStoredAppPin ? "App PIN updated." : "App PIN enabled.");
-    } catch (error) {
-      console.error(error);
-      setAppPinStatusMessage(
-        error instanceof Error ? error.message : "Could not save app PIN settings."
-      );
-    } finally {
-      setSavingAppPin(false);
-    }
-  };
-
-  const handleRemoveAppPin = async () => {
-    if (!user) {
-      setAppPinStatusMessage("You need to log in first.");
-      return;
-    }
-
-    try {
-      setSavingAppPin(true);
-      setAppPinStatusMessage("Removing app PIN...");
-
-      await updateDoc(doc(db, "users", user.uid), {
-        appPinEnabled: false,
-        appPinHash: null,
-        appPinSalt: null,
-        appPinUpdatedAt: new Date(),
-      });
-
-      setAppPinEnabled(false);
-      setHasStoredAppPin(false);
-      setAppPinValue("");
-      setAppPinConfirmValue("");
-      setAppPinStatusMessage("App PIN removed.");
-    } catch (error) {
-      console.error(error);
-      setAppPinStatusMessage(
-        error instanceof Error ? error.message : "Could not remove app PIN."
-      );
-    } finally {
-      setSavingAppPin(false);
-    }
-  };
-
   if (loading) {
     return <main style={{ padding: 20 }}><AppLoadingState title="Loading Account Settings" caption="Pulling your account profile and device settings." /></main>;
   }
@@ -780,92 +674,6 @@ export default function AccountPage() {
         >
           Change Password
         </Link>
-
-        <div
-          style={{
-            marginTop: 18,
-            padding: 16,
-            borderRadius: 14,
-            border: "1px solid rgba(126, 142, 160, 0.18)",
-            background: "linear-gradient(180deg, rgba(13, 18, 24, 0.96) 0%, rgba(8, 12, 18, 0.98) 100%)",
-            display: "grid",
-            gap: 12,
-          }}
-        >
-          <div>
-            <strong style={{ display: "block", marginBottom: 6 }}>App PIN</strong>
-            <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>
-              Use an optional 4-digit PIN to unlock the app when it opens on this device.
-            </p>
-          </div>
-
-          <label style={{ display: "flex", alignItems: "center", gap: 10, color: "#e5edf7" }}>
-            <input
-              type="checkbox"
-              checked={appPinEnabled}
-              onChange={(event) => {
-                setAppPinEnabled(event.target.checked);
-                setAppPinStatusMessage("");
-              }}
-            />
-            Enable App PIN
-          </label>
-
-          {appPinEnabled ? (
-            <div style={{ display: "grid", gap: 10 }}>
-              <input
-                value={appPinValue}
-                onChange={(event) => {
-                  setAppPinValue(event.target.value.replace(/\D/g, "").slice(0, APP_PIN_LENGTH));
-                  setAppPinStatusMessage("");
-                }}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder={hasStoredAppPin ? "New 4-digit PIN (leave blank to keep current)" : "Enter 4-digit PIN"}
-                maxLength={APP_PIN_LENGTH}
-              />
-              <input
-                value={appPinConfirmValue}
-                onChange={(event) => {
-                  setAppPinConfirmValue(event.target.value.replace(/\D/g, "").slice(0, APP_PIN_LENGTH));
-                  setAppPinStatusMessage("");
-                }}
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                placeholder="Confirm 4-digit PIN"
-                maxLength={APP_PIN_LENGTH}
-              />
-              <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                <button type="button" onClick={() => void handleSaveAppPin()} disabled={savingAppPin}>
-                  {savingAppPin ? "Saving..." : hasStoredAppPin ? "Save App PIN" : "Set App PIN"}
-                </button>
-                {hasStoredAppPin ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleRemoveAppPin()}
-                    disabled={savingAppPin}
-                    style={{
-                      background: "linear-gradient(180deg, rgba(127, 29, 29, 0.92) 0%, rgba(69, 10, 10, 0.98) 100%)",
-                      border: "1px solid rgba(248, 113, 113, 0.32)",
-                    }}
-                  >
-                    Remove PIN
-                  </button>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <button type="button" onClick={() => void handleSaveAppPin()} disabled={savingAppPin}>
-              {savingAppPin ? "Saving..." : "Save App PIN Settings"}
-            </button>
-          )}
-
-          {appPinStatusMessage ? (
-            <p style={{ margin: 0, color: appPinStatusMessage.includes("enabled") || appPinStatusMessage.includes("updated") || appPinStatusMessage.includes("removed") || appPinStatusMessage.includes("disabled") ? "#86efac" : "#cbd5e1" }}>
-              {appPinStatusMessage}
-            </p>
-          ) : null}
-        </div>
 
         <h2 style={{ marginTop: 24 }}>History</h2>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 18 }}>

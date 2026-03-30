@@ -10,7 +10,7 @@ export default function DeveloperLoaderTestClient() {
   useEffect(() => {
     const timer = window.setTimeout(() => {
       router.replace("/developer");
-    }, 6800);
+    }, 4200);
 
     return () => window.clearTimeout(timer);
   }, [router]);
