@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v375",
+    title: "Launch-Only Startup Trigger",
+    summary: "Changed the secure startup sequence so it now makes its run/skip decision one time at app launch based on the initial path, instead of reevaluating on later in-app returns to the homepage. That keeps Admin, Dev, and other internal home navigations from retriggering the opening access screen.",
+  },
+  {
     commit: "v374",
     title: "Forum Comment Persistence Loader Fix",
     summary: "Reworked the forum post comment loader to fetch the post’s comment pool directly and paginate/sort in-app, which avoids the fragile ordered Firestore query path that was causing saved comments to disappear after leaving and reopening a thread.",

@@ -1,6 +1,5 @@
 "use client";
 
-import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -86,15 +85,15 @@ function getUserPhoto(profile: UserAccessProfile | null) {
 }
 
 export default function InitialAppSplash({ forceReplay = false }: InitialAppSplashProps) {
-  const pathname = usePathname();
   const [phase, setPhase] = useState<AccessPhase>("booting");
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserAccessProfile | null>(null);
   const [authResolved, setAuthResolved] = useState(false);
   const [bootMode, setBootMode] = useState<BootMode | null>(null);
   const [visibleLines, setVisibleLines] = useState<string[]>([]);
+  const [launchDecisionReady, setLaunchDecisionReady] = useState(false);
+  const [shouldRun, setShouldRun] = useState(forceReplay);
 
-  const shouldRun = forceReplay || pathname === "/";
   const accessGrantedLabel = currentUser ? "ACCESS GRANTED" : "TERMINAL READY";
   const userDisplayName = useMemo(
     () => buildUserDisplayName(profile, currentUser),
@@ -109,7 +108,16 @@ export default function InitialAppSplash({ forceReplay = false }: InitialAppSpla
     bootMode === "authenticated" ? FULL_BOOT_LINES : SIGNED_OUT_LINES;
 
   useEffect(() => {
-    if (typeof window === "undefined" || !shouldRun) {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    setShouldRun(forceReplay || window.location.pathname === "/");
+    setLaunchDecisionReady(true);
+  }, [forceReplay]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !launchDecisionReady || !shouldRun) {
       setPhase("hidden");
       return;
     }
@@ -135,10 +143,10 @@ export default function InitialAppSplash({ forceReplay = false }: InitialAppSpla
 
     startupSequenceConsumedForRuntime = true;
     setPhase("booting");
-  }, [forceReplay, shouldRun]);
+  }, [forceReplay, launchDecisionReady, shouldRun]);
 
   useEffect(() => {
-    if (!shouldRun || phase === "hidden") {
+    if (!launchDecisionReady || !shouldRun || phase === "hidden") {
       return;
     }
 
@@ -163,16 +171,16 @@ export default function InitialAppSplash({ forceReplay = false }: InitialAppSpla
     });
 
     return () => unsubscribe();
-  }, [phase, shouldRun]);
+  }, [launchDecisionReady, phase, shouldRun]);
 
   useEffect(() => {
-    if (!shouldRun || phase === "hidden" || !authResolved || phase !== "booting") {
+    if (!launchDecisionReady || !shouldRun || phase === "hidden" || !authResolved || phase !== "booting") {
       return;
     }
 
     setBootMode(currentUser ? "authenticated" : "signed_out");
     setPhase("identifying");
-  }, [authResolved, currentUser, phase, shouldRun]);
+  }, [authResolved, currentUser, launchDecisionReady, phase, shouldRun]);
 
   useEffect(() => {
     if (phase !== "identifying" || !bootMode) {
@@ -223,7 +231,7 @@ export default function InitialAppSplash({ forceReplay = false }: InitialAppSpla
     };
   }, [phase]);
 
-  if (!shouldRun || phase === "hidden") {
+  if (!launchDecisionReady || !shouldRun || phase === "hidden") {
     return null;
   }
 
