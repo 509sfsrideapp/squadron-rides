@@ -51,6 +51,8 @@ const SIGNED_OUT_LINES = [
   "TERMINAL READY",
 ];
 
+let startupSequenceConsumedForRuntime = false;
+
 function buildUserDisplayName(profile: UserAccessProfile | null, user: User | null) {
   const rank = profile?.rank?.trim() || "";
   const firstName = profile?.firstName?.trim() || "";
@@ -112,6 +114,11 @@ export default function InitialAppSplash({ forceReplay = false }: InitialAppSpla
       return;
     }
 
+    if (!forceReplay && startupSequenceConsumedForRuntime) {
+      setPhase("hidden");
+      return;
+    }
+
     const startupRuntimeSeen =
       typeof window !== "undefined" &&
       (window as Window & { [APP_STARTUP_RUNTIME_KEY]?: boolean })[
@@ -121,10 +128,12 @@ export default function InitialAppSplash({ forceReplay = false }: InitialAppSpla
       window.sessionStorage.getItem(APP_STARTUP_SESSION_KEY) === "true";
 
     if (!forceReplay && (startupRuntimeSeen || startupSessionSeen)) {
+      startupSequenceConsumedForRuntime = true;
       setPhase("hidden");
       return;
     }
 
+    startupSequenceConsumedForRuntime = true;
     setPhase("booting");
   }, [forceReplay, shouldRun]);
 

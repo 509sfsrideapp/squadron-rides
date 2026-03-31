@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v373",
+    title: "One-Time Startup Runtime Guard",
+    summary: "Hardened the startup access-sequence gate with a runtime-level one-shot guard so the secure app-opening sequence is consumed once per live app session and no longer replays when navigating back to the homepage from other areas of the app.",
+  },
+  {
     commit: "v372",
     title: "Startup-to-Homepage Handoff Timing Fix",
     summary: "Adjusted the startup handoff so the homepage reconstruction sequence now waits until the secure access overlay has fully cleared before beginning its own typed-text and panel fade-in animation, instead of running underneath the overlay in the background.",
