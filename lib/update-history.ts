@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v370",
+    title: "Forum Legacy Comment Loader Fix",
+    summary: "Fixed the forum post thread loader so older top-level comments still appear even when they were stored without a parentCommentId field, by scanning the post comment stream and identifying root comments in-app instead of relying on a Firestore null filter that missed those legacy records.",
+  },
+  {
     commit: "v369",
     title: "Startup Replay Guard Fix",
     summary: "Tightened the app-opening access-sequence guard so the startup overlay now runs only on the initial app launch for the current session instead of replaying again when returning to the homepage during normal in-app navigation.",

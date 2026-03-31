@@ -65,6 +65,11 @@ const infoPillStyle: React.CSSProperties = {
 
 const FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE = 10;
 const FORUM_REPLY_PAGE_SIZE = 10;
+const FORUM_TOP_LEVEL_COMMENT_SCAN_MULTIPLIER = 3;
+
+function isTopLevelCommentRecord(comment: Pick<QACommentRecord, "parentCommentId">) {
+  return !comment.parentCommentId;
+}
 
 export default function QAPostDetailPage() {
   const params = useParams<{ postId: string }>();
@@ -154,10 +159,6 @@ export default function QAPostDetailPage() {
   const loadTopLevelComments = useCallback(async (postId: string, options?: { reset?: boolean }) => {
     const reset = Boolean(options?.reset);
     const nextCursor = reset ? null : topLevelCommentCursorRef.current;
-    const sortConstraints =
-      commentSortMode === "oldest"
-        ? [orderBy("createdAt", "asc"), limit(FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE)]
-        : [orderBy("createdAt", "desc"), limit(FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE)];
 
     setLoadingMoreComments(true);
     try {
@@ -167,24 +168,60 @@ export default function QAPostDetailPage() {
         limit: FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE,
         cursor: nextCursor?.id || null,
       });
-      const commentsSnapshot = await getDocs(
-        query(
-          collection(db, "qaComments"),
-          where("postId", "==", postId),
-          where("parentCommentId", "==", null),
-          ...(nextCursor ? [...sortConstraints.slice(0, -1), startAfter(nextCursor), sortConstraints[sortConstraints.length - 1]] : sortConstraints)
-        )
-      );
+      const scanLimit = FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE * FORUM_TOP_LEVEL_COMMENT_SCAN_MULTIPLIER;
+      const nextComments: QACommentRecord[] = [];
+      let scanCursor = nextCursor;
+      let lastScannedDoc: QueryDocumentSnapshot<DocumentData> | null = nextCursor;
+      let foundAdditionalTopLevel = false;
+      let reachedEndOfCommentStream = false;
 
-      const nextComments = commentsSnapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...(docSnap.data() as Omit<QACommentRecord, "id">),
-      }));
+      while (nextComments.length < FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE) {
+        const commentsSnapshot = await getDocs(
+          query(
+            collection(db, "qaComments"),
+            where("postId", "==", postId),
+            orderBy("createdAt", commentSortMode === "oldest" ? "asc" : "desc"),
+            ...(scanCursor ? [startAfter(scanCursor)] : []),
+            limit(scanLimit)
+          )
+        );
 
-      logFirestoreQueryResult("forums.post.comments.top-level", { postId, count: commentsSnapshot.size });
+        if (commentsSnapshot.empty) {
+          reachedEndOfCommentStream = true;
+          break;
+        }
+
+        lastScannedDoc = commentsSnapshot.docs[commentsSnapshot.docs.length - 1] || lastScannedDoc;
+
+        const scannedComments = commentsSnapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...(docSnap.data() as Omit<QACommentRecord, "id">),
+        }));
+
+        const topLevelMatches = scannedComments.filter(isTopLevelCommentRecord);
+        const remainingSlots = FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE - nextComments.length;
+        nextComments.push(...topLevelMatches.slice(0, remainingSlots));
+
+        if (topLevelMatches.length > remainingSlots) {
+          foundAdditionalTopLevel = true;
+          break;
+        }
+
+        if (commentsSnapshot.size < scanLimit) {
+          reachedEndOfCommentStream = true;
+          break;
+        }
+
+        scanCursor = commentsSnapshot.docs[commentsSnapshot.docs.length - 1] || null;
+      }
+
+      logFirestoreQueryResult("forums.post.comments.top-level", { postId, count: nextComments.length });
       setTopLevelComments((current) => (reset ? nextComments : dedupeQARecordsById([...current, ...nextComments])));
-      topLevelCommentCursorRef.current = commentsSnapshot.docs[commentsSnapshot.docs.length - 1] || null;
-      setHasMoreTopLevelComments(commentsSnapshot.size === FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE);
+      topLevelCommentCursorRef.current = lastScannedDoc;
+      setHasMoreTopLevelComments(
+        foundAdditionalTopLevel ||
+          (!reachedEndOfCommentStream && nextComments.length === FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE)
+      );
     } finally {
       setLoadingMoreComments(false);
     }
