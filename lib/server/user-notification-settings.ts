@@ -86,8 +86,9 @@ export async function createUserInboxPostAndMaybeNotify(input: {
   link?: string;
   origin?: string;
   suppressPush?: boolean;
+  extraFields?: Record<string, unknown>;
 }) {
-  await createFirestoreDocument("userInboxPosts", {
+  const createdDocument = await createFirestoreDocument("userInboxPosts", {
     userId: input.userId,
     threadId: input.threadId,
     senderLabel: input.senderLabel,
@@ -104,10 +105,11 @@ export async function createUserInboxPostAndMaybeNotify(input: {
     createdAt: new Date(),
     createdByUid: input.createdByUid || null,
     createdByEmail: input.createdByEmail || null,
+    ...(input.extraFields || {}),
   });
 
   if (input.suppressPush) {
-    return;
+    return createdDocument;
   }
 
   await sendUserPushNotification({
@@ -120,6 +122,8 @@ export async function createUserInboxPostAndMaybeNotify(input: {
   }).catch((error) => {
     console.error("Inbox push notification failed", error);
   });
+
+  return createdDocument;
 }
 
 export async function listUserIdsForNotificationPreference(

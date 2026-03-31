@@ -27,6 +27,7 @@ type QACommentItemProps = {
   onLoadReplies?: (commentId: string, options?: { reset?: boolean }) => Promise<void>;
   loadingRepliesByCommentId?: Record<string, boolean>;
   moreRepliesByCommentId?: Record<string, boolean>;
+  readOnly?: boolean;
 };
 
 export default function QACommentItem({
@@ -43,12 +44,13 @@ export default function QACommentItem({
   onLoadReplies,
   loadingRepliesByCommentId = {},
   moreRepliesByCommentId = {},
+  readOnly = false,
 }: QACommentItemProps) {
   const [collapsed, setCollapsed] = useState(() => (comment.replyCount || 0) > 0 && comment.children.length === 0);
   const [replyOpen, setReplyOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const descendantCount = Math.max(comment.replyCount || 0, countQACommentDescendants(comment));
-  const canReply = !comment.deleted;
+  const canReply = !comment.deleted && !readOnly;
   const isAuthor = currentUserId === comment.authorId;
   const visibleAuthorLabel = getVisibleQACommentAuthorLabel(comment, { showAdminIdentity });
   const adminAuthorLabel = comment.authorAdminLabel?.trim() || comment.authorLabel;
@@ -127,7 +129,7 @@ export default function QACommentItem({
                 </span>
               </div>
 
-              {!comment.deleted ? (
+              {!comment.deleted && !readOnly ? (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                   <QAVoteControls
                     score={comment.score || 0}
@@ -186,7 +188,7 @@ export default function QACommentItem({
                   Reply
                 </button>
               ) : null}
-              {isAuthor && !comment.deleted ? (
+              {isAuthor && !comment.deleted && !readOnly ? (
                 <button
                   type="button"
                   onClick={() => {
@@ -198,7 +200,7 @@ export default function QACommentItem({
                   Edit
                 </button>
               ) : null}
-              {isAuthor && !comment.deleted ? (
+              {isAuthor && !comment.deleted && !readOnly ? (
                 <button
                   type="button"
                   onClick={() => void onDelete(comment.id)}
@@ -283,6 +285,7 @@ export default function QACommentItem({
               onLoadReplies={onLoadReplies}
               loadingRepliesByCommentId={loadingRepliesByCommentId}
               moreRepliesByCommentId={moreRepliesByCommentId}
+              readOnly={readOnly}
             />
           ))}
           {loadingReplies && comment.children.length === 0 ? (

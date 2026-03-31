@@ -13,6 +13,7 @@ type UserInboxPostRecord = {
   responseText?: string | null;
   responseSubmittedAt?: string | null;
   rideId?: string | null;
+  archiveRequestForQAPostId?: string | null;
 };
 
 export async function POST(
@@ -67,6 +68,14 @@ export async function POST(
       readAt: new Date(),
       readByUserId: decoded.sub,
     });
+
+    if (post.archiveRequestForQAPostId) {
+      await patchFirestoreDocument(`qaPosts/${post.archiveRequestForQAPostId}`, {
+        archivePermissionResponseText: responseText,
+        archivePermissionResponseAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
 
     await writeAuditLog({
       action: "inbox_post.user_response",

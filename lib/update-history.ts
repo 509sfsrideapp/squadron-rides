@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v371",
+    title: "Forum Archive and Review Bin",
+    summary: "Added a public Forums Archive page for read-only preserved threads, an admin-only Forum Bin for user-deleted threads waiting on review, admin archive actions on forum threads, and inbox-based archive permission requests that record the user response back onto the deleted thread for admin review.",
+  },
+  {
     commit: "v370",
     title: "Forum Legacy Comment Loader Fix",
     summary: "Fixed the forum post thread loader so older top-level comments still appear even when they were stored without a parentCommentId field, by scanning the post comment stream and identifying root comments in-app instead of relying on a Firestore null filter that missed those legacy records.",

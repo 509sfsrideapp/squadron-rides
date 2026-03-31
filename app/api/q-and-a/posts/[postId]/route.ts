@@ -4,7 +4,7 @@ import { verifyFirebaseIdToken } from "../../../../../lib/server/firebase-auth";
 import { writeAuditLog } from "../../../../../lib/server/audit-log";
 import { createAdminRemovalInboxNotice } from "../../../../../lib/server/admin-content-removal";
 import { getFirestoreDocument } from "../../../../../lib/server/firestore-admin";
-import { deleteQAPost, updateQAPost } from "../../../../../lib/server/q-and-a";
+import { deleteQAPost, requestQAPostDeletionReview, updateQAPost } from "../../../../../lib/server/q-and-a";
 
 type RequestBody = {
   title?: string;
@@ -16,6 +16,7 @@ type QAPostDeleteRecord = {
   authorId: string;
   title?: string | null;
   deleted?: boolean;
+  pendingDeletionReview?: boolean;
 };
 
 export async function PATCH(
@@ -94,13 +95,20 @@ export async function DELETE(
       return NextResponse.json({ error: "That post is unavailable." }, { status: 404 });
     }
 
-    await deleteQAPost({
-      postId,
-      authorId: decoded.sub,
-      allowAdminDelete: isAdminEmail(decoded.email),
-    });
-
     const adminDeletingSomeoneElse = isAdminEmail(decoded.email) && postRecord.authorId !== decoded.sub;
+
+    if (adminDeletingSomeoneElse) {
+      await deleteQAPost({
+        postId,
+        authorId: decoded.sub,
+        allowAdminDelete: true,
+      });
+    } else {
+      await requestQAPostDeletionReview({
+        postId,
+        authorId: decoded.sub,
+      });
+    }
 
     if (adminDeletingSomeoneElse) {
       await createAdminRemovalInboxNotice({
@@ -119,10 +127,11 @@ export async function DELETE(
       targetType: "qaPost",
       targetId: postId,
       status: "success",
-      message: "Deleted Q&A post.",
+      message: adminDeletingSomeoneElse ? "Deleted Q&A post." : "Sent Q&A post to admin review bin.",
       details: {
         adminMessage: body.message?.trim() || null,
         adminDelete: adminDeletingSomeoneElse,
+        pendingDeletionReview: !adminDeletingSomeoneElse,
       },
     });
 

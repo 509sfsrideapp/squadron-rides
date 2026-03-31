@@ -379,12 +379,29 @@ export default function QAPostDetailPage() {
   );
   const commentTree = useMemo(() => buildQACommentTree(loadedComments, commentSortMode), [commentSortMode, loadedComments]);
   const showAdminIdentity = isAdminEmail(user?.email);
-  const canEditPost = Boolean(user && postRecord && !postRecord.deleted && postRecord.authorId === user.uid);
+  const postIsReadOnly = Boolean(postRecord?.archived);
+  const postHiddenForReview = Boolean(postRecord?.pendingDeletionReview && !showAdminIdentity);
+  const canEditPost = Boolean(
+    user &&
+      postRecord &&
+      !postRecord.deleted &&
+      !postRecord.archived &&
+      !postRecord.pendingDeletionReview &&
+      postRecord.authorId === user.uid
+  );
   const canDeletePost = Boolean(
     user &&
       postRecord &&
       !postRecord.deleted &&
+      !postRecord.archived &&
       (postRecord.authorId === user.uid || showAdminIdentity)
+  );
+  const canArchivePost = Boolean(
+    user &&
+      postRecord &&
+      showAdminIdentity &&
+      !postRecord.deleted &&
+      !postRecord.archived
   );
   const visibleAuthorLabel = postRecord ? getVisibleQAPostAuthorLabel(postRecord, { showAdminIdentity }) : "";
   const adminAuthorLabel = postRecord ? (postRecord.authorAdminLabel?.trim() || postRecord.authorLabel) : "";
@@ -453,6 +470,47 @@ export default function QAPostDetailPage() {
     );
   }
 
+  if (postHiddenForReview) {
+    return (
+      <main style={{ padding: 20 }}>
+        <div style={{ maxWidth: 920, margin: "0 auto", display: "grid", gap: 18 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+            <HomeIconLink style={{ marginBottom: 0 }} />
+            <Link
+              href="/q-and-a"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 42,
+                padding: "10px 16px",
+                borderRadius: 12,
+                textDecoration: "none",
+                background: "linear-gradient(180deg, rgba(71, 104, 145, 0.96) 0%, rgba(34, 54, 84, 0.98) 100%)",
+                color: "#ffffff",
+                border: "1px solid rgba(126, 142, 160, 0.24)",
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 28px rgba(17, 24, 39, 0.26)",
+                fontFamily: "var(--font-display)",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                fontSize: 12,
+              }}
+            >
+              Return to Feed
+            </Link>
+          </div>
+
+          <section style={sectionStyle}>
+            <h1 style={{ marginTop: 0 }}>Thread In Review</h1>
+            <p style={{ marginBottom: 0, color: "#cbd5e1" }}>
+              This forum thread was removed by its owner and is currently in the admin review bin.
+            </p>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main style={{ padding: 20 }}>
       <div style={{ maxWidth: 920, margin: "0 auto", display: "grid", gap: 18 }}>
@@ -496,47 +554,59 @@ export default function QAPostDetailPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", gap: 12, flexWrap: "wrap" }}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               <span style={infoPillStyle}>{postRecord.commentCount || 0} comments</span>
-              <QAVoteControls
-                score={postRecord.score || 0}
-                currentVote={postVote}
-                onVote={async (value) => {
-                  const idToken = await auth.currentUser?.getIdToken();
+              {postRecord.archived ? (
+                <span style={{ ...infoPillStyle, color: "#fde68a", border: "1px solid rgba(250, 204, 21, 0.22)", background: "rgba(48, 39, 12, 0.62)" }}>
+                  Archived
+                </span>
+              ) : null}
+              {postRecord.pendingDeletionReview ? (
+                <span style={{ ...infoPillStyle, color: "#fdba74", border: "1px solid rgba(251, 146, 60, 0.22)", background: "rgba(67, 32, 12, 0.62)" }}>
+                  In Bin Review
+                </span>
+              ) : null}
+              {!postIsReadOnly && !postRecord.pendingDeletionReview ? (
+                <QAVoteControls
+                  score={postRecord.score || 0}
+                  currentVote={postVote}
+                  onVote={async (value) => {
+                    const idToken = await auth.currentUser?.getIdToken();
 
-                  if (!idToken) {
-                    throw new Error("You need to sign in again before voting.");
-                  }
+                    if (!idToken) {
+                      throw new Error("You need to sign in again before voting.");
+                    }
 
-                  const nextValue = postVote === value ? 0 : value;
-                  const response = await fetch(`/api/q-and-a/posts/${postRecord.id}/vote`, {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${idToken}`,
-                    },
-                    body: JSON.stringify({ value: nextValue }),
-                  });
+                    const nextValue = postVote === value ? 0 : value;
+                    const response = await fetch(`/api/q-and-a/posts/${postRecord.id}/vote`, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${idToken}`,
+                      },
+                      body: JSON.stringify({ value: nextValue }),
+                    });
 
-                  const payload = (await response.json().catch(() => ({}))) as { error?: string };
+                    const payload = (await response.json().catch(() => ({}))) as { error?: string };
 
-                      if (!response.ok) {
-                        throw new Error(payload.error || "Could not update the vote.");
-                      }
+                    if (!response.ok) {
+                      throw new Error(payload.error || "Could not update the vote.");
+                    }
 
-                      const currentVoteValue = postVote;
-                      setPostVote(nextValue);
-                      setPostRecord((current) =>
-                        current
-                          ? {
-                              ...current,
-                              score: (current.score || 0) - currentVoteValue + nextValue,
-                            }
-                          : current
-                      );
-                    }}
-                    compact
-                  />
+                    const currentVoteValue = postVote;
+                    setPostVote(nextValue);
+                    setPostRecord((current) =>
+                      current
+                        ? {
+                            ...current,
+                            score: (current.score || 0) - currentVoteValue + nextValue,
+                          }
+                        : current
+                    );
+                  }}
+                  compact
+                />
+              ) : null}
             </div>
-            {canEditPost || canDeletePost ? (
+            {canEditPost || canDeletePost || canArchivePost ? (
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                 {canEditPost ? (
                   <button
@@ -563,6 +633,67 @@ export default function QAPostDetailPage() {
                     {editingPost ? "Cancel Edit" : "Edit Post"}
                   </button>
                 ) : null}
+                {canArchivePost ? (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const idToken = await auth.currentUser?.getIdToken();
+
+                      if (!idToken) {
+                        setPostActionError("You need to sign in again before archiving.");
+                        return;
+                      }
+
+                      const reason = window.prompt("Optional admin note for archiving this forum thread.", "") || "";
+
+                      try {
+                        setPostActionError("");
+                        const response = await fetch(`/api/q-and-a/posts/${postRecord.id}/archive`, {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${idToken}`,
+                          },
+                          body: JSON.stringify({ reason }),
+                        });
+
+                        const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+                        if (!response.ok) {
+                          throw new Error(payload.error || "Could not archive the post.");
+                        }
+
+                        setPostRecord((current) =>
+                          current
+                            ? {
+                                ...current,
+                                archived: true,
+                                archivedAt: new Date().toISOString(),
+                                archiveReason: reason || null,
+                                pendingDeletionReview: false,
+                              }
+                            : current
+                        );
+                      } catch (error) {
+                        setPostActionError(error instanceof Error ? error.message : "Could not archive the post.");
+                      }
+                    }}
+                    style={{
+                      minHeight: 38,
+                      padding: "8px 12px",
+                      borderRadius: 10,
+                      border: "1px solid rgba(250, 204, 21, 0.22)",
+                      background: "linear-gradient(180deg, rgba(97, 67, 18, 0.92) 0%, rgba(64, 42, 8, 0.98) 100%)",
+                      color: "#fef3c7",
+                      fontFamily: "var(--font-display)",
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
+                      fontSize: 11,
+                    }}
+                  >
+                    Archive Thread
+                  </button>
+                ) : null}
                 {canDeletePost ? (
                   <button
                     type="button"
@@ -579,7 +710,7 @@ export default function QAPostDetailPage() {
                       }
 
                       if (!adminDeleting) {
-                        const confirmed = window.confirm("Delete this post? It will be removed from the feed.");
+                        const confirmed = window.confirm("Delete this post? It will be removed from the feed and sent to the admin review bin.");
 
                         if (!confirmed) {
                           return;
@@ -831,6 +962,18 @@ export default function QAPostDetailPage() {
                 </div>
               ) : null}
 
+              {postRecord.archived ? (
+                <p style={{ margin: 0, color: "#fde68a" }}>
+                  This thread is archived for reference only. Voting and replies are disabled.
+                </p>
+              ) : null}
+
+              {postRecord.pendingDeletionReview && showAdminIdentity ? (
+                <p style={{ margin: 0, color: "#fdba74" }}>
+                  This thread is currently in the admin review bin after a user delete request.
+                </p>
+              ) : null}
+
               <p style={{ margin: 0, color: "#cbd5e1", whiteSpace: "pre-wrap", lineHeight: 1.7 }}>
                 {postRecord.deleted ? "[deleted]" : postRecord.body?.trim() || "No body text was added to this post."}
               </p>
@@ -865,7 +1008,7 @@ export default function QAPostDetailPage() {
             </div>
           </div>
 
-          {!postRecord.deleted ? (
+          {!postRecord.deleted && !postIsReadOnly && !postRecord.pendingDeletionReview ? (
             <QACommentComposer
               placeholder="Add a top-level comment..."
               submitLabel="Post Comment"
@@ -914,7 +1057,11 @@ export default function QAPostDetailPage() {
           ) : null}
 
           {commentTree.length === 0 ? (
-            <p style={{ margin: 0, color: "#cbd5e1" }}>No comments yet. Start the thread below this post.</p>
+            <p style={{ margin: 0, color: "#cbd5e1" }}>
+              {postIsReadOnly || postRecord.pendingDeletionReview
+                ? "No comments are available on this preserved thread."
+                : "No comments yet. Start the thread below this post."}
+            </p>
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
               {commentTree.map((comment) => (
@@ -1069,6 +1216,7 @@ export default function QAPostDetailPage() {
                   onLoadReplies={loadReplies}
                   loadingRepliesByCommentId={loadingRepliesByParentId}
                   moreRepliesByCommentId={hasMoreRepliesByParentId}
+                  readOnly={postIsReadOnly || Boolean(postRecord.pendingDeletionReview)}
                 />
               ))}
               {hasMoreTopLevelComments ? (

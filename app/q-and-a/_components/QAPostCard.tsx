@@ -81,21 +81,44 @@ export default function QAPostCard({ post, currentVote = 0, onVote, showAdminIde
             ) : null}
           </div>
           <span
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              padding: "7px 11px",
-              borderRadius: 999,
-              border: "1px solid rgba(126, 142, 160, 0.16)",
-              background: "rgba(17, 24, 39, 0.62)",
-              color: "#dbe7f5",
-              fontSize: 11,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              fontFamily: "var(--font-display)",
-            }}
+            style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "end" }}
           >
-            {post.commentCount || 0} comments
+            {post.archived ? (
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  padding: "7px 11px",
+                  borderRadius: 999,
+                  border: "1px solid rgba(250, 204, 21, 0.22)",
+                  background: "rgba(48, 39, 12, 0.62)",
+                  color: "#fde68a",
+                  fontSize: 11,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  fontFamily: "var(--font-display)",
+                }}
+              >
+                Archived
+              </span>
+            ) : null}
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "7px 11px",
+                borderRadius: 999,
+                border: "1px solid rgba(126, 142, 160, 0.16)",
+                background: "rgba(17, 24, 39, 0.62)",
+                color: "#dbe7f5",
+                fontSize: 11,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                fontFamily: "var(--font-display)",
+              }}
+            >
+              {post.commentCount || 0} comments
+            </span>
           </span>
         </div>
 

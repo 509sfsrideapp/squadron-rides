@@ -241,6 +241,26 @@ export default function QAndAPage() {
 
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <Link
+              href="/q-and-a/archive"
+              style={{
+                ...primaryButtonStyle,
+                background: "linear-gradient(180deg, rgba(56, 65, 80, 0.96) 0%, rgba(24, 31, 42, 0.98) 100%)",
+              }}
+            >
+              Archive
+            </Link>
+            {showAdminIdentity ? (
+              <Link
+                href="/q-and-a/bin"
+                style={{
+                  ...primaryButtonStyle,
+                  background: "linear-gradient(180deg, rgba(90, 56, 24, 0.96) 0%, rgba(54, 31, 14, 0.98) 100%)",
+                }}
+              >
+                Bin
+              </Link>
+            ) : null}
+            <Link
               href="/q-and-a/my-posts"
               style={{
                 ...primaryButtonStyle,

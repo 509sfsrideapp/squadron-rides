@@ -41,6 +41,16 @@ export type QAPostDocument = {
   commentCount?: number;
   score?: number;
   deleted?: boolean;
+  archived?: boolean;
+  archivedAt?: TimestampLike;
+  archivedByUid?: string | null;
+  archiveReason?: string | null;
+  pendingDeletionReview?: boolean;
+  deleteRequestedAt?: TimestampLike;
+  archivePermissionRequestedAt?: TimestampLike;
+  archivePermissionRequestPostId?: string | null;
+  archivePermissionResponseText?: string | null;
+  archivePermissionResponseAt?: TimestampLike;
   tags?: QAPostTag[];
 };
 
@@ -253,7 +263,7 @@ function sortPostsForFeed(posts: QAPostRecord[], sortMode: QAPostSortMode) {
 
 export function sortQAPosts(posts: QAPostRecord[], sortMode: QAPostSortMode) {
   return sortPostsForFeed(
-    posts.filter((post) => !post.deleted),
+    posts.filter((post) => !post.deleted && !post.archived && !post.pendingDeletionReview),
     sortMode
   );
 }

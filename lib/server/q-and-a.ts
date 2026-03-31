@@ -56,6 +56,16 @@ export async function createQAPost(input: {
     commentCount: 0,
     score: 0,
     deleted: false,
+    archived: false,
+    pendingDeletionReview: false,
+    archivedAt: null,
+    archivedByUid: null,
+    archiveReason: null,
+    deleteRequestedAt: null,
+    archivePermissionRequestedAt: null,
+    archivePermissionRequestPostId: null,
+    archivePermissionResponseText: null,
+    archivePermissionResponseAt: null,
     tags: normalizeQAPostTags(input.tags),
   })) as { name?: string };
 
@@ -65,6 +75,8 @@ export async function createQAPost(input: {
 type QAPostEditableRecord = {
   authorId: string;
   deleted?: boolean;
+  archived?: boolean;
+  pendingDeletionReview?: boolean;
 };
 
 export async function updateQAPost(input: {
@@ -77,6 +89,10 @@ export async function updateQAPost(input: {
 
   if (!postRecord || postRecord.deleted) {
     throw new Error("That post is unavailable.");
+  }
+
+  if (postRecord.archived || postRecord.pendingDeletionReview) {
+    throw new Error("That post can no longer be edited.");
   }
 
   if (postRecord.authorId !== input.authorId) {
@@ -107,6 +123,48 @@ export async function deleteQAPost(input: { postId: string; authorId: string; al
     body: "",
     snippet: "",
     deleted: true,
+    updatedAt: new Date(),
+  });
+}
+
+export async function requestQAPostDeletionReview(input: {
+  postId: string;
+  authorId: string;
+}) {
+  const postRecord = await getFirestoreDocument<QAPostEditableRecord>(`qaPosts/${input.postId}`);
+
+  if (!postRecord || postRecord.deleted) {
+    throw new Error("That post is unavailable.");
+  }
+
+  if (postRecord.authorId !== input.authorId) {
+    throw new Error("You can only delete your own posts.");
+  }
+
+  await patchFirestoreDocument(`qaPosts/${input.postId}`, {
+    pendingDeletionReview: true,
+    deleteRequestedAt: new Date(),
+    updatedAt: new Date(),
+  });
+}
+
+export async function archiveQAPost(input: {
+  postId: string;
+  archivedByUid: string;
+  reason?: string | null;
+}) {
+  const postRecord = await getFirestoreDocument<QAPostEditableRecord>(`qaPosts/${input.postId}`);
+
+  if (!postRecord || postRecord.deleted) {
+    throw new Error("That post is unavailable.");
+  }
+
+  await patchFirestoreDocument(`qaPosts/${input.postId}`, {
+    archived: true,
+    archivedAt: new Date(),
+    archivedByUid: input.archivedByUid,
+    archiveReason: input.reason?.trim() || null,
+    pendingDeletionReview: false,
     updatedAt: new Date(),
   });
 }
