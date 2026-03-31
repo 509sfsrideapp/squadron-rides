@@ -6,14 +6,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   collection,
   doc,
-  DocumentData,
   getDoc,
   getDocs,
   limit,
-  orderBy,
   query,
-  QueryDocumentSnapshot,
-  startAfter,
   where,
 } from "firebase/firestore";
 import { onAuthStateChanged, User } from "firebase/auth";
@@ -65,7 +61,6 @@ const infoPillStyle: React.CSSProperties = {
 
 const FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE = 10;
 const FORUM_REPLY_PAGE_SIZE = 10;
-const FORUM_TOP_LEVEL_COMMENT_SCAN_MULTIPLIER = 3;
 
 function isTopLevelCommentRecord(comment: Pick<QACommentRecord, "parentCommentId">) {
   return !comment.parentCommentId;
@@ -93,8 +88,9 @@ export default function QAPostDetailPage() {
   const [savingPost, setSavingPost] = useState(false);
   const [deletingPost, setDeletingPost] = useState(false);
   const initializedCommentsRef = useRef(false);
-  const topLevelCommentCursorRef = useRef<QueryDocumentSnapshot<DocumentData> | null>(null);
-  const replyCursorsByParentIdRef = useRef<Record<string, QueryDocumentSnapshot<DocumentData> | null>>({});
+  const allCommentsRef = useRef<QACommentRecord[]>([]);
+  const topLevelCommentOffsetRef = useRef(0);
+  const replyOffsetsByParentIdRef = useRef<Record<string, number>>({});
 
   const loadPostRecord = useCallback(async (postId: string) => {
     logFirestoreQueryRun("forums.post.detail", { postId });
@@ -156,80 +152,62 @@ export default function QAPostDetailPage() {
     } satisfies QACommentRecord;
   }, []);
 
+  const loadAllCommentsForPost = useCallback(async (postId: string) => {
+    logFirestoreQueryRun("forums.post.comments.all", { postId });
+    const commentsSnapshot = await getDocs(
+      query(collection(db, "qaComments"), where("postId", "==", postId), limit(300))
+    );
+
+    const nextComments = commentsSnapshot.docs.map((docSnap) => ({
+      id: docSnap.id,
+      ...(docSnap.data() as Omit<QACommentRecord, "id">),
+    }));
+
+    allCommentsRef.current = dedupeQARecordsById(nextComments);
+    logFirestoreQueryResult("forums.post.comments.all", { postId, count: allCommentsRef.current.length });
+  }, []);
+
+  const getSortedTopLevelComments = useCallback(() => {
+    const topLevelComments = allCommentsRef.current.filter(isTopLevelCommentRecord);
+    return buildQACommentTree(topLevelComments, commentSortMode).map(({ children, ...comment }) => ({
+      ...comment,
+      children,
+    }));
+  }, [commentSortMode]);
+
   const loadTopLevelComments = useCallback(async (postId: string, options?: { reset?: boolean }) => {
     const reset = Boolean(options?.reset);
-    const nextCursor = reset ? null : topLevelCommentCursorRef.current;
 
     setLoadingMoreComments(true);
     try {
-      logFirestoreQueryRun("forums.post.comments.top-level", {
-        postId,
-        sortMode: commentSortMode,
-        limit: FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE,
-        cursor: nextCursor?.id || null,
-      });
-      const scanLimit = FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE * FORUM_TOP_LEVEL_COMMENT_SCAN_MULTIPLIER;
-      const nextComments: QACommentRecord[] = [];
-      let scanCursor = nextCursor;
-      let lastScannedDoc: QueryDocumentSnapshot<DocumentData> | null = nextCursor;
-      let foundAdditionalTopLevel = false;
-      let reachedEndOfCommentStream = false;
-
-      while (nextComments.length < FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE) {
-        const commentsSnapshot = await getDocs(
-          query(
-            collection(db, "qaComments"),
-            where("postId", "==", postId),
-            orderBy("createdAt", commentSortMode === "oldest" ? "asc" : "desc"),
-            ...(scanCursor ? [startAfter(scanCursor)] : []),
-            limit(scanLimit)
-          )
-        );
-
-        if (commentsSnapshot.empty) {
-          reachedEndOfCommentStream = true;
-          break;
-        }
-
-        lastScannedDoc = commentsSnapshot.docs[commentsSnapshot.docs.length - 1] || lastScannedDoc;
-
-        const scannedComments = commentsSnapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...(docSnap.data() as Omit<QACommentRecord, "id">),
-        }));
-
-        const topLevelMatches = scannedComments.filter(isTopLevelCommentRecord);
-        const remainingSlots = FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE - nextComments.length;
-        nextComments.push(...topLevelMatches.slice(0, remainingSlots));
-
-        if (topLevelMatches.length > remainingSlots) {
-          foundAdditionalTopLevel = true;
-          break;
-        }
-
-        if (commentsSnapshot.size < scanLimit) {
-          reachedEndOfCommentStream = true;
-          break;
-        }
-
-        scanCursor = commentsSnapshot.docs[commentsSnapshot.docs.length - 1] || null;
+      if (reset || allCommentsRef.current.length === 0) {
+        await loadAllCommentsForPost(postId);
+        replyOffsetsByParentIdRef.current = {};
+        setLoadedRepliesByParentId({});
+        setHasMoreRepliesByParentId({});
       }
 
-      logFirestoreQueryResult("forums.post.comments.top-level", { postId, count: nextComments.length });
-      setTopLevelComments((current) => (reset ? nextComments : dedupeQARecordsById([...current, ...nextComments])));
-      topLevelCommentCursorRef.current = lastScannedDoc;
-      setHasMoreTopLevelComments(
-        foundAdditionalTopLevel ||
-          (!reachedEndOfCommentStream && nextComments.length === FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE)
+      const sortedTopLevelComments = getSortedTopLevelComments();
+      const nextOffset = reset ? 0 : topLevelCommentOffsetRef.current;
+      const nextComments = sortedTopLevelComments.slice(
+        nextOffset,
+        nextOffset + FORUM_TOP_LEVEL_COMMENTS_PAGE_SIZE
       );
+
+      topLevelCommentOffsetRef.current = nextOffset + nextComments.length;
+
+      setTopLevelComments((current) => (reset ? nextComments : dedupeQARecordsById([...current, ...nextComments])));
+      setHasMoreTopLevelComments(
+        topLevelCommentOffsetRef.current < sortedTopLevelComments.length
+      );
+      logFirestoreQueryResult("forums.post.comments.top-level", { postId, count: nextComments.length });
     } finally {
       setLoadingMoreComments(false);
     }
-  }, [commentSortMode]);
+  }, [getSortedTopLevelComments, loadAllCommentsForPost]);
 
   const loadReplies = useCallback(async (parentCommentId: string, options?: { reset?: boolean }) => {
     const reset = Boolean(options?.reset);
-    const nextCursor = reset ? null : replyCursorsByParentIdRef.current[parentCommentId] || null;
 
     setLoadingRepliesByParentId((current) => ({
       ...current,
@@ -237,39 +215,31 @@ export default function QAPostDetailPage() {
     }));
 
     try {
-      logFirestoreQueryRun("forums.post.comments.replies", {
-        parentCommentId,
-        limit: FORUM_REPLY_PAGE_SIZE,
-        cursor: nextCursor?.id || null,
-      });
-      const repliesSnapshot = await getDocs(
-        query(
-          collection(db, "qaComments"),
-          where("parentCommentId", "==", parentCommentId),
-          orderBy("createdAt", "asc"),
-          ...(nextCursor ? [startAfter(nextCursor)] : []),
-          limit(FORUM_REPLY_PAGE_SIZE)
-        )
-      );
+      const sortedReplies = [...allCommentsRef.current]
+        .filter((comment) => comment.parentCommentId === parentCommentId)
+        .sort((left, right) => {
+          const leftTime = left.createdAt instanceof Date ? left.createdAt.getTime() : typeof left.createdAt === "string" ? Date.parse(left.createdAt) : ((left.createdAt as { seconds?: number } | undefined)?.seconds || 0) * 1000;
+          const rightTime = right.createdAt instanceof Date ? right.createdAt.getTime() : typeof right.createdAt === "string" ? Date.parse(right.createdAt) : ((right.createdAt as { seconds?: number } | undefined)?.seconds || 0) * 1000;
+          return leftTime - rightTime;
+        });
 
-      const nextReplies = repliesSnapshot.docs.map((docSnap) => ({
-        id: docSnap.id,
-        ...(docSnap.data() as Omit<QACommentRecord, "id">),
-      }));
+      const nextOffset = reset ? 0 : replyOffsetsByParentIdRef.current[parentCommentId] || 0;
+      const nextReplies = sortedReplies.slice(nextOffset, nextOffset + FORUM_REPLY_PAGE_SIZE);
 
-      logFirestoreQueryResult("forums.post.comments.replies", { parentCommentId, count: repliesSnapshot.size });
+      replyOffsetsByParentIdRef.current = {
+        ...replyOffsetsByParentIdRef.current,
+        [parentCommentId]: nextOffset + nextReplies.length,
+      };
+
       setLoadedRepliesByParentId((current) => ({
         ...current,
         [parentCommentId]: reset ? nextReplies : dedupeQARecordsById([...(current[parentCommentId] || []), ...nextReplies]),
       }));
-      replyCursorsByParentIdRef.current = {
-        ...replyCursorsByParentIdRef.current,
-        [parentCommentId]: repliesSnapshot.docs[repliesSnapshot.docs.length - 1] || null,
-      };
       setHasMoreRepliesByParentId((current) => ({
         ...current,
-        [parentCommentId]: repliesSnapshot.size === FORUM_REPLY_PAGE_SIZE,
+        [parentCommentId]: (replyOffsetsByParentIdRef.current[parentCommentId] || 0) < sortedReplies.length,
       }));
+      logFirestoreQueryResult("forums.post.comments.replies", { parentCommentId, count: nextReplies.length });
     } finally {
       setLoadingRepliesByParentId((current) => ({
         ...current,
@@ -279,6 +249,10 @@ export default function QAPostDetailPage() {
   }, []);
 
   const updateCommentRecord = useCallback((commentId: string, updater: (comment: QACommentRecord) => QACommentRecord) => {
+    allCommentsRef.current = allCommentsRef.current.map((comment) =>
+      comment.id === commentId ? updater(comment) : comment
+    );
+
     let handled = false;
 
     setTopLevelComments((current) =>
@@ -324,9 +298,10 @@ export default function QAPostDetailPage() {
       setLoadedRepliesByParentId({});
       setPostVote(0);
       setCommentVotesById({});
-      topLevelCommentCursorRef.current = null;
+      allCommentsRef.current = [];
+      topLevelCommentOffsetRef.current = 0;
       setHasMoreTopLevelComments(false);
-      replyCursorsByParentIdRef.current = {};
+      replyOffsetsByParentIdRef.current = {};
       setHasMoreRepliesByParentId({});
       setLoadingRepliesByParentId({});
       return;
@@ -336,9 +311,10 @@ export default function QAPostDetailPage() {
     setLoading(true);
     setTopLevelComments([]);
     setLoadedRepliesByParentId({});
-    topLevelCommentCursorRef.current = null;
+    allCommentsRef.current = [];
+    topLevelCommentOffsetRef.current = 0;
     setHasMoreTopLevelComments(false);
-    replyCursorsByParentIdRef.current = {};
+    replyOffsetsByParentIdRef.current = {};
     setHasMoreRepliesByParentId({});
     setLoadingRepliesByParentId({});
 
@@ -359,9 +335,9 @@ export default function QAPostDetailPage() {
     }
 
     setLoadedRepliesByParentId({});
-    topLevelCommentCursorRef.current = null;
+    topLevelCommentOffsetRef.current = 0;
     setHasMoreTopLevelComments(false);
-    replyCursorsByParentIdRef.current = {};
+    replyOffsetsByParentIdRef.current = {};
     setHasMoreRepliesByParentId({});
     setLoadingRepliesByParentId({});
 
@@ -1050,6 +1026,7 @@ export default function QAPostDetailPage() {
                     : current
                 );
                 if (nextComment) {
+                  allCommentsRef.current = dedupeQARecordsById([...allCommentsRef.current, nextComment]);
                   setTopLevelComments((current) => dedupeQARecordsById([...current, nextComment]));
                 }
               }}
@@ -1114,6 +1091,7 @@ export default function QAPostDetailPage() {
                       replyCount: (current.replyCount || 0) + 1,
                     }));
                     if (nextReply) {
+                      allCommentsRef.current = dedupeQARecordsById([...allCommentsRef.current, nextReply]);
                       setLoadedRepliesByParentId((current) => ({
                         ...current,
                         [parentCommentId]: dedupeQARecordsById([...(current[parentCommentId] || []), nextReply]),
