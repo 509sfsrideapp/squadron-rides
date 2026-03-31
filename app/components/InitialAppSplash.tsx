@@ -7,6 +7,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../../lib/firebase";
 import {
   APP_HOMEPAGE_REVEAL_KEY,
+  APP_STARTUP_RUNTIME_KEY,
   APP_STARTUP_SESSION_KEY,
 } from "../../lib/startup-access";
 
@@ -111,7 +112,15 @@ export default function InitialAppSplash({ forceReplay = false }: InitialAppSpla
       return;
     }
 
-    if (!forceReplay && window.sessionStorage.getItem(APP_STARTUP_SESSION_KEY) === "true") {
+    const startupRuntimeSeen =
+      typeof window !== "undefined" &&
+      (window as Window & { [APP_STARTUP_RUNTIME_KEY]?: boolean })[
+        APP_STARTUP_RUNTIME_KEY
+      ] === true;
+    const startupSessionSeen =
+      window.sessionStorage.getItem(APP_STARTUP_SESSION_KEY) === "true";
+
+    if (!forceReplay && (startupRuntimeSeen || startupSessionSeen)) {
       setPhase("hidden");
       return;
     }
@@ -190,6 +199,9 @@ export default function InitialAppSplash({ forceReplay = false }: InitialAppSpla
 
     const finishTimer = window.setTimeout(() => {
       if (typeof window !== "undefined") {
+        (
+          window as Window & { [APP_STARTUP_RUNTIME_KEY]?: boolean }
+        )[APP_STARTUP_RUNTIME_KEY] = true;
         window.sessionStorage.setItem(APP_STARTUP_SESSION_KEY, "true");
         window.sessionStorage.setItem(APP_HOMEPAGE_REVEAL_KEY, `${Date.now()}`);
       }

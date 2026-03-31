@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v369",
+    title: "Startup Replay Guard Fix",
+    summary: "Tightened the app-opening access-sequence guard so the startup overlay now runs only on the initial app launch for the current session instead of replaying again when returning to the homepage during normal in-app navigation.",
+  },
+  {
     commit: "v368",
     title: "Faster Access Sequence and PIN Removal",
     summary: "Removed the launch App PIN feature from account settings and startup, cleaned those stored PIN fields out of user profiles, shortened the app-opening access sequence to a faster terminal-style handoff, and tightened the homepage reveal so text types in while panels and buttons fade down the screen more quickly.",
