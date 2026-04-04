@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v381",
+    title: "Status Console Prompt Expansion",
+    summary: "Expanded the homepage tactical status-console rotation with additional ride queue, dispatch, inbox, forum, event, module, and notification-link prompts while keeping the favored INITIATE_POST_CHECK line and its related post pool in the mix.",
+  },
+  {
     commit: "v380",
     title: "Driver Clock-In Notification Check",
     summary: "Added a driver self-check push notification when clocking in, plus a compact dashboard reminder card that tells drivers they should have received that confirmation and gives them a button to turn on notifications and immediately verify delivery on the current device.",
