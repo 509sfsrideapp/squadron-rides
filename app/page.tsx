@@ -2084,108 +2084,106 @@ export default function HomePage() {
                 </div>
                 </section>
               ) : null}
-              {hasDeveloperAccess ? (
-                <section
+              <section
+                style={{
+                  maxWidth: 840,
+                  borderRadius: 16,
+                  border: "1px solid rgba(86, 122, 168, 0.26)",
+                  background:
+                    "linear-gradient(180deg, rgba(8, 16, 28, 0.98) 0%, rgba(4, 10, 18, 0.995) 100%)",
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 36px rgba(2, 6, 23, 0.3)",
+                  overflow: "hidden",
+                  ...getStartupRevealStyle(1040),
+                }}
+              >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                  padding: "0.55rem 0.85rem",
+                  borderBottom: "1px solid rgba(86, 122, 168, 0.2)",
+                  background:
+                    "linear-gradient(180deg, rgba(17, 28, 43, 0.98) 0%, rgba(11, 19, 31, 0.98) 100%)",
+                }}
+              >
+                <span
                   style={{
-                    maxWidth: 840,
-                    borderRadius: 16,
-                    border: "1px solid rgba(86, 122, 168, 0.26)",
-                    background:
-                      "linear-gradient(180deg, rgba(8, 16, 28, 0.98) 0%, rgba(4, 10, 18, 0.995) 100%)",
-                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 18px 36px rgba(2, 6, 23, 0.3)",
-                    overflow: "hidden",
-                    ...getStartupRevealStyle(1040),
+                    color: "#9cc2ee",
+                    fontSize: 10,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    fontFamily: "var(--font-display)",
                   }}
                 >
-                <div
+                  App Status Console
+                </span>
+                <span
                   style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    padding: "0.55rem 0.85rem",
-                    borderBottom: "1px solid rgba(86, 122, 168, 0.2)",
-                    background:
-                      "linear-gradient(180deg, rgba(17, 28, 43, 0.98) 0%, rgba(11, 19, 31, 0.98) 100%)",
+                    color: "#7dd3fc",
+                    fontSize: 10,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    fontFamily: "var(--font-display)",
                   }}
                 >
-                  <span
-                    style={{
-                      color: "#9cc2ee",
-                      fontSize: 10,
-                      letterSpacing: "0.14em",
-                      textTransform: "uppercase",
-                      fontFamily: "var(--font-display)",
-                    }}
-                  >
-                    App Status Console
-                  </span>
-                  <span
-                    style={{
-                      color: "#7dd3fc",
-                      fontSize: 10,
-                      letterSpacing: "0.14em",
-                      textTransform: "uppercase",
-                      fontFamily: "var(--font-display)",
-                    }}
-                  >
-                    powershell://ops-monitor.ps1
-                  </span>
-                </div>
-                <div
-                  style={{
-                    padding: "0.95rem 1rem 1rem",
-                    display: "grid",
-                    gap: 10,
-                    background:
-                      "linear-gradient(180deg, rgba(8, 13, 22, 0.98) 0%, rgba(3, 9, 16, 0.995) 100%)",
-                  }}
-                >
-                  {typedAppStatusChecks.map((statusLine, index) => {
-                    const isActiveLine = index === activeTypedStatusIndex;
-                    const lineComplete = !isActiveLine;
+                  powershell://ops-monitor.ps1
+                </span>
+              </div>
+              <div
+                style={{
+                  padding: "0.95rem 1rem 1rem",
+                  display: "grid",
+                  gap: 10,
+                  background:
+                    "linear-gradient(180deg, rgba(8, 13, 22, 0.98) 0%, rgba(3, 9, 16, 0.995) 100%)",
+                }}
+              >
+                {typedAppStatusChecks.map((statusLine, index) => {
+                  const isActiveLine = index === activeTypedStatusIndex;
+                  const lineComplete = !isActiveLine;
 
-                    return (
-                      <div
-                        key={`${statusLine || "status-line"}-${index}`}
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 10,
-                          minHeight: 20,
-                          color: lineComplete ? "#9df6b3" : "#d7e6f8",
-                          fontSize: 12,
-                          lineHeight: 1.4,
-                          fontFamily: "var(--font-mono)",
-                          letterSpacing: "0.04em",
-                        }}
-                      >
-                        <span aria-hidden="true" style={{ color: "#4ade80", flexShrink: 0 }}>
-                          PS&gt;
-                        </span>
-                        <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                          {statusLine}
-                          {isActiveLine && !lineComplete ? (
-                            <span
-                              aria-hidden="true"
-                              style={{
-                                display: "inline-block",
-                                width: 8,
-                                height: 14,
-                                marginLeft: 4,
-                                backgroundColor: "#7dd3fc",
-                                verticalAlign: "text-bottom",
-                                animation: "auth-status-pulse 1s ease-in-out infinite",
-                              }}
-                            />
-                          ) : null}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-                </section>
-              ) : null}
+                  return (
+                    <div
+                      key={`${statusLine || "status-line"}-${index}`}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 10,
+                        minHeight: 20,
+                        color: lineComplete ? "#9df6b3" : "#d7e6f8",
+                        fontSize: 12,
+                        lineHeight: 1.4,
+                        fontFamily: "var(--font-mono)",
+                        letterSpacing: "0.04em",
+                      }}
+                    >
+                      <span aria-hidden="true" style={{ color: "#4ade80", flexShrink: 0 }}>
+                        PS&gt;
+                      </span>
+                      <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                        {statusLine}
+                        {isActiveLine && !lineComplete ? (
+                          <span
+                            aria-hidden="true"
+                            style={{
+                              display: "inline-block",
+                              width: 8,
+                              height: 14,
+                              marginLeft: 4,
+                              backgroundColor: "#7dd3fc",
+                              verticalAlign: "text-bottom",
+                              animation: "auth-status-pulse 1s ease-in-out infinite",
+                            }}
+                          />
+                        ) : null}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+              </section>
             </div>
           ) : null}
 

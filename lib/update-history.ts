@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v378",
+    title: "Public Homepage Status Console Restore",
+    summary: "Restored the tactical App Status Console on the public homepage as a cosmetic element while keeping the non-ride app grid and hidden sections locked behind developer access.",
+  },
+  {
     commit: "v377",
     title: "Full-Width Driver Dashboard CTA",
     summary: "Expanded the public Driver Dashboard button on the homepage to the full ride-action width and added the small driver auth status line beneath the label so it reads more like a primary operational control.",
