@@ -1128,6 +1128,13 @@ export default function HomePage() {
     : !hasVehicleInfo
       ? "DRIVER_DASHBOARD:NULL//VEHICLE:MISSING"
       : "DRIVER_DASHBOARD:NULL//PFP:MISSING";
+  const driverDashboardAuthLabel = driverReady
+    ? "DRIVER_AUTH:TRUE//VIA:PFP_VEHCLDATA"
+    : !hasProfilePhoto && !hasVehicleInfo
+      ? "DRIVER_AUTH:FALSE//VIA:PFP_VEHCLDATA"
+      : !hasVehicleInfo
+        ? "DRIVER_AUTH:FALSE//VIA:VEHCLDATA"
+        : "DRIVER_AUTH:FALSE//VIA:PFP";
   const emergencyRideEnabled = Boolean(profile?.emergencyRideAddressConsent);
   const firstName = profile?.firstName?.trim() || "";
   const displayName = firstName || user?.email?.split("@")[0] || "Operator";
@@ -1931,7 +1938,7 @@ export default function HomePage() {
                         color: "#9cc2ee",
                       }}
                     >
-                      DRIVER_AUTH:TRUE//VIA:PFP_VEHCLDATA
+                      {driverDashboardAuthLabel}
                     </span>
                   </Link>
                 ) : (
@@ -1966,7 +1973,7 @@ export default function HomePage() {
                         opacity: 0.82,
                       }}
                     >
-                      DRIVER_AUTH:TRUE//VIA:PFP_VEHCLDATA
+                      {driverDashboardAuthLabel}
                     </span>
                   </div>
                 )}
