@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v380",
+    title: "Driver Clock-In Notification Check",
+    summary: "Added a driver self-check push notification when clocking in, plus a compact dashboard reminder card that tells drivers they should have received that confirmation and gives them a button to turn on notifications and immediately verify delivery on the current device.",
+  },
+  {
     commit: "v379",
     title: "Driver CTA Auth-Line Specificity",
     summary: "Refined the homepage Driver Dashboard auth-status line so unavailable states now show the exact missing readiness source: profile photo only, vehicle data only, or both.",

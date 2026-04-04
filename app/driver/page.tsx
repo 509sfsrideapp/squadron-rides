@@ -10,6 +10,7 @@ import { auth, db } from "../../lib/firebase";
 import { beginDriverPresenceSession, clearDriverPresence, publishDriverPresence } from "../../lib/driver-presence";
 import { logFirestoreListenerAttach, logFirestoreListenerDetach, logFirestoreQueryResult, logFirestoreScreenMount } from "../../lib/firestore-read-debug";
 import { canDrive, getDriverReadinessIssues } from "../../lib/profile-readiness";
+import { enablePushNotifications } from "../../lib/push-notifications";
 import {
   canDriverSeeRideDuringDispatchWindow,
   isRideDispatchExpanded,
@@ -114,6 +115,9 @@ export default function DriverPage() {
   const [acceptedRides, setAcceptedRides] = useState<Ride[]>([]);
   const [completedRideCount, setCompletedRideCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [driverNotificationStatus, setDriverNotificationStatus] = useState("");
+  const [driverNotificationPermission, setDriverNotificationPermission] = useState("unknown");
+  const [enablingDriverNotifications, setEnablingDriverNotifications] = useState(false);
 
   useEffect(() => {
     logFirestoreScreenMount("driver.dashboard");
@@ -132,6 +136,12 @@ export default function DriverPage() {
     });
 
     return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && "Notification" in window) {
+      setDriverNotificationPermission(Notification.permission);
+    }
   }, []);
 
   useEffect(() => {
@@ -440,9 +450,70 @@ export default function DriverPage() {
         available: true,
       });
       setProfile((current) => (current ? { ...current, available: true } : current));
+
+      const idToken = await auth.currentUser?.getIdToken();
+
+      if (idToken) {
+        const response = await fetch("/api/notifications/driver-clock-in", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+          },
+        });
+
+        const details = (await response.json().catch(() => null)) as { error?: string; tokenCount?: number } | null;
+
+        if (response.ok) {
+          setDriverNotificationStatus("Clock-in notification sent. You should receive it on this device now.");
+        } else {
+          setDriverNotificationStatus(details?.error || "Clocked in, but this device is not ready for push notifications yet.");
+        }
+      } else {
+        setDriverNotificationStatus("Clocked in, but notification verification could not run on this session.");
+      }
     } catch (error) {
       console.error(error);
       alert("Failed to clock in");
+    }
+  };
+
+  const handleEnableDriverNotifications = async () => {
+    if (!user) {
+      setDriverNotificationStatus("Log in again before enabling notifications.");
+      return;
+    }
+
+    try {
+      setEnablingDriverNotifications(true);
+      setDriverNotificationStatus("Enabling notifications on this device...");
+      await enablePushNotifications();
+      setDriverNotificationPermission("granted");
+
+      const idToken = await auth.currentUser?.getIdToken();
+
+      if (!idToken) {
+        throw new Error("Notifications were enabled, but verification could not be completed.");
+      }
+
+      const response = await fetch("/api/notifications/driver-clock-in", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+      const details = (await response.json().catch(() => null)) as { error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(details?.error || "Notifications were enabled, but the driver test alert could not be sent.");
+      }
+
+      setDriverNotificationStatus("Notifications are enabled. A driver clock-in confirmation was sent to this device.");
+    } catch (error) {
+      console.error(error);
+      setDriverNotificationStatus(error instanceof Error ? error.message : "Could not enable notifications on this device.");
+    } finally {
+      setEnablingDriverNotifications(false);
     }
   };
 
@@ -615,6 +686,52 @@ export default function DriverPage() {
             </div>
           ))}
         </div>
+
+        {isClockedIn ? (
+          <div
+            style={{
+              borderRadius: 14,
+              padding: 14,
+              background: "linear-gradient(180deg, rgba(9, 21, 34, 0.88) 0%, rgba(6, 13, 24, 0.94) 100%)",
+              border: "1px solid rgba(86, 122, 168, 0.22)",
+              display: "grid",
+              gap: 10,
+            }}
+          >
+            <div style={{ display: "grid", gap: 6 }}>
+              <p
+                style={{
+                  margin: 0,
+                  color: "#9cc2ee",
+                  fontSize: 11,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  fontFamily: "var(--font-display)",
+                }}
+              >
+                Driver Notification Check
+              </p>
+              <p style={{ margin: 0, color: "#dbeafe", lineHeight: 1.5 }}>
+                You should have received a notification confirming that you clocked in. If you did not get it, use the button below to turn notifications on for this device.
+              </p>
+              <p style={{ margin: 0, color: "#94a3b8", fontSize: 13 }}>
+                {driverNotificationStatus || "Clock-in confirmation notifications help verify that driver alerts are working before a ride request goes live."}
+              </p>
+            </div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <button
+                type="button"
+                onClick={() => void handleEnableDriverNotifications()}
+                disabled={enablingDriverNotifications}
+              >
+                {enablingDriverNotifications ? "Enabling..." : "Turn On Notifications"}
+              </button>
+              <span style={{ color: "#94a3b8", fontSize: 13 }}>
+                Browser permission: {driverNotificationPermission}
+              </span>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <div style={{ marginTop: 20, maxWidth: 640 }}>
