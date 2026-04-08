@@ -868,13 +868,10 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
             }}
           >
             <p style={{ margin: 0, fontSize: "0.95rem", color: "#8ea1b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-              Dropoff Reference
+              Dropoff Location
             </p>
             <p style={{ margin: "8px 0 0", fontSize: "1.45rem", lineHeight: 1.1, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
               {destinationReferenceLine}
-            </p>
-            <p style={{ margin: "10px 0 0", color: "#cbd5e1", fontSize: "0.95rem", lineHeight: 1.5 }}>
-              Saved for driver reference after pickup.
             </p>
           </div>
         ) : null}

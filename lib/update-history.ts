@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v391",
+    title: "Driver Dropoff Label Cleanup",
+    summary: "Simplified the in-progress driver ride card by renaming the post-pickup destination panel to Dropoff Location and removing the extra helper sentence underneath it.",
+  },
+  {
     commit: "v390",
     title: "Picked-Up Dropoff Reference",
     summary: "Updated the driver active ride screen so once a ride is marked picked up, the saved destination or home-address dropoff reference is shown clearly on the page for the driver to use during the ride.",
