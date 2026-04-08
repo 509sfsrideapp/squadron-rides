@@ -1937,6 +1937,7 @@ export default function HomePage() {
                   <Link
                     href="/driver"
                     style={{
+                      position: "relative",
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
@@ -1947,16 +1948,23 @@ export default function HomePage() {
                       padding: "14px 18px",
                       borderRadius: 12,
                       textDecoration: "none",
-                      background: "linear-gradient(180deg, rgba(39, 50, 68, 0.96) 0%, rgba(19, 28, 40, 0.98) 100%)",
+                      background:
+                        profile?.available
+                          ? "linear-gradient(180deg, rgba(18, 103, 68, 0.98) 0%, rgba(10, 63, 44, 0.99) 100%)"
+                          : "linear-gradient(180deg, rgba(39, 50, 68, 0.96) 0%, rgba(19, 28, 40, 0.98) 100%)",
                       color: "#f8fafc",
                       border: "1px solid rgba(126, 142, 160, 0.24)",
-                      boxShadow: "inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 28px rgba(17, 24, 39, 0.26)",
+                      boxShadow: profile?.available
+                        ? "inset 0 1px 0 rgba(255,255,255,0.08), 0 18px 34px rgba(11, 74, 50, 0.32)"
+                        : "inset 0 1px 0 rgba(255,255,255,0.08), 0 14px 28px rgba(17, 24, 39, 0.26)",
                       fontFamily: "var(--font-display)",
                       letterSpacing: "0.08em",
                       textTransform: "uppercase",
                       fontSize: 12,
+                      animation: profile?.available ? "driver-dashboard-pulse 4.2s ease-in-out infinite" : undefined,
                     }}
                     >
+                    <NotificationBadge count={visibleDriverRequestCount} style={{ position: "absolute", top: -7, right: -7 }} />
                     <span>Driver Dashboard</span>
                     <span
                       style={{

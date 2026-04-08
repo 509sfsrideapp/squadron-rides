@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v389",
+    title: "Live Driver CTA Badge and Pulse",
+    summary: "Updated the homepage Driver Dashboard button so clocked-in drivers now get a live open-ride badge on the full-width CTA, and the button shifts into a softly pulsing green operational state while the driver is available.",
+  },
+  {
     commit: "v388",
     title: "Startup Overlay Fresh-Launch Gate",
     summary: "Tightened the app-opening access-sequence trigger so it now runs only on a true fresh app launch, while suppressing the overlay on homepage refreshes, login redirects, and other same-tab returns to home.",
