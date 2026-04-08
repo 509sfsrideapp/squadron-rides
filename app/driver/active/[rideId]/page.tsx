@@ -681,6 +681,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
   const showPickupAddressLine =
     Boolean(pickupAddressLine) &&
     normalizeLocationLine(pickupPrimaryLine) !== normalizeLocationLine(pickupAddressLine);
+  const destinationReferenceLine = ride ? resolveDestinationLabel(ride) || ride.destination?.trim() || "" : "";
   const rideUnavailable =
     !ride ||
     !ACTIVE_RIDE_STATUSES.includes(ride.status as (typeof ACTIVE_RIDE_STATUSES)[number]) ||
@@ -855,6 +856,28 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
             Resolved pickup location may be slightly inaccurate. It&apos;s recommended you call your rider when getting near to verify the pickup location.
           </p>
         </div>
+
+        {ride.status === "picked_up" && destinationReferenceLine ? (
+          <div
+            style={{
+              marginBottom: 18,
+              padding: 16,
+              borderRadius: 14,
+              backgroundColor: "rgba(15, 23, 42, 0.5)",
+              border: "1px solid rgba(148, 163, 184, 0.12)",
+            }}
+          >
+            <p style={{ margin: 0, fontSize: "0.95rem", color: "#8ea1b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+              Dropoff Reference
+            </p>
+            <p style={{ margin: "8px 0 0", fontSize: "1.45rem", lineHeight: 1.1, fontFamily: "var(--font-display)", color: "#f8fbff" }}>
+              {destinationReferenceLine}
+            </p>
+            <p style={{ margin: "10px 0 0", color: "#cbd5e1", fontSize: "0.95rem", lineHeight: 1.5 }}>
+              Saved for driver reference after pickup.
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div style={{ marginTop: 20, maxWidth: 640, marginInline: "auto" }}>

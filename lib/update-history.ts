@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v390",
+    title: "Picked-Up Dropoff Reference",
+    summary: "Updated the driver active ride screen so once a ride is marked picked up, the saved destination or home-address dropoff reference is shown clearly on the page for the driver to use during the ride.",
+  },
+  {
     commit: "v389",
     title: "Live Driver CTA Badge and Pulse",
     summary: "Updated the homepage Driver Dashboard button so clocked-in drivers now get a live open-ride badge on the full-width CTA, and the button shifts into a softly pulsing green operational state while the driver is available.",
