@@ -162,6 +162,7 @@ service cloud.firestore {
           "pickup",
           "pickupLocationName",
           "pickupLocationAddress",
+          "riderManualLocationNote",
           "destination",
           "riderLocation",
           "dispatchMode",
