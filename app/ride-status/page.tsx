@@ -14,7 +14,7 @@ import { mergeRideLiveState, subscribeToRideLiveState, type RideLiveState } from
 import { DEFAULT_RIDE_DISPATCH_MODE, isRideDispatchExpanded, type EmergencyRideDispatchMode, rideDispatchWindowEndsAt } from "../../lib/ride-dispatch";
 import { formatRideTimestamp, getRideLifecycleSteps, getRideStatusLabel } from "../../lib/ride-lifecycle";
 import { onAuthStateChanged, User } from "firebase/auth";
-import { collection, doc, getDoc, onSnapshot, query, where } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, query, updateDoc, where } from "firebase/firestore";
 
 type Ride = {
   id: string;
@@ -75,6 +75,7 @@ type Ride = {
     nanoseconds?: number;
   };
   isEmergencyRide?: boolean;
+  riderManualLocationNote?: string | null;
 };
 
 type RiderProfile = {
@@ -132,7 +133,8 @@ export default function RideStatusPage() {
   const [refreshingLocation, setRefreshingLocation] = useState(false);
   const [timelineExpanded, setTimelineExpanded] = useState(false);
   const [driverPhotoExpanded, setDriverPhotoExpanded] = useState(false);
-  const [cleaningInvalidEmergencyRide, setCleaningInvalidEmergencyRide] = useState(false);
+  const [manualPickupNote, setManualPickupNote] = useState("");
+  const [savingManualPickupNote, setSavingManualPickupNote] = useState(false);
   const riderRefreshInFlightRef = useRef(false);
 
   useEffect(() => {
@@ -287,46 +289,8 @@ export default function RideStatusPage() {
     activeRide?.destination !== "Destination to be confirmed with rider";
 
   useEffect(() => {
-    if (
-      !user ||
-      !activeRide ||
-      cleaningInvalidEmergencyRide ||
-      !activeRide.isEmergencyRide ||
-      !ACTIVE_RIDE_STATUSES.includes(activeRide.status as (typeof ACTIVE_RIDE_STATUSES)[number]) ||
-      riderLocation
-    ) {
-      return;
-    }
-
-    void (async () => {
-      try {
-        setCleaningInvalidEmergencyRide(true);
-        const idToken = await auth.currentUser?.getIdToken();
-
-        if (idToken) {
-          await fetch("/api/rides/cancel", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${idToken}`,
-            },
-            body: JSON.stringify({
-              rideId: activeRide.id,
-              actor: "rider",
-              reason: "Emergency ride auto-canceled because live location was unavailable during request setup.",
-              skipFollowUp: true,
-            }),
-          }).catch((error) => {
-            console.error("Emergency ride cleanup failed", error);
-          });
-        }
-
-        alert("Live pickup location was not captured, so this emergency ride was removed. Please return home and request again once location access is available.");
-      } finally {
-        router.replace("/");
-      }
-    })();
-  }, [activeRide, cleaningInvalidEmergencyRide, riderLocation, router, user]);
+    setManualPickupNote(activeRide?.riderManualLocationNote?.trim() || "");
+  }, [activeRide?.id, activeRide?.riderManualLocationNote]);
 
   const refreshRiderLocation = useCallback(async (manual = false) => {
     if (
@@ -512,6 +476,24 @@ export default function RideStatusPage() {
       alert(error instanceof Error ? error.message : "We could not cancel your ride.");
     } finally {
       setCancelingRide(false);
+    }
+  };
+
+  const saveManualPickupNote = async () => {
+    if (!activeRide) return;
+
+    try {
+      setSavingManualPickupNote(true);
+      await updateDoc(doc(db, "rides", activeRide.id), {
+        riderManualLocationNote: manualPickupNote.trim() || null,
+        riderManualLocationUpdatedAt: new Date(),
+      });
+      setLocationRefreshStatus("Pickup update sent to driver.");
+    } catch (error) {
+      console.error(error);
+      alert("We could not save your pickup details right now.");
+    } finally {
+      setSavingManualPickupNote(false);
     }
   };
 
@@ -748,6 +730,63 @@ export default function RideStatusPage() {
                 {activeRide.pickupLocationAddress || activeRide.pickup || "Address details will appear here once available."}
               </p>
             </div>
+            {!riderLocation ? (
+              <div
+                style={{
+                  marginBottom: 18,
+                  padding: 16,
+                  borderRadius: 14,
+                  backgroundColor: "rgba(15, 23, 42, 0.5)",
+                  border: "1px solid rgba(148, 163, 184, 0.12)",
+                  display: "grid",
+                  gap: 12,
+                }}
+              >
+                <p style={{ margin: 0, fontSize: "0.95rem", color: "#8ea1b8", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                  Manual Pickup Update
+                </p>
+                <p style={{ margin: 0, color: "#cbd5e1", lineHeight: 1.5 }}>
+                  Live pickup coordinates are unavailable right now. Add where you are and this update will be visible to the driver in real time.
+                </p>
+                <textarea
+                  value={manualPickupNote}
+                  onChange={(event) => setManualPickupNote(event.target.value)}
+                  placeholder="Example: Outside Dorm 550 main entrance, north parking lot."
+                  rows={3}
+                  style={{
+                    width: "100%",
+                    borderRadius: 12,
+                    border: "1px solid rgba(126, 142, 160, 0.18)",
+                    backgroundColor: "rgba(9, 15, 25, 0.92)",
+                    color: "#e5edf7",
+                    padding: "12px 14px",
+                    resize: "vertical",
+                  }}
+                />
+                <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    onClick={() => void saveManualPickupNote()}
+                    disabled={savingManualPickupNote}
+                    style={{
+                      padding: "10px 14px",
+                      backgroundColor: "#0f766e",
+                      color: "white",
+                      border: "none",
+                      borderRadius: 10,
+                      cursor: savingManualPickupNote ? "wait" : "pointer",
+                    }}
+                  >
+                    {savingManualPickupNote ? "Saving..." : "Send Pickup Update"}
+                  </button>
+                  {activeRide.riderManualLocationNote?.trim() ? (
+                    <span style={{ color: "#94a3b8", fontSize: 13 }}>
+                      Driver-visible update is active.
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
             {showDestination ? (
               <p>
                 <strong>Destination:</strong> {activeRide.destination}
@@ -764,7 +803,15 @@ export default function RideStatusPage() {
             />
           ) : null}
 
-          <LiveRideMap riderLocation={riderLocation} driverLocation={driverLocation} />
+          <LiveRideMap
+            riderLocation={riderLocation}
+            driverLocation={driverLocation}
+            emptyLabel={
+              activeRide.riderManualLocationNote?.trim()
+                ? "Live pickup coordinates are unavailable. The driver should use your manual pickup update."
+                : "Live pickup coordinates are unavailable. Add a manual pickup update below or call your driver."
+            }
+          />
 
           <div
             style={{

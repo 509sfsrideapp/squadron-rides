@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v392",
+    title: "Manual Pickup Fallback for Emergency Rides",
+    summary: "Changed emergency rides so they can still go out when live GPS is unavailable by marking pickup as TBA, prompting drivers to call the rider, and giving riders a real-time manual pickup update box in Ride Status that is immediately visible to drivers.",
+  },
+  {
     commit: "v391",
     title: "Driver Dropoff Label Cleanup",
     summary: "Simplified the in-progress driver ride card by renaming the post-pickup destination panel to Dropoff Location and removing the extra helper sentence underneath it.",

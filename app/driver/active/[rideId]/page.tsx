@@ -68,6 +68,7 @@ type Ride = {
     seconds?: number;
     nanoseconds?: number;
   };
+  riderManualLocationNote?: string | null;
 };
 
 type DriverProfile = {
@@ -682,6 +683,7 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
     Boolean(pickupAddressLine) &&
     normalizeLocationLine(pickupPrimaryLine) !== normalizeLocationLine(pickupAddressLine);
   const destinationReferenceLine = ride ? resolveDestinationLabel(ride) || ride.destination?.trim() || "" : "";
+  const hasLivePickupCoordinates = Boolean(riderLocation);
   const rideUnavailable =
     !ride ||
     !ACTIVE_RIDE_STATUSES.includes(ride.status as (typeof ACTIVE_RIDE_STATUSES)[number]) ||
@@ -855,6 +857,29 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
           <p style={{ margin: "12px 0 0", color: "#cbd5e1", fontSize: "0.95rem", lineHeight: 1.5 }}>
             Resolved pickup location may be slightly inaccurate. It&apos;s recommended you call your rider when getting near to verify the pickup location.
           </p>
+          {!hasLivePickupCoordinates ? (
+            <p style={{ margin: "12px 0 0", color: "#facc15", fontSize: "0.95rem", lineHeight: 1.5 }}>
+              Live pickup coordinates are unavailable for this ride. Call the rider to confirm the exact pickup location.
+            </p>
+          ) : null}
+          {ride.riderManualLocationNote?.trim() ? (
+            <div
+              style={{
+                marginTop: 12,
+                padding: 12,
+                borderRadius: 12,
+                backgroundColor: "rgba(30, 41, 59, 0.72)",
+                border: "1px solid rgba(148, 163, 184, 0.14)",
+              }}
+            >
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "#93c5fd", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Rider Pickup Update
+              </p>
+              <p style={{ margin: "8px 0 0", color: "#e2e8f0", lineHeight: 1.5 }}>
+                {ride.riderManualLocationNote.trim()}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         {ride.status === "picked_up" && destinationReferenceLine ? (

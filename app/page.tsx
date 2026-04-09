@@ -1385,19 +1385,19 @@ export default function HomePage() {
               .catch(() => null)
           : null;
 
-      if (!riderLocation) {
-        throw new Error("Live location is required for Emergency Ride. Return to the home screen and try the request again once location access is available.");
-      }
-
       const resolvedPickup =
-        geocodedPickup?.placeName ||
-        geocodedPickup?.address ||
-        geocodedPickup?.display ||
-        "Current GPS location";
+        riderLocation
+          ? geocodedPickup?.placeName ||
+            geocodedPickup?.address ||
+            geocodedPickup?.display ||
+            "Current GPS location"
+          : "Pickup TBA";
       const resolvedPickupAddress =
-        geocodedPickup?.address ||
-        geocodedPickup?.display ||
-        "Current GPS location";
+        riderLocation
+          ? geocodedPickup?.address ||
+            geocodedPickup?.display ||
+            "Current GPS location"
+          : "Live location unavailable. Driver should call rider for pickup confirmation.";
       const rideRef = await addDoc(collection(db, "rides"), {
         riderId: user.uid,
         riderName: riderDisplayName,
@@ -1410,6 +1410,9 @@ export default function HomePage() {
         pickup: resolvedPickup,
         pickupLocationName: geocodedPickup?.placeName || null,
         pickupLocationAddress: resolvedPickupAddress,
+        riderManualLocationNote: riderLocation
+          ? null
+          : "Live location could not be captured. Rider can update pickup details from Ride Status.",
         destination: "Destination to be confirmed with rider",
         riderLocation,
         dispatchMode: normalizeRideDispatchMode(profile.emergencyRideDispatchMode ?? DEFAULT_RIDE_DISPATCH_MODE),

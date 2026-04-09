@@ -70,6 +70,7 @@ type Ride = {
     latitude?: number;
     longitude?: number;
   } | null;
+  riderManualLocationNote?: string | null;
 };
 
 const ACTIVE_RIDE_STATUSES = ["accepted", "arrived", "picked_up"] as const;
@@ -820,6 +821,16 @@ export default function DriverPage() {
                   <p style={{ margin: 0 }}>
                     <strong>Pickup:</strong> {renderPickupSummary(ride)}
                   </p>
+                  {ride.riderManualLocationNote?.trim() ? (
+                    <p style={{ margin: 0, color: "#cbd5e1" }}>
+                      <strong>Rider Update:</strong> {ride.riderManualLocationNote.trim()}
+                    </p>
+                  ) : null}
+                  {ride.riderLocation?.latitude == null || ride.riderLocation?.longitude == null ? (
+                    <p style={{ margin: 0, color: "#facc15" }}>
+                      Live pickup coordinates unavailable. Call the rider after accepting.
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
