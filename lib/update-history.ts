@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v404",
+    title: "Homepage Inbox Badge Read-State Fix",
+    summary: "Fixed the homepage profile and Inbox badges so private user inbox notifications now honor each post's real read state instead of lingering unread after everything has already been opened.",
+  },
+  {
     commit: "v403",
     title: "Homepage Ride Preflight Warning",
     summary: "Added a quiet homepage emergency-ride preflight check that tests live location access in the background and only shows a small fix-it warning under Driver Dashboard when the device would likely fall back to Pickup TBA.",
