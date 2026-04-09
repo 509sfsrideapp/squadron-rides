@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v405",
+    title: "Empty Manual Pickup Compose Box",
+    summary: "Updated the Ride Status manual pickup entry box so it opens empty instead of loading the last sent pickup note back into the textarea, while still leaving the driver-visible update active on the ride.",
+  },
+  {
     commit: "v404",
     title: "Homepage Inbox Badge Read-State Fix",
     summary: "Fixed the homepage profile and Inbox badges so private user inbox notifications now honor each post's real read state instead of lingering unread after everything has already been opened.",

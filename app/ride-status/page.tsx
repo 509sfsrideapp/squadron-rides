@@ -290,8 +290,8 @@ export default function RideStatusPage() {
     activeRide?.destination !== "Destination to be confirmed with rider";
 
   useEffect(() => {
-    setManualPickupNote(activeRide?.riderManualLocationNote?.trim() || "");
-  }, [activeRide?.id, activeRide?.riderManualLocationNote]);
+    setManualPickupNote("");
+  }, [activeRide?.id]);
 
   const refreshRiderLocation = useCallback(async (manual = false) => {
     if (
@@ -490,6 +490,7 @@ export default function RideStatusPage() {
         riderManualLocationNote: manualPickupNote.trim() || null,
         riderManualLocationUpdatedAt: new Date(),
       });
+      setManualPickupNote("");
       setLocationRefreshStatus("Pickup update sent to driver.");
     } catch (error) {
       console.error(error);
