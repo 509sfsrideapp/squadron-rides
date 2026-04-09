@@ -855,6 +855,7 @@ export default function HomePage() {
   const [appStatusScenario, setAppStatusScenario] = useState<HomepageStatusScenario>(() => createHomepageStatusScenario());
   const [appStatusPhase, setAppStatusPhase] = useState<"command" | "response">("command");
   const [appStatusCharCount, setAppStatusCharCount] = useState(0);
+  const [ridePreflightIssue, setRidePreflightIssue] = useState<string | null>(null);
   const { riderActiveRide, driverActiveRide, loading: activeRideLoading } = useActiveRides(user);
 
   useEffect(() => {
@@ -1261,6 +1262,91 @@ export default function HomePage() {
       ? "One-tap emergency ride needs location services turned on so your current location can still be sent with the request."
       : null,
   ].filter(Boolean) as string[];
+
+  useEffect(() => {
+    if (!user || !profile || !rideReady || !emergencyRideEnabled) {
+      setRidePreflightIssue(null);
+      return;
+    }
+
+    if (profile.locationServicesEnabled === false || driverActiveRide || riderActiveRide) {
+      setRidePreflightIssue(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const runRidePreflight = async () => {
+      try {
+        if (typeof window === "undefined" || !("geolocation" in navigator)) {
+          if (!cancelled) {
+            setRidePreflightIssue(
+              "LIVE LOCATION CHECK FAILED. This device/browser is not exposing GPS to the app. Fix: open the app from your iPhone Home Screen, confirm device Location Services are on, then reload the app. If it still fails, request the ride anyway and send your pickup manually from Ride Status."
+            );
+          }
+          return;
+        }
+
+        const riderLocation = await new Promise<Coordinates | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (position) =>
+              resolve({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              }),
+            () => resolve(null),
+            {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 0,
+            }
+          );
+        });
+
+        if (!riderLocation) {
+          if (!cancelled) {
+            setRidePreflightIssue(
+              "LIVE LOCATION CHECK FAILED. Emergency Ride would fall back to Pickup TBA on this device right now. Fix: allow Location Services for this app/browser, turn Precise Location on, then reload the homepage. If it still fails, request the ride and type your pickup manually from Ride Status."
+            );
+          }
+          return;
+        }
+
+        await fetch("/api/geocode/reverse", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(riderLocation),
+        }).catch(() => null);
+
+        if (!cancelled) {
+          setRidePreflightIssue(null);
+        }
+      } catch (error) {
+        console.error("Emergency ride preflight failed", error);
+        if (!cancelled) {
+          setRidePreflightIssue(
+            "LIVE LOCATION CHECK FAILED. This account is ride-ready, but the device did not pass the live pickup test. Fix: close and reopen the app, confirm Location Services and Precise Location are enabled, then try again. If the issue continues, request the ride and use the manual pickup update box."
+          );
+        }
+      }
+    };
+
+    void runRidePreflight();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    driverActiveRide,
+    emergencyRideEnabled,
+    profile,
+    profile?.locationServicesEnabled,
+    rideReady,
+    riderActiveRide,
+    user,
+  ]);
   const readinessCards = [
     !rideReady
       ? {
@@ -2018,6 +2104,24 @@ export default function HomePage() {
                   </div>
                 )}
               </div>
+
+              {ridePreflightIssue ? (
+                <div
+                  style={{
+                    marginTop: 10,
+                    maxWidth: 680,
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    border: "1px solid rgba(245, 158, 11, 0.26)",
+                    backgroundColor: "rgba(120, 53, 15, 0.18)",
+                    color: "#fcd34d",
+                    fontSize: 12,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {ridePreflightIssue}
+                </div>
+              ) : null}
 
               {hasDeveloperAccess ? (
                 <section

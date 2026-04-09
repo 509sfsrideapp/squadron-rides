@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v403",
+    title: "Homepage Ride Preflight Warning",
+    summary: "Added a quiet homepage emergency-ride preflight check that tests live location access in the background and only shows a small fix-it warning under Driver Dashboard when the device would likely fall back to Pickup TBA.",
+  },
+  {
     commit: "v402",
     title: "Signup System Permission Prompting",
     summary: "Improved the signup App Permissions step so it now retries the real device notification and location prompts from user interaction and from the final account-creation tap, which makes iPhone system permission requests much more reliable during account setup.",
