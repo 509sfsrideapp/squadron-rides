@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAdminEmail } from "../../../../lib/admin";
 import { getRideDispatchTargeting, isRideDispatchExpanded, normalizeRideDispatchMode } from "../../../../lib/ride-dispatch";
 import { writeAuditLog } from "../../../../lib/server/audit-log";
 import { getAvailableDriverNotificationTokens, getRideDoc, getUserDoc } from "../../../../lib/server/firestore-rest";
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     if (phase === "expand") {
-      let canExpandRide = ride.riderId === decoded.sub || decoded.email === "509sfsrideapp@gmail.com";
+      let canExpandRide = ride.riderId === decoded.sub || isAdminEmail(decoded.email);
 
       if (!canExpandRide) {
         const caller = await getUserDoc(decoded.sub).catch(() => null);
