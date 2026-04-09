@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v393",
+    title: "Test Ride GPS Location Naming",
+    summary: "Updated the App Permissions test ride so it now reverse-geocodes the rider's live GPS position and uses the same resolved pickup name and address behavior as a normal ride request, making the test flow a real location check instead of a placeholder label.",
+  },
+  {
     commit: "v392",
     title: "Manual Pickup Fallback for Emergency Rides",
     summary: "Changed emergency rides so they can still go out when live GPS is unavailable by marking pickup as TBA, prompting drivers to call the rider, and giving riders a real-time manual pickup update box in Ride Status that is immediately visible to drivers.",

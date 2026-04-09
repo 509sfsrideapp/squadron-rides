@@ -23,6 +23,17 @@ import { getLatestActiveRideForRider } from "../../../lib/ride-state";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { addDoc, collection, doc, getDoc, updateDoc } from "firebase/firestore";
 
+type Coordinates = {
+  latitude: number;
+  longitude: number;
+};
+
+type ReverseGeocodeResult = {
+  placeName?: string | null;
+  address?: string | null;
+  display?: string | null;
+};
+
 type UserProfile = {
   name?: string;
   firstName?: string;
@@ -214,7 +225,7 @@ export default function AccountPermissionsPage() {
       return null;
     }
 
-    return new Promise<{ latitude: number; longitude: number } | null>((resolve) => {
+    return new Promise<Coordinates | null>((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) =>
           resolve({
@@ -229,6 +240,22 @@ export default function AccountPermissionsPage() {
         }
       );
     });
+  };
+
+  const resolvePickupLocation = async (coordinates: Coordinates) => {
+    const response = await fetch("/api/geocode/reverse", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(coordinates),
+    });
+
+    if (!response.ok) {
+      throw new Error("Could not resolve the test ride location.");
+    }
+
+    return (await response.json()) as ReverseGeocodeResult;
   };
 
   const runTestRide = async () => {
@@ -258,11 +285,22 @@ export default function AccountPermissionsPage() {
       }
 
       const riderLocation = locationServicesEnabled ? await captureCurrentLocation() : null;
+      const geocodedPickup = riderLocation ? await resolvePickupLocation(riderLocation).catch(() => null) : null;
       const riderDisplayName =
         [profile.rank?.trim(), profile.lastName?.trim()].filter(Boolean).join(" ").trim() ||
         profile.name ||
         user.email?.split("@")[0] ||
         "Test Rider";
+      const resolvedPickupLabel =
+        geocodedPickup?.placeName ||
+        geocodedPickup?.address ||
+        geocodedPickup?.display ||
+        (riderLocation ? "Current GPS test location" : profile.homeAddress?.trim() || "Saved home address");
+      const resolvedPickupAddress =
+        geocodedPickup?.address ||
+        geocodedPickup?.display ||
+        profile.homeAddress?.trim() ||
+        null;
 
       const rideRef = await addDoc(collection(db, "rides"), {
         riderId: user.uid,
@@ -273,9 +311,9 @@ export default function AccountPermissionsPage() {
         riderRank: profile.rank?.trim() || null,
         riderLastName: profile.lastName?.trim() || null,
         riderFlight: profile.flight?.trim() || null,
-        pickup: riderLocation ? "Current GPS test location" : profile.homeAddress?.trim() || "Saved home address",
-        pickupLocationName: "Test Ride",
-        pickupLocationAddress: profile.homeAddress?.trim() || null,
+        pickup: resolvedPickupLabel,
+        pickupLocationName: geocodedPickup?.placeName || null,
+        pickupLocationAddress: resolvedPickupAddress,
         destination: profile.homeAddress?.trim() || "Test destination",
         riderLocation,
         dispatchMode: "all_drivers",
