@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v406",
+    title: "Stronger Pickup TBA Call Guidance",
+    summary: "Updated the Pickup TBA rider and driver screens with stronger call-each-other guidance, simplified the rider pickup entry placeholder to Enter current location here, and added a direct Call Rider action on the driver side when live pickup coordinates are unavailable.",
+  },
+  {
     commit: "v405",
     title: "Empty Manual Pickup Compose Box",
     summary: "Updated the Ride Status manual pickup entry box so it opens empty instead of loading the last sent pickup note back into the textarea, while still leaving the driver-visible update active on the ride.",

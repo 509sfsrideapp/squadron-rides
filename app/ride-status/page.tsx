@@ -751,10 +751,27 @@ export default function RideStatusPage() {
                 <p style={{ margin: 0, color: "#cbd5e1", lineHeight: 1.5 }}>
                   Live pickup coordinates are unavailable right now. Add where you are and this update will be visible to the driver in real time.
                 </p>
+                <div
+                  style={{
+                    padding: 14,
+                    borderRadius: 12,
+                    border: "1px solid rgba(245, 158, 11, 0.26)",
+                    backgroundColor: "rgba(120, 53, 15, 0.18)",
+                    display: "grid",
+                    gap: 6,
+                  }}
+                >
+                  <p style={{ margin: 0, color: "#fcd34d", fontSize: "0.84rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    Call Your Driver
+                  </p>
+                  <p style={{ margin: 0, color: "#fef3c7", lineHeight: 1.5, fontWeight: 600 }}>
+                    Call your driver now so both of you can confirm the exact pickup location faster.
+                  </p>
+                </div>
                 <textarea
                   value={manualPickupNote}
                   onChange={(event) => setManualPickupNote(event.target.value)}
-                  placeholder="Example: Outside Dorm 550 main entrance, north parking lot."
+                  placeholder="Enter current location here"
                   rows={3}
                   style={{
                     width: "100%",
@@ -812,7 +829,7 @@ export default function RideStatusPage() {
             emptyLabel={
               activeRide.riderManualLocationNote?.trim()
                 ? "Live pickup coordinates are unavailable. The driver should use your manual pickup update."
-                : "Live pickup coordinates are unavailable. Add a manual pickup update below or call your driver."
+                : "Live pickup coordinates are unavailable. Add a manual pickup update below and call your driver."
             }
           />
 

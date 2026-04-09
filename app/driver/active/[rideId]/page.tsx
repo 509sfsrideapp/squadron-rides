@@ -858,9 +858,40 @@ export default function ActiveRidePage(props: PageProps<"/driver/active/[rideId]
             Resolved pickup location may be slightly inaccurate. It&apos;s recommended you call your rider when getting near to verify the pickup location.
           </p>
           {!hasLivePickupCoordinates ? (
-            <p style={{ margin: "12px 0 0", color: "#facc15", fontSize: "0.95rem", lineHeight: 1.5 }}>
-              Live pickup coordinates are unavailable for this ride. Call the rider to confirm the exact pickup location.
-            </p>
+            <div
+              style={{
+                marginTop: 12,
+                padding: 14,
+                borderRadius: 12,
+                border: "1px solid rgba(245, 158, 11, 0.26)",
+                backgroundColor: "rgba(120, 53, 15, 0.18)",
+                display: "grid",
+                gap: 8,
+              }}
+            >
+              <p style={{ margin: 0, color: "#fcd34d", fontSize: "0.84rem", textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                Call The Rider
+              </p>
+              <p style={{ margin: 0, color: "#fef3c7", fontSize: "0.98rem", lineHeight: 1.5, fontWeight: 600 }}>
+                Live pickup coordinates are unavailable for this ride. Call the rider now to confirm the exact pickup location as quickly as possible.
+              </p>
+              {riderCallHref ? (
+                <a
+                  href={riderCallHref}
+                  style={{
+                    justifySelf: "start",
+                    padding: "10px 14px",
+                    borderRadius: 10,
+                    backgroundColor: "rgba(15, 118, 110, 0.92)",
+                    color: "#f8fafc",
+                    textDecoration: "none",
+                    fontWeight: 700,
+                  }}
+                >
+                  Call Rider
+                </a>
+              ) : null}
+            </div>
           ) : null}
           {ride.riderManualLocationNote?.trim() ? (
             <div
