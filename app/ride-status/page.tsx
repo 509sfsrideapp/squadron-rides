@@ -75,6 +75,7 @@ type Ride = {
     nanoseconds?: number;
   };
   isEmergencyRide?: boolean;
+  isTestRide?: boolean;
   riderManualLocationNote?: string | null;
 };
 
@@ -461,6 +462,7 @@ export default function RideStatusPage() {
         body: JSON.stringify({
           rideId: activeRide.id,
           actor: "rider",
+          skipFollowUp: activeRide.isTestRide === true,
         }),
       });
 

@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v395",
+    title: "Silent Test Ride Cancel",
+    summary: "Updated rider-side test ride cancellation so it skips the normal cancellation follow-up inbox prompt, keeping test runs from leaving behind the same required notification flow used for real rides.",
+  },
+  {
     commit: "v394",
     title: "Post-Signup Auto Login Handoff",
     summary: "Updated account creation so new users stay signed in immediately after signup and are sent straight to the homepage instead of being kicked back through the login flow.",
