@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v402",
+    title: "Signup System Permission Prompting",
+    summary: "Improved the signup App Permissions step so it now retries the real device notification and location prompts from user interaction and from the final account-creation tap, which makes iPhone system permission requests much more reliable during account setup.",
+  },
+  {
     commit: "v401",
     title: "Emergency Ride Permission Fix",
     summary: "Fixed the emergency ride Firestore create rule so one-tap rides can include the manual pickup fallback note without being rejected by permissions when a new rider requests help.",

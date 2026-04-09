@@ -24,6 +24,65 @@ export default function SignupTermsPage() {
   const [notificationPermission, setNotificationPermission] = useState("unknown");
   const [locationPermission, setLocationPermission] = useState("unknown");
   const permissionPromptStartedRef = useRef(false);
+  const interactionPromptArmedRef = useRef(false);
+
+  const requestSystemPermissions = async () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if ("Notification" in window) {
+      const initialNotificationPermission = Notification.permission;
+      setNotificationPermission(initialNotificationPermission);
+
+      if (initialNotificationPermission === "default") {
+        try {
+          const nextPermission = await Notification.requestPermission();
+          setNotificationPermission(nextPermission);
+        } catch (error) {
+          console.error("Notification permission request failed", error);
+        }
+      }
+    }
+
+    if (!("geolocation" in navigator)) {
+      setLocationPermission("unsupported");
+      return;
+    }
+
+    try {
+      const permissionsApi = (navigator as Navigator & {
+        permissions?: {
+          query: (descriptor: { name: "geolocation" }) => Promise<{ state: string }>;
+        };
+      }).permissions;
+
+      if (permissionsApi?.query) {
+        const permissionStatus = await permissionsApi.query({ name: "geolocation" });
+        setLocationPermission(permissionStatus.state);
+      }
+    } catch (error) {
+      console.error("Location permission status check failed", error);
+    }
+
+    await new Promise<void>((resolve) => {
+      navigator.geolocation.getCurrentPosition(
+        () => {
+          setLocationPermission("granted");
+          resolve();
+        },
+        (error) => {
+          setLocationPermission(error.code === error.PERMISSION_DENIED ? "denied" : "prompt");
+          resolve();
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
+        }
+      );
+    });
+  };
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -55,67 +114,35 @@ export default function SignupTermsPage() {
     }
 
     permissionPromptStartedRef.current = true;
+    void requestSystemPermissions();
+  }, []);
 
-    const promptPermissions = async () => {
-      if ("Notification" in window) {
-        const initialNotificationPermission = Notification.permission;
-        setNotificationPermission(initialNotificationPermission);
+  useEffect(() => {
+    if (typeof window === "undefined" || interactionPromptArmedRef.current) {
+      return;
+    }
 
-        if (initialNotificationPermission === "default") {
-          try {
-            const nextPermission = await Notification.requestPermission();
-            setNotificationPermission(nextPermission);
-          } catch (error) {
-            console.error("Notification permission request failed", error);
-          }
-        }
-      }
+    interactionPromptArmedRef.current = true;
 
-      if (!("geolocation" in navigator)) {
-        setLocationPermission("unsupported");
+    const handleInteractionPrompt = () => {
+      const needsNotificationPrompt = typeof window !== "undefined" && "Notification" in window && Notification.permission === "default";
+      const needsLocationPrompt = locationPermission === "unknown" || locationPermission === "prompt";
+
+      if (!needsNotificationPrompt && !needsLocationPrompt) {
         return;
       }
 
-      try {
-        const permissionsApi = (navigator as Navigator & {
-          permissions?: {
-            query: (descriptor: { name: "geolocation" }) => Promise<{ state: string }>;
-          };
-        }).permissions;
-
-        if (permissionsApi?.query) {
-          const permissionStatus = await permissionsApi.query({ name: "geolocation" });
-          setLocationPermission(permissionStatus.state);
-
-          if (permissionStatus.state !== "prompt") {
-            return;
-          }
-        }
-      } catch (error) {
-        console.error("Location permission status check failed", error);
-      }
-
-      await new Promise<void>((resolve) => {
-        navigator.geolocation.getCurrentPosition(
-          () => {
-            setLocationPermission("granted");
-            resolve();
-          },
-          (error) => {
-            setLocationPermission(error.code === error.PERMISSION_DENIED ? "denied" : "prompt");
-            resolve();
-          },
-          {
-            enableHighAccuracy: true,
-            timeout: 10000,
-            maximumAge: 0,
-          }
-        );
-      });
+      void requestSystemPermissions();
     };
 
-    void promptPermissions();
-  }, []);
+    window.addEventListener("pointerdown", handleInteractionPrompt, { once: true, passive: true });
+    window.addEventListener("keydown", handleInteractionPrompt, { once: true });
+
+    return () => {
+      window.removeEventListener("pointerdown", handleInteractionPrompt);
+      window.removeEventListener("keydown", handleInteractionPrompt);
+    };
+  }, [locationPermission]);
 
   const handleAcceptTerms = async () => {
     if (!draft) {
@@ -131,6 +158,15 @@ export default function SignupTermsPage() {
     try {
       setSubmitting(true);
       setStatusMessage("Creating account...");
+
+      if (
+        (typeof window !== "undefined" && "Notification" in window && Notification.permission === "default") ||
+        locationPermission === "unknown" ||
+        locationPermission === "prompt"
+      ) {
+        await requestSystemPermissions();
+      }
+
       await finalizeSignupFromDraft(draft, {
         emergencyRideAddressConsent: emergencyRideConsent,
         locationServicesEnabled: locationPermission !== "denied",
@@ -225,9 +261,26 @@ export default function SignupTermsPage() {
             </span>
           </div>
           <p style={{ margin: 0, color: "#94a3b8" }}>
-            Notification and location permission prompts should appear automatically when this page opens.
+            Notification and location permission prompts should appear automatically when this page opens. If iPhone
+            blocks the first attempt, the next tap on this page or the Create Account button will trigger the real
+            system request again.
           </p>
         </div>
+        <button
+          type="button"
+          onClick={() => void requestSystemPermissions()}
+          style={{
+            marginBottom: 16,
+            padding: "10px 14px",
+            borderRadius: 10,
+            border: "1px solid rgba(148, 163, 184, 0.18)",
+            backgroundColor: "rgba(15, 23, 42, 0.86)",
+            color: "#e5edf7",
+            cursor: "pointer",
+          }}
+        >
+          Prompt Device Permissions
+        </button>
         <label
           style={{
             display: "flex",
