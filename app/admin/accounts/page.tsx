@@ -325,6 +325,49 @@ export default function AdminAccountsPage() {
     }
   };
 
+  const handleAvailabilityAction = async (appUser: AppUser, available: boolean) => {
+    if (!auth.currentUser) {
+      setAccountActionMessage("Admin session expired. Please log in again.");
+      return;
+    }
+
+    try {
+      setActingOnUserId(appUser.id);
+      setAccountActionMessage(available ? "Clocking driver in..." : "Clocking driver out...");
+
+      const idToken = await auth.currentUser.getIdToken();
+      const response = await fetch("/api/admin/accounts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          action: "setAvailability",
+          userId: appUser.id,
+          username: appUser.username || "",
+          email: appUser.email || "",
+          available,
+        }),
+      });
+
+      const payload = (await response.json().catch(() => ({}))) as { error?: string };
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Could not update driver availability.");
+      }
+
+      setAccountActionMessage(
+        `${appUser.name || appUser.email || appUser.id} is now ${available ? "clocked in" : "clocked out"}.`
+      );
+    } catch (error) {
+      console.error(error);
+      setAccountActionMessage(error instanceof Error ? error.message : "Could not update driver availability.");
+    } finally {
+      setActingOnUserId("");
+    }
+  };
+
   const openMessageComposer = (appUser: AppUser) => {
     setMessageDraftUserId(appUser.id);
     setMessageTitle("");
@@ -726,6 +769,21 @@ export default function AdminAccountsPage() {
                     </div>
 
                     <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        onClick={() => void handleAvailabilityAction(appUser, !appUser.available)}
+                        disabled={busy || appUser.accountFrozen}
+                        style={{
+                          padding: "8px 12px",
+                          backgroundColor: appUser.available ? "#7f1d1d" : "#0f766e",
+                          color: "white",
+                          border: "none",
+                          borderRadius: 8,
+                          cursor: "pointer",
+                        }}
+                      >
+                        {busy ? "Working..." : appUser.available ? "Clock Out Driver" : "Clock In Driver"}
+                      </button>
                       <Link
                         href={`/admin/accounts/${appUser.id}/inbox`}
                         style={{

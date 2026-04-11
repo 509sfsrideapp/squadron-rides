@@ -10,13 +10,14 @@ import { createFirestoreDocument, deleteFirestoreDocument, getFirestoreDocument,
 import { deleteUserOwnedDocuments } from "../../../../lib/server/account-cleanup";
 import { deleteIdentityUser, setIdentityUserDisabled, updateIdentityUserEmail } from "../../../../lib/server/identity-toolkit";
 
-type AdminAccountAction = "freeze" | "unfreeze" | "delete" | "update";
+type AdminAccountAction = "freeze" | "unfreeze" | "delete" | "update" | "setAvailability";
 
 type RequestBody = {
   action?: AdminAccountAction;
   userId?: string;
   username?: string;
   email?: string;
+  available?: boolean;
   updates?: {
     firstName?: string;
     lastName?: string;
@@ -286,6 +287,29 @@ export async function POST(request: NextRequest) {
           previousEmail: previousEmail || null,
           username: normalizedUsername,
           previousUsername: previousUsername || null,
+        },
+      });
+
+      return NextResponse.json({ ok: true });
+    }
+
+    if (action === "setAvailability") {
+      await patchFirestoreDocument(`users/${userId}`, {
+        available: Boolean(body.available),
+        updatedAt: new Date(),
+      });
+
+      await writeAuditLog({
+        action: body.available ? "admin.account.clock_in" : "admin.account.clock_out",
+        actor: { uid: adminToken.sub, email: adminToken.email },
+        targetType: "user",
+        targetId: userId,
+        status: "success",
+        message: `${body.available ? "Clocked in" : "Clocked out"} account ${targetEmail || userId}.`,
+        details: {
+          email: targetEmail || null,
+          username: username || null,
+          available: Boolean(body.available),
         },
       });
 

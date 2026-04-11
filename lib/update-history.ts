@@ -7,6 +7,11 @@ export type UpdateHistoryEntry = {
 // Newest first. Add each new shipped update to the top of this list.
 export const UPDATE_HISTORY: UpdateHistoryEntry[] = [
   {
+    commit: "v409",
+    title: "Admin Account Clock In and Clock Out Controls",
+    summary: "Added dedicated Clock In Driver and Clock Out Driver actions to each expanded user card in Admin Accounts, backed by a separate admin availability API action and audit log entries so admins can manually set driver availability without opening the full edit form.",
+  },
+  {
     commit: "v408",
     title: "Explicit Device Location Prompt Buttons",
     summary: "Added direct Prompt Device Location Access actions to both the homepage ride preflight warning and App Permissions so users have a clear user-gesture trigger for the native GPS permission request when live location still is not working.",
