@@ -46,7 +46,6 @@ export default function BottomUtilityNav() {
       <Link href="/developer" style={linkStyle}>Dev</Link>
       {showAdminLink ? <Link href="/admin" style={linkStyle}>Admin</Link> : null}
       <Link href="/suggestions" style={linkStyle}>Suggestions</Link>
-      <Link href="/contact" style={linkStyle}>Contact</Link>
     </nav>
   );
 }
